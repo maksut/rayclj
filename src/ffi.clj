@@ -6,7 +6,7 @@
 
 (set! *warn-on-reflection* true)
 
-(defonce loader-lookup (atom (SymbolLookup/loaderLookup)))
+(defonce ^:private loader-lookup (atom (SymbolLookup/loaderLookup)))
 
 ;; System/loadLibrary is associated with a class loader
 ;; SymbolLookup/loaderLookup needs to happen together
@@ -16,7 +16,7 @@
   (System/loadLibrary name)
   (reset! loader-lookup (SymbolLookup/loaderLookup)))
 
-(defn lookup [name]
+(defn- lookup [name]
   (let [loader-lookup ^SymbolLookup @loader-lookup]
     (->> name
          (.find loader-lookup)
@@ -33,7 +33,7 @@
    :c-pointer ValueLayout/ADDRESS})
 
 ; to avoid reflection
-(defn memory-segment-set [^MemorySegment seg c-type ^long offset val]
+(defn- memory-segment-set [^MemorySegment seg c-type ^long offset val]
   (case c-type
     :c-bool (.set seg ValueLayout/JAVA_BOOLEAN offset ^boolean val)
     :c-byte (.set seg ValueLayout/JAVA_BYTE offset (unchecked-byte val))
@@ -56,7 +56,7 @@
     :c-double (.get seg ValueLayout/JAVA_DOUBLE offset)
     :c-pointer (.get seg ValueLayout/ADDRESS offset)))
 
-(defn- auto-str ^MemorySegment [str]
+(defn auto-str ^MemorySegment [str]
   (.allocateUtf8String (Arena/ofAuto) str))
 
 (defn- auto-alloc ^MemoryLayout [^MemoryLayout layout]
@@ -81,7 +81,7 @@
       (let [offset (+ previous-offset (long (:byte-size x)))]
         (recur offset xs (conj result (assoc x :offset previous-offset)))))))
 
-(defn- struct-layout
+(defn struct-layout
   ([spec name]
    (let [layout (struct-layout spec)
          ^MemoryLayout mem-layout (:mem-layout layout)
@@ -95,133 +95,50 @@
       :mem-layout layout
       :byte-size (.byteSize layout)})))
 
-(defn map->struct [struct-layout m]
-  (loop [seg (auto-alloc (:mem-layout struct-layout))
-         [f & fs] (:fields struct-layout)]
-    (if (nil? f)
-      seg
-      (let [c-type (second (:spec f))
-            offset (:offset f)
-            val ((:ident f) m)]
-        (memory-segment-set seg c-type offset val)
-        (recur seg fs)))))
+(defn- set-field-seg! [m ^MemorySegment seg field]
+  (let [c-type (second (:spec field))
+        offset (:offset field)
+        val ((:ident field) m)]
+    (memory-segment-set seg c-type offset val)))
 
-(defn- field->tuple [field-layout ^MemorySegment seg]
+(defn map->struct-seg [struct-layout m]
+  (let [seg (auto-alloc (:mem-layout struct-layout))
+        fields (:fields struct-layout)
+        set-field (partial set-field-seg! m seg)]
+    (doall (map set-field fields))
+    seg))
+
+(defn- field-seg->tuple [field-layout ^MemorySegment seg]
   (let [offset (:offset field-layout)
         c-type (second (:spec field-layout))
         val (memory-segment-get seg c-type offset)
         ident (:ident field-layout)]
     [ident val]))
 
-(defn struct->map [struct-layout ^MemorySegment seg]
+(defn struct-seg->map [struct-layout ^MemorySegment seg]
   (->> (:fields struct-layout)
-       (map #(field->tuple % seg))
+       (map #(field-seg->tuple % seg))
        (into {})))
 
-(defn layout [prim-or-struct-spec]
-  (if (keyword? prim-or-struct-spec)
-    (primitives prim-or-struct-spec)
-    (-> prim-or-struct-spec struct-layout :mem-layout)))
+(defn- arg-layout [arg-spec]
+  (if (keyword? arg-spec)
+    (primitives arg-spec)
+    (-> arg-spec struct-layout :mem-layout)))
 
-(defn- descr [{:keys [args return] :or {args [] return nil}}]
-  (let [arg-layouts (map layout args)
+(defn- func-descr [{:keys [args return] :or {args [] return nil}}]
+  (let [arg-layouts (map arg-layout args)
         arg-layouts (into-array MemoryLayout arg-layouts)]
     (if (nil? return)
       (FunctionDescriptor/ofVoid arg-layouts)
-      (FunctionDescriptor/of (layout return) arg-layouts))))
+      (FunctionDescriptor/of (arg-layout return) arg-layouts))))
 
 (def ^:private object-class (Class/forName "[Ljava.lang.Object;"))
 
-(defn- invoke-fn [{name :name :as spec}]
+(defn invoke-fn [{name :name :as spec}]
   (let [linker (Linker/nativeLinker)
         addr (lookup name)
-        descr (descr spec)
+        descr (func-descr spec)
         handle (.downcallHandle linker addr descr (into-array Linker$Option []))
         arg-size (count (:args spec))
-        handle (.asSpreader handle object-class arg-size)]
+        handle (.asSpreader handle object-class arg-size)] ; so we can call .invoke
     (fn [& args] (.invoke handle (object-array args)))))
-
-;; usage
-(load-lib! "raylib")
-
-(def ^:private init-window-invoke
-  (invoke-fn {:name "InitWindow" :args [:c-int :c-int :c-pointer]}))
-
-(defn init-window [width height title]
-  (init-window-invoke (int width) (int height) (auto-str title)))
-
-(def window-should-close?
-  (invoke-fn {:name "WindowShouldClose" :args [] :return :c-bool}))
-
-(def close-window
-  (invoke-fn {:name "CloseWindow" :args []}))
-
-(def begin-drawing
-  (invoke-fn {:name "BeginDrawing" :args []}))
-
-(def end-drawing
-  (invoke-fn {:name "EndDrawing" :args []}))
-
-(def color-spec
-  [[:r :c-byte]
-   [:g :c-byte]
-   [:b :c-byte]
-   [:a :c-byte]])
-
-(def color-layout (struct-layout color-spec "Color"))
-
-(def clear-backbround-invoke
-  (invoke-fn {:name "ClearBackground" :args [color-spec]}))
-
-(descr {:name "ClearBackground" :args [color-spec]})
-
-(defn clear-backbround [color]
-  (clear-backbround-invoke (map->struct color-layout color)))
-
-(def draw-text-invoke
-  (invoke-fn {:name "DrawText" :args [:c-pointer :c-int :c-int :c-int color-spec]}))
-
-(defn draw-text [text pos-x pos-y font-size color]
-  (draw-text-invoke
-   (auto-str text)
-   (int pos-x)
-   (int pos-y)
-   (int font-size)
-   (map->struct color-layout color)))
-
-(->> color-spec
-     (map field-layout)
-     (assoc-offset))
-
-(load-lib! "color")
-
-; (def test-invoke
-;   (invoke-fn {:name "test" :args [color-spec]}))
-;
-; (defn test [color]
-;   (test-invoke (map->struct color-layout color)))
-;
-; (test {:r 245 :g 245 :b 245 :a 255})
-;
-; (defn print-struct [struct]
-;   (let [buffer (.asByteBuffer struct)
-;         to-print [(.get buffer) (.get buffer) (.get buffer) (.get buffer)]]
-;     (println to-print)
-;     to-print))
-
-; (let [white (map->struct color-layout {:r 245 :g 245 :b 245 :a 255})
-;       lightgray (map->struct color-layout {:r 200 :g 200 :b 200 :a 255})]
-;   {:white white
-;    :bytes (print-struct white)
-;    :layout (struct->map color-layout white)})
-
-; (let [white {:r 245 :g 245 :b 245 :a 255}
-;       lightgray {:r 200 :g 200 :b 200 :a 255}]
-;   (init-window 800 450 "raylib [core] example - basic window")
-;   (while (not (window-should-close?))
-;     (begin-drawing)
-;     (clear-backbround white)
-;     (draw-text "Hello, World!" 190 200 20 lightgray)
-;     (end-drawing))
-;   (close-window))
-;
