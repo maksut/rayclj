@@ -3,18 +3,16 @@
 
 (f/load-lib! "color")
 
-(def color-spec
+(def color
   [[:r :c-byte]
    [:g :c-byte]
    [:b :c-byte]
    [:a :c-byte]])
 
-(def color-layout (f/struct-layout color-spec "Color"))
-
 (def test-invoke
-  (f/invoke-fn {:name "test" :args [color-spec]}))
+  (f/native-fn {:name "test" :args [color]}))
 
 (defn test-fn [color]
-  (test-invoke (f/map->struct-seg color-layout color)))
+  (test-invoke color))
 
 (test-fn {:r 245 :g 245 :b 245 :a 255})

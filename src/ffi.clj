@@ -6,21 +6,20 @@
 
 (set! *warn-on-reflection* true)
 
-(defonce ^:private loader-lookup (atom (SymbolLookup/loaderLookup)))
-
 ;; System/loadLibrary is associated with a class loader
 ;; SymbolLookup/loaderLookup needs to happen together
 ;; So whenever we load a library we create a lookup instance and reset an atom.
 ;; Sigh...
+(defonce ^:private loader-lookup (atom (SymbolLookup/loaderLookup)))
+
 (defn load-lib! [name]
   (System/loadLibrary name)
   (reset! loader-lookup (SymbolLookup/loaderLookup)))
 
 (defn- lookup [name]
-  (let [loader-lookup ^SymbolLookup @loader-lookup]
-    (->> name
-         (.find loader-lookup)
-         (.get))))
+  (let [loader-lookup ^SymbolLookup @loader-lookup
+        optional (.find loader-lookup name)]
+    (.orElse optional nil)))
 
 (def ^:private primitives
   {:c-bool ValueLayout/JAVA_BOOLEAN
@@ -45,7 +44,7 @@
     :c-pointer (.set seg ValueLayout/ADDRESS offset ^MemorySegment val)))
 
 ; to avoid reflection
-(defn memory-segment-get [^MemorySegment seg c-type ^long offset]
+(defn- memory-segment-get [^MemorySegment seg c-type ^long offset]
   (case c-type
     :c-bool (.get seg ValueLayout/JAVA_BOOLEAN offset)
     :c-byte (.get seg ValueLayout/JAVA_BYTE offset)
@@ -56,7 +55,7 @@
     :c-double (.get seg ValueLayout/JAVA_DOUBLE offset)
     :c-pointer (.get seg ValueLayout/ADDRESS offset)))
 
-(defn auto-str ^MemorySegment [str]
+(defn- auto-str ^MemorySegment [str]
   (.allocateUtf8String (Arena/ofAuto) str))
 
 (defn- auto-alloc ^MemoryLayout [^MemoryLayout layout]
@@ -81,19 +80,13 @@
       (let [offset (+ previous-offset (long (:byte-size x)))]
         (recur offset xs (conj result (assoc x :offset previous-offset)))))))
 
-(defn struct-layout
-  ([spec name]
-   (let [layout (struct-layout spec)
-         ^MemoryLayout mem-layout (:mem-layout layout)
-         mem-layout (.withName mem-layout name)]
-     (assoc layout :mem-layout mem-layout)))
-  ([spec]
-   (let [fields (->> spec (map field-layout) (assoc-offset))
-         layouts (into-array MemoryLayout (map :mem-layout fields))
-         ^MemoryLayout layout (MemoryLayout/structLayout layouts)]
-     {:fields fields
-      :mem-layout layout
-      :byte-size (.byteSize layout)})))
+(defn- struct-layout [spec]
+  (let [fields (->> spec (map field-layout) (assoc-offset))
+        layouts (into-array MemoryLayout (map :mem-layout fields))
+        ^MemoryLayout layout (MemoryLayout/structLayout layouts)]
+    {:fields fields
+     :mem-layout layout
+     :byte-size (.byteSize layout)}))
 
 (defn- set-field-seg! [m ^MemorySegment seg field]
   (let [c-type (second (:spec field))
@@ -101,7 +94,7 @@
         val ((:ident field) m)]
     (memory-segment-set seg c-type offset val)))
 
-(defn map->struct-seg [struct-layout m]
+(defn- map->struct-seg [struct-layout m]
   (let [seg (auto-alloc (:mem-layout struct-layout))
         fields (:fields struct-layout)
         set-field (partial set-field-seg! m seg)]
@@ -134,11 +127,27 @@
 
 (def ^:private object-class (Class/forName "[Ljava.lang.Object;"))
 
-(defn invoke-fn [{name :name :as spec}]
+(defn- arg->seg-fn [arg-spec]
+  (case arg-spec
+    :c-bool boolean
+    :c-byte unchecked-byte
+    :c-short unchecked-short
+    :c-int unchecked-int
+    :c-long unchecked-long
+    :c-float unchecked-float
+    :c-double unchecked-double
+    :c-pointer auto-str       ;; TODO: fix this assumption; all pointers are strings!
+    (fn [m] (map->struct-seg (struct-layout arg-spec) m)))) ;; default assumes structs 
+
+(defn native-fn [{name :name :as spec}]
   (let [linker (Linker/nativeLinker)
         addr (lookup name)
         descr (func-descr spec)
         handle (.downcallHandle linker addr descr (into-array Linker$Option []))
-        arg-size (count (:args spec))
-        handle (.asSpreader handle object-class arg-size)] ; so we can call .invoke
-    (fn [& args] (.invoke handle (object-array args)))))
+        arg-specs (:args spec)
+        handle (.asSpreader handle object-class (count arg-specs)) ; so we can call .invoke
+        converters (map arg->seg-fn arg-specs) ;; fns that coerce primitives and convert map args into struct memory segments
+        apply (fn [f x] (f x))]
+    (fn [& args]
+      (let [converted-args (map apply converters args)]
+        (.invoke handle (object-array converted-args))))))
