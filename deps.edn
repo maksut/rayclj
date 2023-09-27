@@ -1,0 +1,25 @@
+{:paths ["src"]
+
+ :deps
+ {org.clojure/clojure {:mvn/version "1.11.1"}}
+
+ :aliases
+ {:build {:deps {io.github.clojure/tools.build {:git/tag "v0.9.5" :git/sha "24f2894"}}
+          :ns-default build}
+
+  :dev {:paths ["target/classes"]
+        :classpath-overrides {org.clojure/clojure nil} ;; for disabling the official compiler
+        :extra-deps {nrepl/nrepl       {:mvn/version "1.0.0"}
+                     cider/cider-nrepl {:mvn/version "0.28.7"}
+                     djblue/portal     {:mvn/version "0.37.1"}
+                     com.github.jpmonettas/clojure {:mvn/version "1.11.1-9"}
+                     com.github.jpmonettas/flow-storm-dbg {:mvn/version "3.7.3"}}
+        :jvm-opts ["--enable-preview"
+                   "--enable-native-access=ALL-UNNAMED"
+                   "-Djava.library.path=native/raylib-4.5.0_linux_amd64/lib:native/color"
+                   ;"-Dclojure.storm.instrumentEnable=true"
+                   ;"-Dclojure.storm.instrumentOnlyPrefixes=ffi"
+                   ]
+        :main-opts  ["-m" "nrepl.cmdline"
+                     "--middleware" "[cider.nrepl/cider-middleware]"
+                     "--interactive"]}}}
