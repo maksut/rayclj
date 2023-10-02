@@ -49,53 +49,41 @@
 ;; Structures Definition
 ;;
 
-(defmacro ^:private with-segment
-  "Creates a segment defined by klass and sets the fields.
-  Names of the arguments significant!
+(defmacro vec->seg [layout setters]
+  (let [seg (gensym "seg")
+        args (repeatedly (count setters) #(gensym "arg"))]
+    `(fn f#
+       ([^Arena arena# [~@args]]
+        (let [~seg (.allocate arena# ~layout)]
+          ~@(map #(list %1 seg %2) setters args)
+          ~seg))
+       ([v#] (f# (Arena/ofAuto) v#)))))
 
-  Example: '(with-segment arena Vector2 x y) expands to
+(defmacro seg->vec [getters]
+  (let [seg (gensym "seg")]
+    `(fn [~seg]
+       [~@(map #(list % seg) getters)])))
 
-    (let* [seg (.allocate arena (Vector2/$LAYOUT))]
-      (Vector2/x$set seg x)
-      (Vector2/y$set seg y)
-      seg)
-  "
-  [^Arena arena klass & fields]
-  (let [to-symbol (fn [& args] (symbol (apply str args)))
-        set-fn (fn [sym] (to-symbol klass "/" sym "$set"))  ; eg: Vector2/x$set
-        seg-sym (gensym "seg")
-        ; eg: (Vector2/x$set seg x)
-        set-field (fn [field] `(~(set-fn field) ~seg-sym ~(to-symbol field)))]
-    `(let [~seg-sym (.allocate ~arena (~(to-symbol klass "/$LAYOUT")))]
-       ~@(map set-field fields)
-       ~seg-sym)))
+(def v2
+  (vec->seg (Vector2/$LAYOUT) [Vector2/x$set Vector2/y$set]))
 
-(defn v2
-  ([^Arena arena [x y]] (with-segment arena Vector2 x y))
-  ([v] (v2 (Arena/ofAuto) v)))
+(def v3
+  (vec->seg (Vector3/$LAYOUT) [Vector3/x$set Vector3/y$set Vector3/z$set]))
 
-(defn v3
-  ([^Arena arena [x y z]] (with-segment arena Vector3 x y z))
-  ([v] (v3 (Arena/ofAuto) v)))
+(def v4
+  (vec->seg (Vector4/$LAYOUT) [Vector4/x$set Vector4/y$set Vector4/z$set Vector4/w$set]))
 
-(defn v4
-  ([^Arena arena [x y z w]] (with-segment arena Vector4 x y z w))
-  ([v] (v4 (Arena/ofAuto) v)))
+(def ^:private to-v2 (seg->vec [Vector2/x$get Vector2/y$get]))
 
 (def quaternion v4) ;; 4 components (Vector4 alias)
 
-(defn matrix
+(def matrix
   "Matrix, 4x4 components, column major, OpenGL style, right-handed"
-  [^Arena arena
-   [m0 m4 m8 m12
-    m1 m5 m9 m13
-    m2 m6 m10 m14
-    m3 m7 m11 m15]]
-  (with-segment arena Matrix
-    m0 m4 m8 m12
-    m1 m5 m9 m13
-    m2 m6 m10 m14
-    m3 m7 m11 m15))
+  (vec->seg (Matrix/$LAYOUT)
+            [Matrix/m0$set Matrix/m4$set Matrix/m8$set Matrix/m12$set
+             Matrix/m1$set Matrix/m5$set Matrix/m9$set Matrix/m13$set
+             Matrix/m2$set Matrix/m6$set Matrix/m10$set Matrix/m14$set
+             Matrix/m3$set Matrix/m7$set Matrix/m11$set Matrix/m15$set]))
 
 (defn color
   ([^Arena arena c]
@@ -116,132 +104,196 @@
 ;; Keyboard keys (US keyboard layout)
 ;; NOTE: Use GetKeyPressed() to allow redefining required keys for alternative layouts
 (def ^:private keyboard-key
-  {::null          0,        ;; Key: NULL, used for no key pressed
+  {::null          0        ;; Key: NULL, used for no key pressed
    ;; Alphanumeric keys
-   ::apostrophe    39,       ;; Key: '
-   ::comma         44,       ;; Key: ,
-   ::minus         45,       ;; Key: -
-   ::period        46,       ;; Key: .
-   ::slash         47,       ;; Key: /
-   ::zero          48,       ;; Key: 0
-   ::one           49,       ;; Key: 1
-   ::two           50,       ;; Key: 2
-   ::three         51,       ;; Key: 3
-   ::four          52,       ;; Key: 4
-   ::five          53,       ;; Key: 5
-   ::six           54,       ;; Key: 6
-   ::seven         55,       ;; Key: 7
-   ::eight         56,       ;; Key: 8
-   ::nine          57,       ;; Key: 9
-   ::semicolon     59,       ;; Key: ;
-   ::equal         61,       ;; Key: =
-   ::a             65,       ;; Key: A | a
-   ::b             66,       ;; Key: B | b
-   ::c             67,       ;; Key: C | c
-   ::d             68,       ;; Key: D | d
-   ::e             69,       ;; Key: E | e
-   ::f             70,       ;; Key: F | f
-   ::g             71,       ;; Key: G | g
-   ::h             72,       ;; Key: H | h
-   ::i             73,       ;; Key: I | i
-   ::j             74,       ;; Key: J | j
-   ::k             75,       ;; Key: K | k
-   ::l             76,       ;; Key: L | l
-   ::m             77,       ;; Key: M | m
-   ::n             78,       ;; Key: N | n
-   ::o             79,       ;; Key: O | o
-   ::p             80,       ;; Key: P | p
-   ::q             81,       ;; Key: Q | q
-   ::r             82,       ;; Key: R | r
-   ::s             83,       ;; Key: S | s
-   ::t             84,       ;; Key: T | t
-   ::u             85,       ;; Key: U | u
-   ::v             86,       ;; Key: V | v
-   ::w             87,       ;; Key: W | w
-   ::x             88,       ;; Key: X | x
-   ::y             89,       ;; Key: Y | y
-   ::z             90,       ;; Key: Z | z
-   ::left-bracket  91,       ;; Key: [
-   ::backslash     92,       ;; Key: '\'
-   ::right-bracket 93,       ;; Key: ]
-   ::grave         96,       ;; Key: `
+   ::apostrophe    39       ;; Key: '
+   ::comma         44       ;; Key: ,
+   ::minus         45       ;; Key: -
+   ::period        46       ;; Key: .
+   ::slash         47       ;; Key: /
+   ::zero          48       ;; Key: 0
+   ::one           49       ;; Key: 1
+   ::two           50       ;; Key: 2
+   ::three         51       ;; Key: 3
+   ::four          52       ;; Key: 4
+   ::five          53       ;; Key: 5
+   ::six           54       ;; Key: 6
+   ::seven         55       ;; Key: 7
+   ::eight         56       ;; Key: 8
+   ::nine          57       ;; Key: 9
+   ::semicolon     59       ;; Key: ;
+   ::equal         61       ;; Key: =
+   ::a             65       ;; Key: A | a
+   ::b             66       ;; Key: B | b
+   ::c             67       ;; Key: C | c
+   ::d             68       ;; Key: D | d
+   ::e             69       ;; Key: E | e
+   ::f             70       ;; Key: F | f
+   ::g             71       ;; Key: G | g
+   ::h             72       ;; Key: H | h
+   ::i             73       ;; Key: I | i
+   ::j             74       ;; Key: J | j
+   ::k             75       ;; Key: K | k
+   ::l             76       ;; Key: L | l
+   ::m             77       ;; Key: M | m
+   ::n             78       ;; Key: N | n
+   ::o             79       ;; Key: O | o
+   ::p             80       ;; Key: P | p
+   ::q             81       ;; Key: Q | q
+   ::r             82       ;; Key: R | r
+   ::s             83       ;; Key: S | s
+   ::t             84       ;; Key: T | t
+   ::u             85       ;; Key: U | u
+   ::v             86       ;; Key: V | v
+   ::w             87       ;; Key: W | w
+   ::x             88       ;; Key: X | x
+   ::y             89       ;; Key: Y | y
+   ::z             90       ;; Key: Z | z
+   ::left-bracket  91       ;; Key: [
+   ::backslash     92       ;; Key: '\'
+   ::right-bracket 93       ;; Key: ]
+   ::grave         96       ;; Key: `
    ;; Function keys
-   ::space         32,       ;; Key: Space
-   ::escape        256,      ;; Key: Esc
-   ::enter         257,      ;; Key: Enter
-   ::tab           258,      ;; Key: Tab
-   ::backspace     259,      ;; Key: Backspace
-   ::insert        260,      ;; Key: Ins
-   ::delete        261,      ;; Key: Del
-   ::right         262,      ;; Key: Cursor right
-   ::left          263,      ;; Key: Cursor left
-   ::down          264,      ;; Key: Cursor down
-   ::up            265,      ;; Key: Cursor up
-   ::page-up       266,      ;; Key: Page up
-   ::page-down     267,      ;; Key: Page down
-   ::home          268,      ;; Key: Home
-   ::end           269,      ;; Key: End
-   ::caps-lock     280,      ;; Key: Caps lock
-   ::scroll-lock   281,      ;; Key: Scroll down
-   ::num-lock      282,      ;; Key: Num lock
-   ::print-screen  283,      ;; Key: Print screen
-   ::pause         284,      ;; Key: Pause
-   ::f1            290,      ;; Key: F1
-   ::f2            291,      ;; Key: F2
-   ::f3            292,      ;; Key: F3
-   ::f4            293,      ;; Key: F4
-   ::f5            294,      ;; Key: F5
-   ::f6            295,      ;; Key: F6
-   ::f7            296,      ;; Key: F7
-   ::f8            297,      ;; Key: F8
-   ::f9            298,      ;; Key: F9
-   ::f10           299,      ;; Key: F10
-   ::f11           300,      ;; Key: F11
-   ::f12           301,      ;; Key: F12
-   ::left-shift    340,      ;; Key: Shift left
-   ::left-control  341,      ;; Key: Control left
-   ::left-alt      342,      ;; Key: Alt left
-   ::left-super    343,      ;; Key: Super left
-   ::right-shift   344,      ;; Key: Shift right
-   ::right-control 345,      ;; Key: Control right
-   ::right-alt     346,      ;; Key: Alt right
-   ::right-super   347,      ;; Key: Super right
-   ::kb-menu       348,      ;; Key: KB menu
+   ::space         32       ;; Key: Space
+   ::escape        256      ;; Key: Esc
+   ::enter         257      ;; Key: Enter
+   ::tab           258      ;; Key: Tab
+   ::backspace     259      ;; Key: Backspace
+   ::insert        260      ;; Key: Ins
+   ::delete        261      ;; Key: Del
+   ::right         262      ;; Key: Cursor right
+   ::left          263      ;; Key: Cursor left
+   ::down          264      ;; Key: Cursor down
+   ::up            265      ;; Key: Cursor up
+   ::page-up       266      ;; Key: Page up
+   ::page-down     267      ;; Key: Page down
+   ::home          268      ;; Key: Home
+   ::end           269      ;; Key: End
+   ::caps-lock     280      ;; Key: Caps lock
+   ::scroll-lock   281      ;; Key: Scroll down
+   ::num-lock      282      ;; Key: Num lock
+   ::print-screen  283      ;; Key: Print screen
+   ::pause         284      ;; Key: Pause
+   ::f1            290      ;; Key: F1
+   ::f2            291      ;; Key: F2
+   ::f3            292      ;; Key: F3
+   ::f4            293      ;; Key: F4
+   ::f5            294      ;; Key: F5
+   ::f6            295      ;; Key: F6
+   ::f7            296      ;; Key: F7
+   ::f8            297      ;; Key: F8
+   ::f9            298      ;; Key: F9
+   ::f10           299      ;; Key: F10
+   ::f11           300      ;; Key: F11
+   ::f12           301      ;; Key: F12
+   ::left-shift    340      ;; Key: Shift left
+   ::left-control  341      ;; Key: Control left
+   ::left-alt      342      ;; Key: Alt left
+   ::left-super    343      ;; Key: Super left
+   ::right-shift   344      ;; Key: Shift right
+   ::right-control 345      ;; Key: Control right
+   ::right-alt     346      ;; Key: Alt right
+   ::right-super   347      ;; Key: Super right
+   ::kb-menu       348      ;; Key: KB menu
    ;; Keypad keys
-   ::kp-0          320,      ;; Key: Keypad 0
-   ::kp-1          321,      ;; Key: Keypad 1
-   ::kp-2          322,      ;; Key: Keypad 2
-   ::kp-3          323,      ;; Key: Keypad 3
-   ::kp-4          324,      ;; Key: Keypad 4
-   ::kp-5          325,      ;; Key: Keypad 5
-   ::kp-6          326,      ;; Key: Keypad 6
-   ::kp-7          327,      ;; Key: Keypad 7
-   ::kp-8          328,      ;; Key: Keypad 8
-   ::kp-9          329,      ;; Key: Keypad 9
-   ::kp-decimal    330,      ;; Key: Keypad .
-   ::kp-divide     331,      ;; Key: Keypad /
-   ::kp-multiply   332,      ;; Key: Keypad *
-   ::kp-subtract   333,      ;; Key: Keypad -
-   ::kp-add        334,      ;; Key: Keypad +
-   ::kp-enter      335,      ;; Key: Keypad Enter
-   ::kp-equal      336,      ;; Key: Keypad =
+   ::kp-0          320      ;; Key: Keypad 0
+   ::kp-1          321      ;; Key: Keypad 1
+   ::kp-2          322      ;; Key: Keypad 2
+   ::kp-3          323      ;; Key: Keypad 3
+   ::kp-4          324      ;; Key: Keypad 4
+   ::kp-5          325      ;; Key: Keypad 5
+   ::kp-6          326      ;; Key: Keypad 6
+   ::kp-7          327      ;; Key: Keypad 7
+   ::kp-8          328      ;; Key: Keypad 8
+   ::kp-9          329      ;; Key: Keypad 9
+   ::kp-decimal    330      ;; Key: Keypad .
+   ::kp-divide     331      ;; Key: Keypad /
+   ::kp-multiply   332      ;; Key: Keypad *
+   ::kp-subtract   333      ;; Key: Keypad -
+   ::kp-add        334      ;; Key: Keypad +
+   ::kp-enter      335      ;; Key: Keypad Enter
+   ::kp-equal      336      ;; Key: Keypad =
    ;; Android key buttons
-   ::back          4,        ;; Key: Android back button
-   ::menu          82,       ;; Key: Android menu button
-   ::volume-up     24,       ;; Key: Android volume up button
+   ::back          4        ;; Key: Android back button
+   ::menu          82       ;; Key: Android menu button
+   ::volume-up     24       ;; Key: Android volume up button
    ::volume-down   25        ;; Key: Android volume down button
    })
 
-;;
-;; Window related functions
-;;
+;; Mouse buttons
+(def ^:private mouse-button
+  {::left    0 ;; Mouse button left
+   ::right   1 ;; Mouse button right
+   ::middle  2 ;; Mouse button middle (pressed wheel)
+   ::side    3 ;; Mouse button side (advanced mouse device)
+   ::extra   4 ;; Mouse button extra (advanced mouse device)
+   ::forward 5 ;; Mouse button forward (advanced mouse device)
+   ::back    6 ;; Mouse button back (advanced mouse device)
+   })
+
+;; Mouse cursor
+(def ^:private mouse-cursor
+  {::default        0   ;; Default pointer shape
+   ::arrow          1   ;; Arrow shape
+   ::ibeam          2   ;; Text writing cursor shape
+   ::crosshair      3   ;; Cross shape
+   ::pointing-hand  4   ;; Pointing hand cursor
+   ::resize-ew      5   ;; Horizontal resize/move arrow shape
+   ::resize-ns      6   ;; Vertical resize/move arrow shape
+   ::resize-nwse    7   ;; Top-left to bottom-right diagonal resize/move arrow shape
+   ::resize-nesw    8   ;; The top-right to bottom-left diagonal resize/move arrow shape
+   ::resize-all     9   ;; The omnidirectional resize/move cursor shape
+   ::not-allowed    10  ;; The operation-not-allowed shape
+   })
+
+;; Gamepad buttons
+(def ^:private gamepad-button
+  {::unknown           0   ;; Unknown button, just for error checking
+   ::left-face-up      1   ;; Gamepad left DPAD up button
+   ::left-face-right   2   ;; Gamepad left DPAD right button
+   ::left-face-down    3   ;; Gamepad left DPAD down button
+   ::left-face-left    4   ;; Gamepad left DPAD left button
+   ::right-face-up     5   ;; Gamepad right button up (i.e. PS3: Triangle, Xbox: Y)
+   ::right-face-right  6   ;; Gamepad right button right (i.e. PS3: Square, Xbox: X)
+   ::right-face-down   7   ;; Gamepad right button down (i.e. PS3: Cross, Xbox: A)
+   ::right-face-left   8   ;; Gamepad right button left (i.e. PS3: Circle, Xbox: B)
+   ::left-trigger-1    9   ;; Gamepad top/back trigger left (first), it could be a trailing button
+   ::left-trigger-2    10  ;; Gamepad top/back trigger left (second), it could be a trailing button
+   ::right-trigger-1   11  ;; Gamepad top/back trigger right (one), it could be a trailing button
+   ::right-trigger-2   12  ;; Gamepad top/back trigger right (second), it could be a trailing button
+   ::middle-left       13  ;; Gamepad center buttons, left one (i.e. PS3: Select)
+   ::middle            14  ;; Gamepad center buttons, middle one (i.e. PS3: PS, Xbox: XBOX)
+   ::middle-right      15  ;; Gamepad center buttons, right one (i.e. PS3: Start)
+   ::left-thumb        16  ;; Gamepad joystick pressed button left
+   ::right-thumb       17  ;; Gamepad joystick pressed button right
+   })
+
+;; Gamepad axis
+(def ^:private gamepad-axis
+  {::left-x        0 ;; Gamepad left stick X axis
+   ::left-y        1 ;; Gamepad left stick Y axis
+   ::right-x       2 ;; Gamepad right stick X axis
+   ::right-y       3 ;; Gamepad right stick Y axis
+   ::left-trigger  4 ;; Gamepad back trigger left, pressure level: [1..-1]
+   ::right-trigger 5 ;; Gamepad back trigger right, pressure level: [1..-1]
+   })
+
+;;------------------------------------------------------------------------------------
+;; Window and Graphics Device Functions (Module: core)
+;;------------------------------------------------------------------------------------
 
 (defn init-window!
+  "Initialize window and OpenGL context"
   ([arena width height title] (raylib_h/InitWindow width height (string arena title)))
   ([width height title] (raylib_h/InitWindow width height (string title))))
 
-(defn window-should-close? [] (raylib_h/WindowShouldClose))
-(defn close-window! [] (raylib_h/CloseWindow))
+(defn window-should-close?
+  "Check if KEY_ESCAPE pressed or Close icon pressed"
+  [] (raylib_h/WindowShouldClose))
+
+(defn close-window!
+  "Close window and unload OpenGL context"
+  [] (raylib_h/CloseWindow))
 
 ;;
 ;; Drawing-related functions
@@ -268,19 +320,162 @@
 (defn get-frame-time! [] (raylib_h/GetFrameTime))
 (defn get-time! [] (raylib_h/GetTime))
 
-;;
-;; Input-related functions: keyboard
-;;
+;;------------------------------------------------------------------------------------
+;; Input Handling Functions (Module: core)
+;;------------------------------------------------------------------------------------
 
+;; Input-related functions: keyboard
 (defn- keycode [key] (if (keyword? key) (keyboard-key key) key))
 
-(defn is-key-pressed? [key] (raylib_h/IsKeyPressed (keycode key)))
-(defn is-key-down? [key] (raylib_h/IsKeyDown (keycode key)))
-(defn is-key-released? [key] (raylib_h/IsKeyReleased (keycode key)))
-(defn is-key-up? [key] (raylib_h/IsKeyUp (keycode key)))
-(defn set-exit-key! [key] (raylib_h/SetExitKey (keycode key)))
-(defn get-key-pressed! [] (raylib_h/GetKeyPressed))
-(defn get-char-pressed! [] (raylib_h/GetCharPressed))
+(defn is-key-pressed?
+  "Check if a key has been pressed once"
+  [key] (raylib_h/IsKeyPressed (keycode key)))
+
+(defn is-key-down?
+  "Check if a key has been pressed again (Only PLATFORM_DESKTOP)"
+  [key] (raylib_h/IsKeyDown (keycode key)))
+
+(defn is-key-released?
+  "Check if a key is being pressed"
+  [key] (raylib_h/IsKeyReleased (keycode key)))
+
+(defn is-key-up?
+  "Check if a key has been released once"
+  [key] (raylib_h/IsKeyUp (keycode key)))
+
+(defn set-exit-key!
+  "Set a custom key to exit program (default is ESC)"
+  [key] (raylib_h/SetExitKey (keycode key)))
+
+(defn get-key-pressed!
+  "Get key pressed (keycode), call it multiple times for keys queued, returns 0 when the queue is empty"
+  [] (raylib_h/GetKeyPressed))
+
+(defn get-char-pressed!
+  "Get char pressed (unicode), call it multiple times for chars queued, returns 0 when the queue is empty"
+  [] (raylib_h/GetCharPressed))
+
+;; Input-related functions: gamepads
+(defn is-gamepad-available?
+  "Check if a gamepad is available"
+  [gamepad] (raylib_h/IsGamepadAvailable gamepad))
+
+;; TODO: string return value
+(defn get-gamepad-name!
+  "Get gamepad internal name id"
+  [gamepad] (raylib_h/GetGamepadName gamepad))
+
+(defn gamepad-button-down?
+  "Check if a gamepad button is being pressed"
+  [gamepad button] (raylib_h/IsGamepadButtonDown gamepad (gamepad-button button)))
+
+(defn gamepad-button-released?
+  "Check if a gamepad button has been released once"
+  [gamepad button] (raylib_h/IsGamepadButtonReleased gamepad (gamepad-button button)))
+
+(defn gamepad-button-up?
+  "Check if a gamepad button is NOT being pressed"
+  [gamepad button] (raylib_h/IsGamepadButtonUp gamepad (gamepad-button button)))
+
+(defn get-gamepad-button-pressed!
+  "Get the last gamepad button pressed"
+  [] (gamepad-button (raylib_h/GetGamepadButtonPressed)))
+
+(defn get-gamepad-axis-count!
+  "Get gamepad axis count for a gamepad"
+  [gamepad] (raylib_h/GetGamepadAxisCount gamepad))
+
+(defn get-gamepad-axis-movement!
+  "Get axis movement value for a gamepad axis"
+  [gamepad axis] (raylib_h/GetGamepadAxisMovement gamepad (gamepad-axis axis)))
+
+(defn set-gamepad-mappings!
+  "Set internal gamepad mappings (SDL_GameControllerDB)"
+  [mappings] (raylib_h/SetGamepadMappings mappings))
+
+;; Input-related functions: mouse
+(defn mouse-button-pressed?
+  "Check if a mouse button has been pressed once"
+  [button] (raylib_h/IsMouseButtonPressed (mouse-button button)))
+
+(defn mouse-button-down?
+  "Check if a mouse button is being pressed"
+  [button] (raylib_h/IsMouseButtonDown (mouse-button button)))
+
+(defn mouse-button-released?
+  "Check if a mouse button has been released once"
+  [button] (raylib_h/IsMouseButtonReleased (mouse-button button)))
+
+(defn mouse-button-up?
+  "Check if a mouse button is NOT being pressed"
+  [button] (raylib_h/IsMouseButtonUp (mouse-button button)))
+
+(defn get-mouse-x!
+  "Get mouse position X"
+  [] (raylib_h/GetMouseX))
+
+(defn get-mouse-y!
+  "Get mouse position Y"
+  [] (raylib_h/GetMouseY))
+
+(defn get-mouse-position!
+  "Get mouse position XY"
+  ([^Arena arena] (to-v2 (raylib_h/GetMousePosition arena)))
+  ([] (get-mouse-position! (Arena/ofAuto))))
+
+(defn get-mouse-delta!
+  "Get mouse delta between frames"
+  ([^Arena arena] (to-v2 (raylib_h/GetMouseDelta arena)))
+  ([] (get-mouse-delta! (Arena/ofAuto))))
+
+(defn set-mouse-position!
+  "Set mouse position XY"
+  [x y] (raylib_h/SetMousePosition x y))
+
+(defn set-mouse-offset!
+  "Set mouse offset"
+  ([offset-x offset-y] (raylib_h/SetMouseOffset offset-x offset-y)))
+
+(defn set-mouse-scale!
+  "Set mouse scaling"
+  ([scale-x scale-y] (raylib_h/SetMouseScale scale-x scale-y)))
+
+(defn get-mouse-wheel-move!
+  "Get mouse wheel movement for X or Y, whichever is larger"
+  ([] (raylib_h/GetMouseWheelMove)))
+
+;; TODO: return value is a vector2
+(defn get-mouse-wheel-move-v!
+  "Get mouse wheel movement for both X and Y"
+  ([^Arena arena] (raylib_h/GetMouseWheelMoveV arena))
+  ([] (get-mouse-wheel-move-v! (Arena/ofAuto))))
+
+(defn set-mouse-cursor!
+  "Set mouse cursor"
+  ([cursor] (raylib_h/SetMouseCursor (mouse-cursor cursor))))
+
+;; Input-related functions: touch
+(defn get-touch-x!
+  "Get touch position X for touch point 0 (relative to screen size)"
+  ([] (raylib_h/GetTouchX)))
+
+(defn get-touch-y!
+  "Get touch position Y for touch point 0 (relative to screen size)"
+  ([] (raylib_h/GetTouchY)))
+
+;; TODO: return value is a vector2
+(defn get-touch-position!
+  "Get touch position XY for a touch point index (relative to screen size)"
+  ([^Arena arena index] (raylib_h/GetTouchPosition arena index))
+  ([index] (get-touch-position! (Arena/ofAuto) index)))
+
+(defn get-touch-point-id!
+  "Get touch point identifier for given index"
+  ([index] (raylib_h/GetTouchPointId index)))
+
+(defn get-touch-point-count!
+  "Get number of touch points"
+  ([] (raylib_h/GetTouchPointCount)))
 
 ;;
 ;; Basic shapes drawing functions
@@ -292,5 +487,11 @@
   ([v radius c] (draw-circle-v! (Arena/ofAuto) v radius c)))
 
 (comment
-   ;; raylib example2
-  )
+  (macroexpand '(vec->seg Vector2/$LAYOUT [Vector2/x$set Vector2/y$set]))
+  (macroexpand '(seg->vec [Vector2/x$get Vector2/y$get]))
+
+  (def f (vec->seg (Vector2/$LAYOUT) [Vector2/x$set Vector2/y$set]))
+  (def g (seg->vec [Vector2/x$get Vector2/y$get]))
+
+  (let [seg (f [1 2])]
+    (g seg)))
