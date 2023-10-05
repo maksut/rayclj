@@ -1,101 +1,21 @@
 (ns raylib
-  (:import [raylib raylib_h Color Vector2 Vector3 Vector4 Matrix]
-           [java.lang.foreign Arena MemorySegment]))
+  (:import
+   [raylib
+    raylib_h
+    Vector2
+    Vector3
+    Vector4
+    Matrix
+    Color
+    Rectangle
+    Image
+    Texture
+    RenderTexture
+    Camera3D
+    Camera2D]
+   [java.lang.foreign Arena MemorySegment]))
 
 (set! *warn-on-reflection* true)
-
-;;
-;; some basic colors
-;;
-
-(def ^:private predefined-colors
-  {::lightgray {:r 200 :g 200 :b 200 :a 255}  ;; Light Gray
-   ::gray {:r 130 :g 130 :b 130 :a 255}       ;; Gray
-   ::darkgray {:r 80 :g 80 :b 80 :a 255}      ;; Dark Gray
-   ::yellow {:r 253 :g 249 :b 0 :a 255}       ;; Yellow
-   ::gold {:r 255 :g 203 :b 0 :a 255}         ;; Gold
-   ::orange {:r 255 :g 161 :b 0 :a 255}       ;; Orange
-   ::ping {:r 255 :g 109 :b 194 :a 255}       ;; Pink
-   ::red {:r 230 :g 41 :b 55 :a 255}          ;; Red
-   ::maroon {:r 190 :g 33 :b 55 :a 255}       ;; Maroon
-   ::green {:r 0 :g 228 :b 48 :a 255}         ;; Green
-   ::lime {:r 0 :g 158 :b 47 :a 255}          ;; Lime
-   ::darkgreen {:r 0 :g 117 :b 44 :a 255}     ;; Dark Green
-   ::skyblue {:r 102 :g 191 :b 255 :a 255}    ;; Sky Blue
-   ::blue {:r 0 :g 121 :b 241 :a 255}         ;; Blue
-   ::darkblue {:r 0 :g 82 :b 172 :a 255}      ;; Dark Blue
-   ::purple {:r 200 :g 122 :b 255 :a 255}     ;; Purple
-   ::violet {:r 135 :g 60 :b 190 :a 255}      ;; Violet
-   ::darkpurple {:r 112 :g 31 :b 126 :a 255}  ;; Dark Purple
-   ::beige {:r 211 :g 176 :b 131 :a 255}      ;; Beige
-   ::brown {:r 127 :g 106 :b 79 :a 255}       ;; Brown
-   ::darkbrown {:r 76 :g 63 :b 47 :a 255}     ;; Dark Brown
-   ::white {:r 255 :g 255 :b 255 :a 255}      ;; White
-   ::black {:r 0 :g 0 :b 0 :a 255}            ;; Black
-   ::blank {:r 0 :g 0 :b 0 :a 0}              ;; Blank (Transparent)
-   ::magenta {:r 255 :g 0 :b 255 :a 255}      ;; Magenta
-   ::raywhite {:r 245 :g 245 :b 245 :a 255}}) ;; Raylib White (raylib logo)
-
-;;
-;; utilities
-;;
-
-(defn string ^MemorySegment
-  ([str] (string (Arena/ofAuto) str))
-  ([^Arena arena str]
-   (.allocateUtf8String arena str)))
-
-;;
-;; Structures Definition
-;;
-
-(defmacro vec->seg [layout setters]
-  (let [seg (gensym "seg")
-        args (repeatedly (count setters) #(gensym "arg"))]
-    `(fn f#
-       ([^Arena arena# [~@args]]
-        (let [~seg (.allocate arena# ~layout)]
-          ~@(map #(list %1 seg %2) setters args)
-          ~seg))
-       ([v#] (f# (Arena/ofAuto) v#)))))
-
-(defmacro seg->vec [getters]
-  (let [seg (gensym "seg")]
-    `(fn [~seg]
-       [~@(map #(list % seg) getters)])))
-
-(def v2
-  (vec->seg (Vector2/$LAYOUT) [Vector2/x$set Vector2/y$set]))
-
-(def v3
-  (vec->seg (Vector3/$LAYOUT) [Vector3/x$set Vector3/y$set Vector3/z$set]))
-
-(def v4
-  (vec->seg (Vector4/$LAYOUT) [Vector4/x$set Vector4/y$set Vector4/z$set Vector4/w$set]))
-
-(def ^:private to-v2 (seg->vec [Vector2/x$get Vector2/y$get]))
-
-(def quaternion v4) ;; 4 components (Vector4 alias)
-
-(def matrix
-  "Matrix, 4x4 components, column major, OpenGL style, right-handed"
-  (vec->seg (Matrix/$LAYOUT)
-            [Matrix/m0$set Matrix/m4$set Matrix/m8$set Matrix/m12$set
-             Matrix/m1$set Matrix/m5$set Matrix/m9$set Matrix/m13$set
-             Matrix/m2$set Matrix/m6$set Matrix/m10$set Matrix/m14$set
-             Matrix/m3$set Matrix/m7$set Matrix/m11$set Matrix/m15$set]))
-
-(defn color
-  ([^Arena arena c]
-   (let [c (if (keyword? c) (predefined-colors c) c)
-         {:keys [r g b a]} c
-         seg (.allocate arena (Color/$LAYOUT))]
-     (Color/r$set seg (unchecked-byte r))
-     (Color/g$set seg (unchecked-byte g))
-     (Color/b$set seg (unchecked-byte b))
-     (Color/a$set seg (unchecked-byte a))
-     seg))
-  ([c] (color (Arena/ofAuto) c)))
 
 ;;
 ;; Enumerators Definition
@@ -103,7 +23,7 @@
 
 ;; Keyboard keys (US keyboard layout)
 ;; NOTE: Use GetKeyPressed() to allow redefining required keys for alternative layouts
-(def ^:private keyboard-key
+(def keyboard-key
   {::null          0        ;; Key: NULL, used for no key pressed
    ;; Alphanumeric keys
    ::apostrophe    39       ;; Key: '
@@ -221,7 +141,7 @@
    })
 
 ;; Mouse buttons
-(def ^:private mouse-button
+(def mouse-button
   {::left    0 ;; Mouse button left
    ::right   1 ;; Mouse button right
    ::middle  2 ;; Mouse button middle (pressed wheel)
@@ -247,7 +167,7 @@
    })
 
 ;; Gamepad buttons
-(def ^:private gamepad-button
+(def gamepad-button
   {::unknown           0   ;; Unknown button, just for error checking
    ::left-face-up      1   ;; Gamepad left DPAD up button
    ::left-face-right   2   ;; Gamepad left DPAD right button
@@ -269,7 +189,7 @@
    })
 
 ;; Gamepad axis
-(def ^:private gamepad-axis
+(def gamepad-axis
   {::left-x        0 ;; Gamepad left stick X axis
    ::left-y        1 ;; Gamepad left stick Y axis
    ::right-x       2 ;; Gamepad right stick X axis
@@ -278,14 +198,335 @@
    ::right-trigger 5 ;; Gamepad back trigger right, pressure level: [1..-1]
    })
 
+;;
+;; Utility Functions
+;;
+
+(defn keycode [key] (if (keyword? key) (keyboard-key key) key))
+
+(def ^Arena auto-arena (Arena/ofAuto))
+(def ^Arena global-arena (Arena/global))
+
+(defn get-string [^MemorySegment seg]
+  (.getUtf8String seg 0))
+
+(defn string
+  ([str] (.allocateUtf8String auto-arena str))
+  ([^Arena arena str] (.allocateUtf8String arena str)))
+
+;;
+;; Structures Definition
+;;
+
+(defn get-vector2 [^MemorySegment seg]
+  [(Vector2/x$get seg) (Vector2/y$get seg)])
+
+(defn set-vector2! [^MemorySegment seg [x y]]
+  (Vector2/x$set seg x)
+  (Vector2/y$set seg y)
+  seg)
+
+(defn vector2
+  "Vector2, 2 components"
+  ([^Arena arena v]
+   (set-vector2! (.allocate arena (Vector2/$LAYOUT)) v))
+  ([v] (vector2 auto-arena v)))
+
+(defn get-vector3 [^MemorySegment seg]
+  [(Vector3/x$get seg)
+   (Vector3/y$get seg)
+   (Vector3/z$get seg)])
+
+(defn set-vector3! [^MemorySegment seg [x y z]]
+  (Vector3/x$set seg x)
+  (Vector3/y$set seg y)
+  (Vector3/z$set seg z)
+  seg)
+
+(defn vector3
+  "Vector3, 3 components"
+  ([^Arena arena v]
+   (set-vector3! (.allocate arena (Vector3/$LAYOUT)) v))
+  ([v] (vector3 auto-arena v)))
+
+(defn get-vector4 [^MemorySegment seg]
+  [(Vector4/x$get seg)
+   (Vector4/y$get seg)
+   (Vector4/z$get seg)
+   (Vector4/z$get seg)])
+
+(defn set-vector4! [^MemorySegment seg [x y z w]]
+  (Vector4/x$set seg x)
+  (Vector4/y$set seg y)
+  (Vector4/z$set seg z)
+  (Vector4/z$set seg w)
+  seg)
+
+(defn vector4
+  "Vector4, 4 components"
+  ([^Arena arena v]
+   (set-vector4! (.allocate arena (Vector3/$LAYOUT)) v))
+  ([v] (vector4 auto-arena v)))
+
+(def quaternion
+  "Quaternion, 4 components (Vector4 alias)"
+  vector4)
+
+(defn get-matrix
+  [^MemorySegment seg]
+  [(Matrix/m0$get seg) (Matrix/m4$get seg) (Matrix/m8$get seg) (Matrix/m12$get seg)
+   (Matrix/m1$get seg) (Matrix/m5$get seg) (Matrix/m9$get seg) (Matrix/m13$get seg)
+   (Matrix/m2$get seg) (Matrix/m6$get seg) (Matrix/m10$get seg) (Matrix/m14$get seg)
+   (Matrix/m3$get seg) (Matrix/m7$get seg) (Matrix/m11$get seg) (Matrix/m15$get seg)])
+
+(defn set-matrix!
+  [^MemorySegment seg
+   [m0 m4 m8 m12
+    m1 m5 m9 m13
+    m2 m6 m10 m14
+    m3 m7 m11 m15]]
+  (Matrix/m0$set seg m0) (Matrix/m4$set seg m4) (Matrix/m8$set seg m8) (Matrix/m12$set seg m12)
+  (Matrix/m1$set seg m1) (Matrix/m5$set seg m5) (Matrix/m9$set seg m9) (Matrix/m13$set seg m13)
+  (Matrix/m2$set seg m2) (Matrix/m6$set seg m6) (Matrix/m10$set seg m10) (Matrix/m14$set seg m14)
+  (Matrix/m3$set seg m3) (Matrix/m7$set seg m7) (Matrix/m11$set seg m11) (Matrix/m15$set seg m15)
+  seg)
+
+(defn matrix
+  "Matrix, 4x4 components, column major, OpenGL style, right-handed
+   float m0, m4, m8, m12;  // Matrix first row (4 components)
+   float m1, m5, m9, m13;  // Matrix second row (4 components)
+   float m2, m6, m10, m14; // Matrix third row (4 components)
+   float m3, m7, m11, m15; // Matrix fourth row (4 components)"
+  ([^Arena arena m]
+   (set-matrix! (.allocate arena (Vector3/$LAYOUT)) m))
+  ([m] (matrix auto-arena m)))
+
+(defn get-color [^MemorySegment seg]
+  {:r (Color/r$get seg)
+   :g (Color/g$get seg)
+   :b (Color/b$get seg)
+   :a (Color/a$get seg)})
+
+(defn set-color! [^MemorySegment seg {:keys [r g b a]}]
+  (Color/r$set seg (unchecked-byte r))
+  (Color/g$set seg (unchecked-byte g))
+  (Color/b$set seg (unchecked-byte b))
+  (Color/a$set seg (unchecked-byte a))
+  seg)
+
+(declare predefined-colors)
+
+(defn color
+  "Color, 4 components, R8G8B8A8 (32bit)
+   unsigned char r; // Color red value
+   unsigned char g; // Color green value
+   unsigned char b; // Color blue value
+   unsigned char a; // Color alpha value"
+  ([^Arena arena c]
+   (if (keyword? c)
+     (predefined-colors c)
+     (set-color! (.allocate arena (Color/$LAYOUT)) c)))
+  ([c] (color auto-arena c)))
+
+(defn get-rectangle [^MemorySegment seg]
+  {:x (Rectangle/x$get seg)
+   :y (Rectangle/y$get seg)
+   :width (Rectangle/width$get seg)
+   :height (Rectangle/height$get seg)})
+
+(defn set-rectangle! [^MemorySegment seg {:keys [x y width height]}]
+  (Rectangle/x$set seg x)
+  (Rectangle/y$set seg y)
+  (Rectangle/width$set seg width)
+  (Rectangle/height$set seg height)
+  seg)
+
+(defn rectangle
+  "Rectangle, 4 components
+   float x;      // Rectangle top-left corner position x
+   float y;      // Rectangle top-left corner position y
+   float width;  // Rectangle width
+   float height; // Rectangle height"
+  ([^Arena arena r]
+   (set-rectangle! (.allocate arena (Rectangle/$LAYOUT)) r))
+  ([r] (rectangle auto-arena r)))
+
+(defn get-image [^MemorySegment seg]
+  {:data (Image/data$get seg)
+   :width (Image/width$get seg)
+   :height (Image/height$get seg)
+   :mipmaps (Image/mipmaps$get seg)
+   :format (Image/format$get seg)})
+
+(defn set-image! [^MemorySegment seg {:keys [data width height mipmaps format]}]
+  (Image/data$set seg data)
+  (Image/width$set seg width)
+  (Image/height$set seg height)
+  (Image/mipmaps$set seg mipmaps)
+  (Image/format$set seg format)
+  seg)
+
+;; TODO: figure out *data
+(defn image
+  "Image, pixel data stored in CPU memory (RAM)
+   void *data;  // Image raw data
+   int width;   // Image base width
+   int height;  // Image base height
+   int mipmaps; // Mipmap levels, 1 by default
+   int format;  // Data format (PixelFormat type)"
+  ([^Arena arena img]
+   (set-image! (.allocate arena (Image/$LAYOUT)) img))
+  ([img] (image auto-arena img)))
+
+(defn get-texture [^MemorySegment seg]
+  {:id (Texture/id$get seg)
+   :width (Texture/width$get seg)
+   :height (Texture/height$get seg)
+   :mipmaps (Texture/mipmaps$get seg)
+   :format (Texture/format$get seg)})
+
+(defn set-texture! [^MemorySegment seg {:keys [id width height mipmaps format]}]
+  (Texture/id$set seg id)
+  (Texture/width$set seg width)
+  (Texture/height$set seg height)
+  (Texture/mipmaps$set seg mipmaps)
+  (Texture/format$set seg format)
+  seg)
+
+(defn texture
+  "Texture, tex data stored in GPU memory (VRAM)
+   unsigned int id; // OpenGL texture id
+   int width;       // Texture base width
+   int height;      // Texture base height
+   int mipmaps;     // Mipmap levels, 1 by default
+   int format;      // Data format (PixelFormat type)"
+  ([^Arena arena t]
+   (set-texture! (.allocate arena (Texture/$LAYOUT)) t))
+  ([texture] (texture auto-arena texture)))
+
+(def texture-2d
+  "Texture2D, same as Texture"
+  texture)
+
+(def texture-cubemap
+  "TextureCubemap, same as Texture"
+  texture)
+
+(defn get-render-texture [^MemorySegment seg]
+  {:id (RenderTexture/id$get seg)
+   :texture (get-texture (RenderTexture/texture$slice seg))
+   :depth (get-texture (RenderTexture/depth$slice seg))})
+
+(defn set-render-texture! [^MemorySegment seg {:keys [id texture depth]}]
+  (RenderTexture/id$set seg id)
+  (set-texture! (RenderTexture/texture$slice seg) texture)
+  (set-texture! (RenderTexture/depth$slice seg) depth)
+  seg)
+
+(defn render-texture
+  "RenderTexture, fbo for texture rendering
+   unsigned int id; // OpenGL framebuffer object id
+   Texture texture; // Color buffer attachment texture
+   Texture depth;   // Depth buffer attachment texture"
+  ([^Arena arena t]
+   (set-render-texture! (.allocate arena (RenderTexture/$LAYOUT)) t))
+  ([t] (render-texture auto-arena t)))
+
+(def render-texture-2d
+  "RenderTexture2D, same as RenderTexture"
+  render-texture)
+
+(defn get-camera-3d [^MemorySegment seg]
+  {:position (get-vector3 (Camera3D/position$slice seg))
+   :target (get-vector3 (Camera3D/target$slice seg))
+   :up (get-vector3 (Camera3D/up$slice seg))
+   :fovy (Camera3D/fovy$get seg)
+   :projection (Camera3D/projection$get seg)})
+
+(defn set-camera-3d! [^MemorySegment seg {:keys [position target up fovy projection]}]
+  (set-vector3! (Camera3D/position$slice seg) position)
+  (set-vector3! (Camera3D/target$slice seg) target)
+  (set-vector3! (Camera3D/up$slice seg) up)
+  (Camera3D/fovy$set seg fovy)
+  (Camera3D/projection$set seg projection)
+  seg)
+
+(defn camera-3d
+  "Camera, defines position/orientation in 3d space
+   Vector3 position; // Camera position
+   Vector3 target;   // Camera target it looks-at
+   Vector3 up;       // Camera up vector (rotation over its axis)
+   float fovy;       // Camera field-of-view aperture in Y (degrees) in perspective, used as near plane width in orthographic
+   int projection;   // Camera projection: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC"
+  ([^Arena arena camera]
+   (set-camera-3d! (.allocate arena (Camera3D/$LAYOUT)) camera))
+  ([camera] (camera-3d auto-arena camera)))
+
+(defn get-camera-2d [^MemorySegment seg]
+  {:offset (get-vector2 (Camera2D/offset$slice seg))
+   :target (get-vector2 (Camera2D/target$slice seg))
+   :rotation (Camera2D/rotation$get seg)
+   :zoom (Camera2D/zoom$get seg)})
+
+(defn set-camera-2d! [^MemorySegment seg {:keys [offset target rotation zoom]}]
+  (set-vector2! (Camera2D/offset$slice seg) offset)
+  (set-vector2! (Camera2D/target$slice seg) target)
+  (Camera2D/rotation$set seg rotation)
+  (Camera2D/zoom$set seg zoom)
+  seg)
+
+(defn camera-2d
+  "Camera2D, defines position/orientation in 2d space
+   Vector2 offset; // Camera offset (displacement from target)
+   Vector2 target; // Camera target (rotation and zoom origin)
+   float rotation; // Camera rotation in degrees
+   float zoom;     // Camera zoom (scaling), should be 1.0f by default"
+  ([^Arena arena camera]
+   (set-camera-2d! (.allocate arena (Camera2D/$LAYOUT)) camera))
+  ([camera] (camera-2d auto-arena camera)))
+
+;;
+;; some basic colors
+;;
+
+(def predefined-colors
+  (into
+   {}
+   (map (fn [[k v]] [k (color global-arena v)])
+        {::lightgray {:r 200 :g 200 :b 200 :a 255}  ;; Light Gray
+         ::gray {:r 130 :g 130 :b 130 :a 255}       ;; Gray
+         ::darkgray {:r 80 :g 80 :b 80 :a 255}      ;; Dark Gray
+         ::yellow {:r 253 :g 249 :b 0 :a 255}       ;; Yellow
+         ::gold {:r 255 :g 203 :b 0 :a 255}         ;; Gold
+         ::orange {:r 255 :g 161 :b 0 :a 255}       ;; Orange
+         ::pink {:r 255 :g 109 :b 194 :a 255}       ;; Pink
+         ::red {:r 230 :g 41 :b 55 :a 255}          ;; Red
+         ::maroon {:r 190 :g 33 :b 55 :a 255}       ;; Maroon
+         ::green {:r 0 :g 228 :b 48 :a 255}         ;; Green
+         ::lime {:r 0 :g 158 :b 47 :a 255}          ;; Lime
+         ::darkgreen {:r 0 :g 117 :b 44 :a 255}     ;; Dark Green
+         ::skyblue {:r 102 :g 191 :b 255 :a 255}    ;; Sky Blue
+         ::blue {:r 0 :g 121 :b 241 :a 255}         ;; Blue
+         ::darkblue {:r 0 :g 82 :b 172 :a 255}      ;; Dark Blue
+         ::purple {:r 200 :g 122 :b 255 :a 255}     ;; Purple
+         ::violet {:r 135 :g 60 :b 190 :a 255}      ;; Violet
+         ::darkpurple {:r 112 :g 31 :b 126 :a 255}  ;; Dark Purple
+         ::beige {:r 211 :g 176 :b 131 :a 255}      ;; Beige
+         ::brown {:r 127 :g 106 :b 79 :a 255}       ;; Brown
+         ::darkbrown {:r 76 :g 63 :b 47 :a 255}     ;; Dark Brown
+         ::white {:r 255 :g 255 :b 255 :a 255}      ;; White
+         ::black {:r 0 :g 0 :b 0 :a 255}            ;; Black
+         ::blank {:r 0 :g 0 :b 0 :a 0}              ;; Blank (Transparent)
+         ::magenta {:r 255 :g 0 :b 255 :a 255}      ;; Magenta
+         ::raywhite {:r 245 :g 245 :b 245 :a 255}}  ;; Raylib White (raylib logo)
+        )))
 ;;------------------------------------------------------------------------------------
 ;; Window and Graphics Device Functions (Module: core)
 ;;------------------------------------------------------------------------------------
 
 (defn init-window!
   "Initialize window and OpenGL context"
-  ([arena width height title] (raylib_h/InitWindow width height (string arena title)))
-  ([width height title] (raylib_h/InitWindow width height (string title))))
+  [width height title] (raylib_h/InitWindow width height title))
 
 (defn window-should-close?
   "Check if KEY_ESCAPE pressed or Close icon pressed"
@@ -300,16 +541,39 @@
 ;;
 
 (defn clear-background!
-  ([arena c] (raylib_h/ClearBackground (color arena c)))
-  ([c] (raylib_h/ClearBackground (color c))))
+  "Set background color (framebuffer clear color)"
+  [color] (raylib_h/ClearBackground color))
 
-(defn begin-drawing! [] (raylib_h/BeginDrawing))
-(defn end-drawing! [] (raylib_h/EndDrawing))
+(defn begin-drawing!
+  "Setup canvas (framebuffer) to start drawing"
+  [] (raylib_h/BeginDrawing))
+
+(defn end-drawing!
+  "End canvas drawing and swap buffers (double buffering)"
+  [] (raylib_h/EndDrawing))
+
+(defn begin-mode-3d!
+  "Begin 3D mode with custom camera (3D)"
+  [camera] (raylib_h/BeginMode3D camera))
+
+(defn end-mode-3d!
+  "Ends 3D mode and returns to default 2D orthographic mode"
+  [] (raylib_h/EndMode3D))
 
 (defn draw-text!
-  ([arena text x y font-size c]
-   (raylib_h/DrawText (string arena text) x y font-size (color arena c)))
-  ([text x y font-size c] (draw-text! (Arena/ofAuto) text x y font-size c)))
+  [text x y font-size color]
+  (raylib_h/DrawText text x y font-size color))
+
+; RLAPI void BeginTextureMode(RenderTexture2D target);              // Begin drawing to render texture
+; RLAPI void EndTextureMode(void);                                  // Ends drawing to render texture
+; RLAPI void BeginShaderMode(Shader shader);                        // Begin custom shader drawing
+; RLAPI void EndShaderMode(void);                                   // End custom shader drawing (use default shader)
+; RLAPI void BeginBlendMode(int mode);                              // Begin blending mode (alpha, additive, multiplied, subtract, custom)
+; RLAPI void EndBlendMode(void);                                    // End blending mode (reset to default: alpha blending)
+; RLAPI void BeginScissorMode(int x, int y, int width, int height); // Begin scissor mode (define screen area for following drawing)
+; RLAPI void EndScissorMode(void);                                  // End scissor mode
+; RLAPI void BeginVrStereoMode(VrStereoConfig config);              // Begin stereo rendering (requires VR simulator)
+; RLAPI void EndVrStereoMode(void);                                 // End stereo rendering (requires VR simulator)
 
 ;;
 ;; Timing-related functions
@@ -325,8 +589,6 @@
 ;;------------------------------------------------------------------------------------
 
 ;; Input-related functions: keyboard
-(defn- keycode [key] (if (keyword? key) (keyboard-key key) key))
-
 (defn is-key-pressed?
   "Check if a key has been pressed once"
   [key] (raylib_h/IsKeyPressed (keycode key)))
@@ -420,13 +682,13 @@
 
 (defn get-mouse-position!
   "Get mouse position XY"
-  ([^Arena arena] (to-v2 (raylib_h/GetMousePosition arena)))
-  ([] (get-mouse-position! (Arena/ofAuto))))
+  ([^Arena arena] (raylib_h/GetMousePosition arena))
+  ([] (raylib_h/GetMousePosition auto-arena)))
 
 (defn get-mouse-delta!
   "Get mouse delta between frames"
-  ([^Arena arena] (to-v2 (raylib_h/GetMouseDelta arena)))
-  ([] (get-mouse-delta! (Arena/ofAuto))))
+  ([^Arena arena] (raylib_h/GetMouseDelta arena))
+  ([] (raylib_h/GetMouseDelta auto-arena)))
 
 (defn set-mouse-position!
   "Set mouse position XY"
@@ -434,59 +696,75 @@
 
 (defn set-mouse-offset!
   "Set mouse offset"
-  ([offset-x offset-y] (raylib_h/SetMouseOffset offset-x offset-y)))
+  [offset-x offset-y] (raylib_h/SetMouseOffset offset-x offset-y))
 
 (defn set-mouse-scale!
   "Set mouse scaling"
-  ([scale-x scale-y] (raylib_h/SetMouseScale scale-x scale-y)))
+  [scale-x scale-y] (raylib_h/SetMouseScale scale-x scale-y))
 
 (defn get-mouse-wheel-move!
   "Get mouse wheel movement for X or Y, whichever is larger"
-  ([] (raylib_h/GetMouseWheelMove)))
+  [] (raylib_h/GetMouseWheelMove))
 
-;; TODO: return value is a vector2
 (defn get-mouse-wheel-move-v!
   "Get mouse wheel movement for both X and Y"
   ([^Arena arena] (raylib_h/GetMouseWheelMoveV arena))
-  ([] (get-mouse-wheel-move-v! (Arena/ofAuto))))
+  ([] (raylib_h/GetMouseWheelMoveV auto-arena)))
 
 (defn set-mouse-cursor!
   "Set mouse cursor"
-  ([cursor] (raylib_h/SetMouseCursor (mouse-cursor cursor))))
+  [cursor] (raylib_h/SetMouseCursor (mouse-cursor cursor)))
 
 ;; Input-related functions: touch
 (defn get-touch-x!
   "Get touch position X for touch point 0 (relative to screen size)"
-  ([] (raylib_h/GetTouchX)))
+  [] (raylib_h/GetTouchX))
 
 (defn get-touch-y!
   "Get touch position Y for touch point 0 (relative to screen size)"
-  ([] (raylib_h/GetTouchY)))
+  [] (raylib_h/GetTouchY))
 
-;; TODO: return value is a vector2
 (defn get-touch-position!
   "Get touch position XY for a touch point index (relative to screen size)"
   ([^Arena arena index] (raylib_h/GetTouchPosition arena index))
-  ([index] (get-touch-position! (Arena/ofAuto) index)))
+  ([index] (raylib_h/GetTouchPosition auto-arena index)))
 
 (defn get-touch-point-id!
   "Get touch point identifier for given index"
-  ([index] (raylib_h/GetTouchPointId index)))
+  [index] (raylib_h/GetTouchPointId index))
 
 (defn get-touch-point-count!
   "Get number of touch points"
-  ([] (raylib_h/GetTouchPointCount)))
+  [] (raylib_h/GetTouchPointCount))
 
 ;;
 ;; Basic shapes drawing functions
 ;;
 
 (defn draw-circle-v!
-  ([arena center-v radius c]
-   (raylib_h/DrawCircleV (v2 arena center-v) radius (color arena c)))
-  ([v radius c] (draw-circle-v! (Arena/ofAuto) v radius c)))
+  [center-v radius color]
+  (raylib_h/DrawCircleV center-v radius color))
 
 (comment
+  ; an attempt to use macros. but hard to read
+  (defmacro vec->seg [layout setters]
+    (let [seg (gensym "seg")
+          args (repeatedly (count setters) #(gensym "arg"))]
+      `(fn f#
+         ([^Arena arena# [~@args]]
+          (let [~seg (.allocate arena# ~layout)]
+            ~@(map #(list %1 seg %2) setters args)
+            ~seg))
+         ([v#] (f# auto-arena v#)))))
+
+  (defmacro seg->vec [getters]
+    (let [seg (gensym "seg")]
+      `(fn [~seg]
+         [~@(map #(list % seg) getters)])))
+
+  (def to-v2 (seg->vec [Vector2/x$get Vector2/y$get]))
+  (def vector2 (vec->seg (Vector2/$LAYOUT) [Vector2/x$set Vector2/y$set]))
+
   (macroexpand '(vec->seg Vector2/$LAYOUT [Vector2/x$set Vector2/y$set]))
   (macroexpand '(seg->vec [Vector2/x$get Vector2/y$get]))
 
