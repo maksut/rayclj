@@ -1,58 +1,72 @@
 (ns examples.shapes.basic-shapes
-  (:require [raylib :as r]))
+  (:require [raylib.core :as rc]
+            [raylib.enums :as enums]
+            [raylib.shapes :as rs]))
 
 (let [screen-width 800
-      screen-height 450
-      message (r/string "some basic shapes available on raylib")]
+      screen-height 450]
 
-  (r/init-window! screen-width screen-height (r/string "raylib [shapes] example - basic shapes drawing"))
+  (rc/init-window! screen-width screen-height "raylib [shapes] example - basic shapes drawing")
 
-  (r/set-target-fps! 60) ; Set our game to run at 60 frames-per-second
+  (rc/set-target-fps! 60) ; Set our game to run at 60 frames-per-second
 
   (loop [rotation 0.0]
-    (when-not (r/window-should-close?) ; Detect window close button or ESC key
+    (when-not (rc/window-should-close?) ; Detect window close button or ESC key
+      (rc/with-drawing!
+        ; Draw
+        (rc/clear-background! ::enums/white)
 
-       ; Draw
-      (r/begin-drawing!)
-      (r/clear-background! (r/color ::r/white))
+        (rc/draw-text! "some basic shapes available on raylib" 20 20 20 ::enums/darkgray)
 
-      (r/draw-text! message 20 20 20 (r/color ::r/darkgray))
+        (rc/draw-fps! 50 50)
 
-      ; Circle shapes and lines
-      (r/draw-circle! (/ screen-width 5) 120 35 (r/color ::r/darkblue))
-      (r/draw-circle-gradient! (/ screen-width 5) 220 60 (r/color ::r/green) (r/color ::r/skyblue))
-      (r/draw-circle-lines! (/ screen-width 5) 340 80 (r/color ::r/darkblue))
+        ; Circle shapes and lines
+        (rs/draw-circle! (/ screen-width 5) 120 35 ::enums/darkblue)
+        (rs/draw-circle-gradient! (/ screen-width 5) 220 60 ::enums/green ::enums/skyblue)
+        (rs/draw-circle-lines! (/ screen-width 5) 340 80 ::enums/darkblue)
 
-      ; Rectangle shapes and lines
-      (r/draw-rectangle! (- (* 2 (/ screen-width 4)) 60) 100 120 60 (r/color ::r/red))
-      (r/draw-rectangle-gradient-h! (- (* 2 (/ screen-width 4)) 90) 170 180 130 (r/color ::r/maroon) (r/color ::r/gold))
-      (r/draw-rectangle-lines! (- (* 2 (/ screen-width 4)) 40) 320 80 60 (r/color ::r/orange)) ; NOTE: Uses QUADS internally, not lines
+        ; Rectangle shapes and lines
+        (rs/draw-rectangle! (- (* 2 (/ screen-width 4)) 60) 100 120 60 ::enums/red)
+        (rs/draw-rectangle-gradient-h! (- (* 2 (/ screen-width 4)) 90) 170 180 130 ::enums/maroon ::enums/gold)
+        (rs/draw-rectangle-lines! (- (* 2 (/ screen-width 4)) 40) 320 80 60 ::enums/orange) ; NOTE: Uses QUADS internally, not lines
 
-      ; Triangle shapes and lines
-      (r/draw-triangle!
-       (r/vector2 [(* 3 (/ screen-width 4)) 80])
-       (r/vector2 [(- (* 3 (/ screen-width 4)) 60) 150])
-       (r/vector2 [(+ (* 3 (/ screen-width 4)) 60) 150])
-       (r/color ::r/violet))
+        ; Triangle shapes and lines
+        (rs/draw-triangle!
+         [(* 3 (/ screen-width 4)) 80]
+         [(- (* 3 (/ screen-width 4)) 60) 150]
+         [(+ (* 3 (/ screen-width 4)) 60) 150]
+         ::enums/violet)
 
-      (r/draw-triangle-lines!
-       (r/vector2 [(* 3 (/ screen-width 4)) 160])
-       (r/vector2 [(- (* 3 (/ screen-width 4)) 20) 230])
-       (r/vector2 [(+ (* 3 (/ screen-width 4)) 20) 230])
-       (r/color ::r/darkblue))
+        (rs/draw-triangle-lines!
+         [(* 3 (/ screen-width 4)) 160]
+         [(- (* 3 (/ screen-width 4)) 20) 230]
+         [(+ (* 3 (/ screen-width 4)) 20) 230]
+         ::enums/darkblue)
 
-      ; Polygon shapes and lines
-      (r/draw-poly! (r/vector2 [(* 3 (/ screen-width 4)) 330]) 6 80 rotation (r/color ::r/brown))
-      (r/draw-poly-lines! (r/vector2 [(* 3 (/ screen-width 4)) 330]) 6 90 rotation (r/color ::r/brown))
-      (r/draw-poly-lines-ex! (r/vector2 [(* 3 (/ screen-width 4)) 330]) 6 85 rotation 6 (r/color ::r/beige))
+        ; Polygon shapes and lines
+        (let [poly-center [(* 3 (/ screen-width 4)) 330]]
+          (rs/draw-poly! poly-center 6 80 rotation ::enums/brown)
+          (rs/draw-poly-lines! poly-center 6 90 rotation ::enums/brown)
+          (rs/draw-poly-lines-ex! poly-center 6 85 rotation 6 ::enums/beige))
 
-      ; NOTE: We draw all LINES based shapes together to optimize internal drawing,
-      ; this way, all LINES are rendered in a single draw pass
-      (r/draw-line! 18 42 (- screen-width 18) 42 (r/color ::r/black))
-
-      (r/end-drawing!)
+       ; NOTE: We draw all LINES based shapes together to optimize internal drawing,
+       ; this way, all LINES are rendered in a single draw pass
+        (rs/draw-line! 18 42 (- screen-width 18) 42 ::enums/black))
 
       ; Loop
       (recur (+ rotation 0.2))))
 
-  (r/close-window!)) ; De-Initialization
+  (rc/close-window!)) ; De-Initialization
+
+(comment
+  (import java.util.WeakHashMap)
+
+  (def compute-if-not-exists
+    (let [weak-map (WeakHashMap.)]
+      (fn [f arg]
+        (let [exists (.get weak-map arg)]
+          (if (nil? exists)
+            (let [value (f arg)]
+              (.put weak-map arg value)
+              value)
+            exists))))))

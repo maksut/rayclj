@@ -1,11 +1,22 @@
 (ns examples.core.basic-window
-  (:require [raylib :as r]))
+  (:require [raylib.core :as rc]
+            [raylib.enums :as enums]))
 
-(let [message (r/string "Hello, World!")]
-  (r/init-window! 800 450 (r/string "raylib [core] example - basic window"))
-  (while (not (r/window-should-close?)) ; Detect window close button or ESC key
-    (r/begin-drawing!)
-    (r/clear-background! (r/color ::r/white))
-    (r/draw-text! message 190 200 20 (r/color ::r/lightgray))
-    (r/end-drawing!))
-  (r/close-window!))
+(let [screen-width 800 screen-height 450]
+  (rc/init-window! screen-width screen-height "raylib [core] example - basic window")
+  (rc/set-target-fps! 60) ;; Set our game to run at 60 frames-per-second
+
+  ;; Main game loop
+  (while (not (rc/window-should-close?)) ;; Detect window close button or ESC key
+    ;; Update
+    ;;----------------------------------------------------------------------------------
+    ;; TODO: Update your game state here
+    ;;----------------------------------------------------------------------------------
+
+    ;; Draw
+    (rc/with-drawing!
+      (rc/clear-background! ::enums/white)
+      (rc/draw-text! "Hello, World!" 190 200 20 ::enums/lightgray)))
+
+  ;; De-Initialization
+  (rc/close-window!)) ;; Close window and OpenGL context

@@ -7,7 +7,7 @@
  {:build {:deps {io.github.clojure/tools.build {:git/tag "v0.9.5" :git/sha "24f2894"}}
           :ns-default build}
 
-  :dev {:paths ["target/classes"]
+  :dev {:paths ["src" "target/classes"]
         :classpath-overrides {org.clojure/clojure nil} ;; for disabling the official compiler
         :extra-deps {nrepl/nrepl       {:mvn/version "1.0.0"}
                      cider/cider-nrepl {:mvn/version "0.28.7"}
