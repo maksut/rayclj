@@ -1,5 +1,6 @@
 (ns examples.shapes.basic-shapes
   (:require [raylib.core :as rc]
+            [raylib.text :as rt]
             [raylib.enums :as enums]
             [raylib.shapes :as rs]))
 
@@ -16,9 +17,9 @@
         ; Draw
         (rc/clear-background! ::enums/white)
 
-        (rc/draw-text! "some basic shapes available on raylib" 20 20 20 ::enums/darkgray)
+        (rt/draw-text! "some basic shapes available on raylib" 20 20 20 ::enums/darkgray)
 
-        (rc/draw-fps! 50 50)
+        (rt/draw-fps! 50 50)
 
         ; Circle shapes and lines
         (rs/draw-circle! (/ screen-width 5) 120 35 ::enums/darkblue)

@@ -1,5 +1,6 @@
 (ns examples.core.input-mouse
   (:require [raylib.core :as rc]
+            [raylib.text :as rt]
             [raylib.enums :as enums]
             [raylib.shapes :as rs]))
 
@@ -28,7 +29,7 @@
         (rc/with-drawing!
           (rc/clear-background! ::enums/white)
           (rs/draw-circle-v! ball-position 40 ball-color)
-          (rc/draw-text! "move ball with mouse and click mouse button to change color" 10 10 20 ::enums/darkgray))
+          (rt/draw-text! "move ball with mouse and click mouse button to change color" 10 10 20 ::enums/darkgray))
 
         ;; Loop
         (recur ball-color))))

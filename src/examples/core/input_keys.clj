@@ -1,5 +1,6 @@
 (ns examples.core.input-keys
   (:require [raylib.core :as rc]
+            [raylib.text :as rt]
             [raylib.enums :as enums]
             [raylib.shapes :as rs]))
 
@@ -23,7 +24,7 @@
         ;; Draw
         (rc/with-drawing!
           (rc/clear-background! ::enums/white)
-          (rc/draw-text! "move the ball with arrow keys" 10 10 20 ::enums/darkgray)
+          (rt/draw-text! "move the ball with arrow keys" 10 10 20 ::enums/darkgray)
           (rs/draw-circle-v! new-position 50 ::enums/maroon))
 
         ;; Loop

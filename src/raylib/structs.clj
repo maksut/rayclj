@@ -18,15 +18,15 @@
 
 (set! *warn-on-reflection* true)
 
-(defmacro pt "passthrough val if MemorySegment otherwise apply f"
+(defn passthrough "passthrough val if MemorySegment otherwise apply f"
   ([val f]
-   `(if (instance? MemorySegment ~val)
-      ~val
-      (~f ~val)))
+   (if (instance? MemorySegment val)
+     val
+     (f val)))
   ([val f arg1]
-   `(if (instance? MemorySegment ~val)
-      ~val
-      (~f ~arg1 ~val))))
+   (if (instance? MemorySegment val)
+     val
+     (f arg1 val))))
 
 ;;
 ;; Structures Definition
@@ -45,7 +45,7 @@
 (defn vector2
   "Vector2, 2 components"
   ([^Arena arena v] (set-vector2! (.allocate arena (Vector2/$LAYOUT)) v))
-  ([v] (pt v vector2 arena/*current-arena*)))
+  ([v] (passthrough v vector2 arena/*current-arena*)))
 
 (defn vector2-array
   ([^Arena arena vectors]
@@ -70,7 +70,7 @@
   "Vector3, 3 components"
   ([^Arena arena v]
    (set-vector3! (.allocate arena (Vector3/$LAYOUT)) v))
-  ([v] (pt v vector3 arena/*current-arena*)))
+  ([v] (passthrough v vector3 arena/*current-arena*)))
 
 (defn get-vector4 [^MemorySegment seg]
   [(Vector4/x$get seg)
@@ -89,7 +89,7 @@
   "Vector4, 4 components"
   ([^Arena arena v]
    (set-vector4! (.allocate arena (Vector3/$LAYOUT)) v))
-  ([v] (pt v vector4 arena/*current-arena*)))
+  ([v] (passthrough v vector4 arena/*current-arena*)))
 
 (def quaternion
   "Quaternion, 4 components (Vector4 alias)"
@@ -122,7 +122,7 @@
    float m3, m7, m11, m15; // Matrix fourth row (4 components)"
   ([^Arena arena m]
    (set-matrix! (.allocate arena (Vector3/$LAYOUT)) m))
-  ([m] (pt m matrix arena/*current-arena*)))
+  ([m] (passthrough m matrix arena/*current-arena*)))
 
 (defn get-color [^MemorySegment seg]
   {:r (Color/r$get seg)
@@ -149,7 +149,7 @@
    (if (keyword? c)
      (predefined-colors c)
      (set-color! (.allocate arena (Color/$LAYOUT)) c)))
-  ([c] (pt c color arena/*current-arena*)))
+  ([c] (passthrough c color arena/*current-arena*)))
 
 (def predefined-colors
   (into
@@ -179,7 +179,7 @@
    float height; // Rectangle height"
   ([^Arena arena r]
    (set-rectangle! (.allocate arena (Rectangle/$LAYOUT)) r))
-  ([r] (pt r rectangle arena/*current-arena*)))
+  ([r] (passthrough r rectangle arena/*current-arena*)))
 
 (defn get-image [^MemorySegment seg]
   {:data (Image/data$get seg)
@@ -206,7 +206,7 @@
    int format;  // Data format (PixelFormat type)"
   ([^Arena arena img]
    (set-image! (.allocate arena (Image/$LAYOUT)) img))
-  ([img] (pt img image arena/*current-arena*)))
+  ([img] (passthrough img image arena/*current-arena*)))
 
 (defn get-texture [^MemorySegment seg]
   {:id (Texture/id$get seg)
@@ -232,7 +232,7 @@
    int format;      // Data format (PixelFormat type)"
   ([^Arena arena t]
    (set-texture! (.allocate arena (Texture/$LAYOUT)) t))
-  ([textur] (pt textur arena/*current-arena*)))
+  ([textur] (passthrough textur arena/*current-arena*)))
 
 (def texture-2d
   "Texture2D, same as Texture"
@@ -260,7 +260,7 @@
    Texture depth;   // Depth buffer attachment texture"
   ([^Arena arena t]
    (set-render-texture! (.allocate arena (RenderTexture/$LAYOUT)) t))
-  ([t] (pt t render-texture arena/*current-arena*)))
+  ([t] (passthrough t render-texture arena/*current-arena*)))
 
 (def render-texture-2d
   "RenderTexture2D, same as RenderTexture"
@@ -290,7 +290,7 @@
    int projection;   // Camera projection: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC"
   ([^Arena arena camera]
    (set-camera-3d! (.allocate arena (Camera3D/$LAYOUT)) camera))
-  ([camera] (pt camera camera-3d arena/*current-arena*)))
+  ([camera] (passthrough camera camera-3d arena/*current-arena*)))
 
 (defn get-camera-2d [^MemorySegment seg]
   {:offset (get-vector2 (Camera2D/offset$slice seg))
@@ -313,7 +313,7 @@
    float zoom;     // Camera zoom (scaling), should be 1.0f by default"
   ([^Arena arena camera]
    (set-camera-2d! (.allocate arena (Camera2D/$LAYOUT)) camera))
-  ([camera] (pt camera camera-2d arena/*current-arena*)))
+  ([camera] (passthrough camera camera-2d arena/*current-arena*)))
 
 (comment
   ; an attempt to use macros. but hard to read

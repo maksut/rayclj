@@ -1,5 +1,6 @@
 (ns examples.experiment.hexagon
   (:require [raylib.core :as rc]
+            [raylib.text :as rt]
             [raylib.shapes :as rs]
             [raylib.enums :as enums]))
 
@@ -30,7 +31,7 @@
         (rc/begin-drawing!)
         (rc/clear-background! ::enums/white)
         (rs/draw-poly! hex-position 6 40 45 hex-color)
-        (rc/draw-text! message 10 10 20 ::enums/darkgray)
+        (rt/draw-text! message 10 10 20 ::enums/darkgray)
         (rc/end-drawing!)
 
         ; Loop
