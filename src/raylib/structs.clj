@@ -332,14 +332,5 @@
       `(fn [~seg]
          [~@(map #(list % seg) getters)])))
 
-  (def to-v2 (seg->vec [Vector2/x$get Vector2/y$get]))
-  (def vector2 (vec->seg (Vector2/$LAYOUT) [Vector2/x$set Vector2/y$set]))
-
   (macroexpand '(vec->seg Vector2/$LAYOUT [Vector2/x$set Vector2/y$set]))
-  (macroexpand '(seg->vec [Vector2/x$get Vector2/y$get]))
-
-  (def f (vec->seg (Vector2/$LAYOUT) [Vector2/x$set Vector2/y$set]))
-  (def g (seg->vec [Vector2/x$get Vector2/y$get]))
-
-  (let [seg (f [1 2])]
-    (g seg)))
+  (macroexpand '(seg->vec [Vector2/x$get Vector2/y$get])))

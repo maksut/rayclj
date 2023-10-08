@@ -57,7 +57,11 @@
 ; RLAPI void SetWindowIcon(Image image);                            // Set icon for window (single image, RGBA 32bit, only PLATFORM_DESKTOP)
 ; RLAPI void SetWindowIcons(Image *images, int count);              // Set icon for window (multiple images, RGBA 32bit, only PLATFORM_DESKTOP)
 ; RLAPI void SetWindowTitle(const char *title);                     // Set title for window (only PLATFORM_DESKTOP)
-; RLAPI void SetWindowPosition(int x, int y);                       // Set window position on screen (only PLATFORM_DESKTOP)
+
+(defn set-window-position!
+  "Set window position on screen (only PLATFORM_DESKTOP)"
+  [x y] (raylib_h/SetWindowPosition x y))
+
 ; RLAPI void SetWindowMonitor(int monitor);                         // Set monitor for the current window (fullscreen mode)
 ; RLAPI void SetWindowMinSize(int width, int height);               // Set window minimum dimensions (for FLAG_WINDOW_RESIZABLE)
 ; RLAPI void SetWindowSize(int width, int height);                  // Set window dimensions
@@ -287,12 +291,12 @@
 (defn get-mouse-position!
   "Get mouse position XY"
   ([^Arena arena] (raylib_h/GetMousePosition arena))
-  ([] (raylib_h/GetMousePosition arena/*current-arena*)))
+  ([] (structs/get-vector2 (raylib_h/GetMousePosition arena/*current-arena*))))
 
 (defn get-mouse-delta!
   "Get mouse delta between frames"
   ([^Arena arena] (raylib_h/GetMouseDelta arena))
-  ([] (raylib_h/GetMouseDelta arena/*current-arena*)))
+  ([] (structs/get-vector2 (raylib_h/GetMouseDelta arena/*current-arena*))))
 
 (defn set-mouse-position!
   "Set mouse position XY"
@@ -313,7 +317,7 @@
 (defn get-mouse-wheel-move-v!
   "Get mouse wheel movement for both X and Y"
   ([^Arena arena] (raylib_h/GetMouseWheelMoveV arena))
-  ([] (raylib_h/GetMouseWheelMoveV arena/*current-arena*)))
+  ([] (structs/get-vector2 (raylib_h/GetMouseWheelMoveV arena/*current-arena*))))
 
 (defn set-mouse-cursor!
   "Set mouse cursor"
@@ -331,7 +335,7 @@
 (defn get-touch-position!
   "Get touch position XY for a touch point index (relative to screen size)"
   ([^Arena arena index] (raylib_h/GetTouchPosition arena index))
-  ([index] (raylib_h/GetTouchPosition arena/*current-arena* index)))
+  ([index] (structs/get-vector2 (raylib_h/GetTouchPosition arena/*current-arena* index))))
 
 (defn get-touch-point-id!
   "Get touch point identifier for given index"

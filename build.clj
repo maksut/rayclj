@@ -21,17 +21,21 @@
   (b/delete {:path "java/generated"})
   (b/delete {:path "target"}))
 
-(defn jgenerate [{:keys [jextract-dir]}]
-  (let [raylib_h (absolute-path "./native/raylib-4.5.0_linux_amd64/include/raylib.h")
-        output (absolute-path "./java/generated/")]
+(defn jgenerate-one [jextract-dir header-name]
+  (let [inc-dir "./native/raylib-4.5.0_linux_amd64/include/"
+        output-dir (absolute-path "./java/generated/")]
     (execute
      "./jextract"
      "--source"
-     "--target-package" "raylib"
+     "--target-package" header-name
      "-lraylib"
-     "--output" output
-     raylib_h
+     "--output" output-dir
+     (absolute-path (str inc-dir header-name ".h"))
      :dir jextract-dir)))
+
+(defn jgenerate [{:keys [jextract-dir]}]
+  (let [headers ["raylib", "rlgl", "raymath"]]
+    (map #(jgenerate-one jextract-dir %) headers)))
 
 (defn jcompile [_]
   (b/javac {:src-dirs ["java/generated"]
