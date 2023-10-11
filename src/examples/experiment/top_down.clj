@@ -53,10 +53,10 @@
          (rc/is-key-down? ::enums/s) (vector2-add [0 move])        ;; down: y += 2
          (rc/is-key-down? ::enums/d) (vector2-add [move 0]))))))   ;; right: x += 2
 
-(def bullet-speed 200)
+(def bullet-speed 10)
 
 (defn update-player-shoot [state]
-  (if (rc/mouse-button-down? ::enums/left)
+  (if (rc/mouse-button-pressed? ::enums/left)
     (let [player-pos (-> state :player :position)
           cursor-pos (-> state :cursor :position)
           direction (vector2-normalize (vector2-substract cursor-pos player-pos))
@@ -64,6 +64,20 @@
           bullet {:position player-pos :velocity velocity}]
       (update-in state [:projectiles] conj bullet))
     state))
+
+(defn update-one-projectile [{:keys [position velocity]}]
+  {:position (vector2-add position velocity)
+   :velocity velocity})
+
+(defn projectile-in-screen? [{:keys [width height]} {[x y] :position}]
+  (and (> x 0) (< x width)
+       (> y 0) (< y height)))
+
+(defn update-projectiles [{:keys [projectiles screen] :as state}]
+  (let [new-projectiles (map update-one-projectile projectiles)]
+    (->> new-projectiles
+         (filter (partial projectile-in-screen? screen))
+         (assoc state :projectiles))))
 
 (defn update-player-rotation [state]
   (let [cursor-pos (-> state :cursor :position)
@@ -75,6 +89,7 @@
   (-> state
       (update-player-position frame-time)
       (update-cursor)
+      (update-projectiles)
       (update-player-rotation)
       (update-player-shoot)))
 
@@ -93,11 +108,17 @@
 (defn draw-cursor [{:keys [position color rotation]}]
   (rs/draw-poly! position 6 20 rotation color))
 
-(defn draw-state [{:keys [player cursor]}]
+(defn draw-projectile [{:keys [position]}]
+  (let [[x y] position]
+    (rs/draw-circle! x y 10 ::enums/yellow)))
+
+(defn draw-state [{:keys [player cursor projectiles]}]
   (rc/with-drawing!
     (rc/clear-background! ::enums/white)
+    (rt/draw-fps! 10 40)
     (draw-player player)
     (draw-cursor cursor)
+    (doseq [p projectiles] (draw-projectile p))
     (rt/draw-text! "move ball with mouse and click mouse button to change color" 10 10 20 ::enums/darkgray)))
 
 (defn draw-error-state [{:keys [error]}]
@@ -105,7 +126,8 @@
     (rc/clear-background! ::enums/white)
     (rt/draw-text! (str error) 10 10 20 ::enums/red)))
 
-(def initial-state {:player {:position [400 225] :rotation 0}
+(def initial-state {:screen {:height 450 :width 800}
+                    :player {:position [400 225] :rotation 0}
                     :cursor {:color ::enums/maroon :rotation 0}
                     :projectiles []})
 
@@ -133,8 +155,8 @@
     (recur @game-state)))
 
 (defn game-init []
-  (let [screen-width 800 screen-height 450]
-    (rc/init-window! screen-width screen-height "topdown shooter")
+  (let [{:keys [width height]} (:screen initial-state)]
+    (rc/init-window! width height "topdown shooter")
     (rc/set-target-fps! 60)
     (try
       (game-loop initial-state)
