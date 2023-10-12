@@ -19,7 +19,9 @@
       [0 0]
       [(/ x length) (/ y length)])))
 
-(defn update-cursor [state]
+(def cursor-speed 100)
+
+(defn update-cursor [state frame-time]
   (let [{:keys [rotation color]} (:cursor state)
         new-position (rc/get-mouse-position!)
         new-color
@@ -37,7 +39,7 @@
      :cursor
      {:position new-position
       :color new-color
-      :rotation (mod (inc rotation) 360)})))
+      :rotation (mod (+ (* frame-time cursor-speed) rotation) 360)})))
 
 (def player-speed 240) ; 240 units per second
 
@@ -53,7 +55,7 @@
          (rc/is-key-down? ::enums/s) (vector2-add [0 move])        ;; down: y += 2
          (rc/is-key-down? ::enums/d) (vector2-add [move 0]))))))   ;; right: x += 2
 
-(def bullet-speed 10)
+(def bullet-speed 1000)
 
 (defn update-player-shoot [state]
   (if (rc/mouse-button-pressed? ::enums/left)
@@ -65,16 +67,17 @@
       (update-in state [:projectiles] conj bullet))
     state))
 
-(defn update-one-projectile [{:keys [position velocity]}]
-  {:position (vector2-add position velocity)
+(defn update-one-projectile [frame-time {:keys [position velocity]}]
+  {:position (vector2-add position (vector2-scale velocity frame-time))
    :velocity velocity})
 
 (defn projectile-in-screen? [{:keys [width height]} {[x y] :position}]
   (and (> x 0) (< x width)
        (> y 0) (< y height)))
 
-(defn update-projectiles [{:keys [projectiles screen] :as state}]
-  (let [new-projectiles (map update-one-projectile projectiles)]
+(defn update-projectiles [{:keys [projectiles screen] :as state} frame-time]
+  (let [one-p (partial update-one-projectile frame-time)
+        new-projectiles (map one-p projectiles)]
     (->> new-projectiles
          (filter (partial projectile-in-screen? screen))
          (assoc state :projectiles))))
@@ -88,8 +91,8 @@
 (defn update-state [state frame-time]
   (-> state
       (update-player-position frame-time)
-      (update-cursor)
-      (update-projectiles)
+      (update-cursor frame-time)
+      (update-projectiles frame-time)
       (update-player-rotation)
       (update-player-shoot)))
 
@@ -157,7 +160,6 @@
 (defn game-init []
   (let [{:keys [width height]} (:screen initial-state)]
     (rc/init-window! width height "topdown shooter")
-    (rc/set-target-fps! 60)
     (try
       (game-loop initial-state)
       (catch InterruptedException _ nil)) ; quit the loop silently on interrupt
