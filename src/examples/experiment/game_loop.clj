@@ -1,35 +1,34 @@
 (ns examples.experiment.game-loop
   (:require [raylib.core :as rc]
             [raylib.text :as rt]
-            [raylib.shapes :as rs]
-            [raylib.enums :as enums]))
+            [raylib.shapes :as rs]))
 
 (defn update-state [{:keys [hex-color]}]
   (let [hex-position (rc/get-mouse-position!)
         hex-color
         (cond
-          (rc/mouse-button-pressed? ::enums/left) ::enums/maroon
-          (rc/mouse-button-pressed? ::enums/middle) ::enums/lime
-          (rc/mouse-button-pressed? ::enums/right) ::enums/darkblue
-          (rc/mouse-button-pressed? ::enums/side) ::enums/purple
-          (rc/mouse-button-pressed? ::enums/extra) ::enums/yellow
-          (rc/mouse-button-pressed? ::enums/forward) ::enums/orange
-          (rc/mouse-button-pressed? ::enums/back) ::enums/beige
+          (rc/mouse-button-pressed? :left) :maroon
+          (rc/mouse-button-pressed? :middle) :lime
+          (rc/mouse-button-pressed? :right) :darkblue
+          (rc/mouse-button-pressed? :side) :purple
+          (rc/mouse-button-pressed? :extra) :yellow
+          (rc/mouse-button-pressed? :forward) :orange
+          (rc/mouse-button-pressed? :back) :beige
           :else hex-color)]
     {:hex-position hex-position :hex-color hex-color}))
 
 (defn draw-state [{:keys [hex-position hex-color]}]
   (rc/with-drawing!
-    (rc/clear-background! ::enums/white)
+    (rc/clear-background! :white)
     (rs/draw-poly! hex-position 6 40 45 hex-color)
-    (rt/draw-text! "move ball with mouse and click mouse button to change color" 10 10 20 ::enums/darkgray)))
+    (rt/draw-text! "move ball with mouse and click mouse button to change color" 10 10 20 :darkgray)))
 
 (defn draw-error-state [{:keys [error]}]
   (rc/with-drawing!
-    (rc/clear-background! ::enums/white)
-    (rt/draw-text! (str error) 10 10 20 ::enums/red)))
+    (rc/clear-background! :white)
+    (rt/draw-text! (str error) 10 10 20 :red)))
 
-(def initial-state {:hex-color ::enums/darkblue})
+(def initial-state {:hex-color :darkblue})
 
 (defonce game-state (atom {}))
 
@@ -67,7 +66,7 @@
   (def game (future (game-init)))
 
   ; change the state
-  (swap! game-state assoc :hex-color ::enums/yellow)
+  (swap! game-state assoc :hex-color :yellow)
 
   ; reset the state
   (reset! game-state initial-state)

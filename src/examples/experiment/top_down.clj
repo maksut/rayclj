@@ -3,7 +3,6 @@
             [raylib.core :as rc]
             [raylib.text :as rt]
             [raylib.shapes :as rs]
-            [raylib.enums :as enums]
             [rlgl.core :as gl]))
 
 (defn vector2-add [v1 v2] (mapv + v1 v2))
@@ -26,13 +25,13 @@
         new-position (rc/get-mouse-position!)
         new-color
         (cond
-          (rc/mouse-button-pressed? ::enums/left) ::enums/maroon
-          (rc/mouse-button-pressed? ::enums/middle) ::enums/lime
-          (rc/mouse-button-pressed? ::enums/right) ::enums/darkblue
-          (rc/mouse-button-pressed? ::enums/side) ::enums/purple
-          (rc/mouse-button-pressed? ::enums/extra) ::enums/yellow
-          (rc/mouse-button-pressed? ::enums/forward) ::enums/orange
-          (rc/mouse-button-pressed? ::enums/back) ::enums/beige
+          (rc/mouse-button-pressed? :left) :maroon
+          (rc/mouse-button-pressed? :middle) :lime
+          (rc/mouse-button-pressed? :right) :darkblue
+          (rc/mouse-button-pressed? :side) :purple
+          (rc/mouse-button-pressed? :extra) :yellow
+          (rc/mouse-button-pressed? :forward) :orange
+          (rc/mouse-button-pressed? :back) :beige
           :else color)]
     (assoc
      state
@@ -50,15 +49,15 @@
      [:player :position]
      (fn [position]
        (cond-> position
-         (rc/is-key-down? ::enums/w) (vector2-add [0 (* -1 move)]) ;; up: y -= 2
-         (rc/is-key-down? ::enums/a) (vector2-add [(* -1 move) 0]) ;; left: x -= 2
-         (rc/is-key-down? ::enums/s) (vector2-add [0 move])        ;; down: y += 2
-         (rc/is-key-down? ::enums/d) (vector2-add [move 0]))))))   ;; right: x += 2
+         (rc/is-key-down? :w) (vector2-add [0 (* -1 move)]) ;; up: y -= 2
+         (rc/is-key-down? :a) (vector2-add [(* -1 move) 0]) ;; left: x -= 2
+         (rc/is-key-down? :s) (vector2-add [0 move])        ;; down: y += 2
+         (rc/is-key-down? :d) (vector2-add [move 0]))))))   ;; right: x += 2
 
 (def bullet-speed 1000)
 
 (defn update-player-shoot [state]
-  (if (rc/mouse-button-pressed? ::enums/left)
+  (if (rc/mouse-button-pressed? :left)
     (let [player-pos (-> state :player :position)
           cursor-pos (-> state :cursor :position)
           direction (vector2-normalize (vector2-substract cursor-pos player-pos))
@@ -102,10 +101,10 @@
     (gl/push-matrix!)
     (gl/translatef! x y 0)
     (gl/rotatef! rotation 0 0 1)
-    (rs/draw-circle! 0 0 20 ::enums/maroon)
+    (rs/draw-circle! 0 0 20 :maroon)
     (gl/rotatef! 90 0 0 1)
     (gl/translatef! 0 20 0)
-    (rs/draw-poly! [0 0] 3 20 0 ::enums/purple)
+    (rs/draw-poly! [0 0] 3 20 0 :purple)
     (gl/pop-matrix!)))
 
 (defn draw-cursor [{:keys [position color rotation]}]
@@ -113,25 +112,25 @@
 
 (defn draw-projectile [{:keys [position]}]
   (let [[x y] position]
-    (rs/draw-circle! x y 10 ::enums/yellow)))
+    (rs/draw-circle! x y 10 :yellow)))
 
 (defn draw-state [{:keys [player cursor projectiles]}]
   (rc/with-drawing!
-    (rc/clear-background! ::enums/white)
+    (rc/clear-background! :white)
     (rt/draw-fps! 10 40)
     (draw-player player)
     (draw-cursor cursor)
     (doseq [p projectiles] (draw-projectile p))
-    (rt/draw-text! "move ball with mouse and click mouse button to change color" 10 10 20 ::enums/darkgray)))
+    (rt/draw-text! "move ball with mouse and click mouse button to change color" 10 10 20 :darkgray)))
 
 (defn draw-error-state [{:keys [error]}]
   (rc/with-drawing!
-    (rc/clear-background! ::enums/white)
-    (rt/draw-text! (str error) 10 10 20 ::enums/red)))
+    (rc/clear-background! :white)
+    (rt/draw-text! (str error) 10 10 20 :red)))
 
 (def initial-state {:screen {:height 450 :width 800}
                     :player {:position [400 225] :rotation 0}
-                    :cursor {:color ::enums/maroon :rotation 0}
+                    :cursor {:color :maroon :rotation 0}
                     :projectiles []})
 
 (defonce game-state (atom {}))
@@ -170,7 +169,7 @@
   (def game (future (game-init)))
 
   ; change the state
-  (swap! game-state assoc :hex-color ::enums/yellow)
+  (swap! game-state assoc :hex-color :yellow)
 
   ; reset the state
   (reset! game-state initial-state)

@@ -1,7 +1,6 @@
 (ns examples.core.basic-window
   (:require [raylib.core :as rc]
-            [raylib.text :as rt]
-            [raylib.enums :as enums]))
+            [raylib.text :as rt]))
 
 (let [screen-width 800 screen-height 450]
   (rc/init-window! screen-width screen-height "raylib [core] example - basic window")
@@ -16,8 +15,8 @@
 
     ;; Draw
     (rc/with-drawing!
-      (rc/clear-background! ::enums/white)
-      (rt/draw-text! "Hello, World!" 190 200 20 ::enums/lightgray)))
+      (rc/clear-background! :white)
+      (rt/draw-text! "Hello, World!" 190 200 20 :lightgray)))
 
   ;; De-Initialization
   (rc/close-window!)) ;; Close window and OpenGL context

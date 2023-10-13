@@ -1,7 +1,6 @@
 (ns examples.core.input-keys
   (:require [raylib.core :as rc]
             [raylib.text :as rt]
-            [raylib.enums :as enums]
             [raylib.shapes :as rs]))
 
 (let [screen-width 800
@@ -16,16 +15,16 @@
       ;; Update
       (let [new-position
             (cond-> ball-position
-              (rc/is-key-down? ::enums/right) (vec-add [2 0])  ;; x += 2
-              (rc/is-key-down? ::enums/left) (vec-add [-2 0])  ;; x -= 2
-              (rc/is-key-down? ::enums/up) (vec-add [0 -2])    ;; y -= 2
-              (rc/is-key-down? ::enums/down) (vec-add [0 2]))] ;; y += 2
+              (rc/is-key-down? :right) (vec-add [2 0])  ;; x += 2
+              (rc/is-key-down? :left) (vec-add [-2 0])  ;; x -= 2
+              (rc/is-key-down? :up) (vec-add [0 -2])    ;; y -= 2
+              (rc/is-key-down? :down) (vec-add [0 2]))] ;; y += 2
 
         ;; Draw
         (rc/with-drawing!
-          (rc/clear-background! ::enums/white)
-          (rt/draw-text! "move the ball with arrow keys" 10 10 20 ::enums/darkgray)
-          (rs/draw-circle-v! new-position 50 ::enums/maroon))
+          (rc/clear-background! :white)
+          (rt/draw-text! "move the ball with arrow keys" 10 10 20 :darkgray)
+          (rs/draw-circle-v! new-position 50 :maroon))
 
         ;; Loop
         (recur new-position))))
