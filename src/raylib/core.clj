@@ -1,7 +1,7 @@
 (ns raylib.core
-  (:require [raylib.arena :as arena]
-            [raylib.enums :as enums]
-            [raylib.structs :as structs])
+  (:require [raylib.arena :as rarena]
+            [raylib.enums :as renums]
+            [raylib.structs :as rstructs])
   (:import [raylib raylib_h]
            [java.lang.foreign Arena MemorySegment]))
 
@@ -11,13 +11,13 @@
 ;; Utility Functions
 ;;
 
-(defn keycode [key] (if (keyword? key) (enums/keyboard-key key) key))
+(defn keycode [key] (if (keyword? key) (renums/keyboard-key key) key))
 
 (defn get-string [^MemorySegment seg]
   (.getUtf8String seg 0))
 
 (defn string
-  ([str] (.allocateUtf8String arena/*current-arena* str))
+  ([str] (.allocateUtf8String rarena/*current-arena* str))
   ([^Arena arena str] (.allocateUtf8String arena str)))
 
 ;;------------------------------------------------------------------------------------
@@ -109,7 +109,7 @@
 
 (defn clear-background!
   "Set background color (framebuffer clear color)"
-  [color] (raylib_h/ClearBackground (structs/color color)))
+  [color] (raylib_h/ClearBackground (rstructs/color color)))
 
 (defn begin-drawing!
   "Setup canvas (framebuffer) to start drawing"
@@ -120,17 +120,17 @@
   [] (raylib_h/EndDrawing))
 
 (defmacro with-drawing! [& body]
-  `(binding [arena/*current-arena* (arena/confined-arena!)]
+  `(binding [rarena/*current-arena* (rarena/confined-arena!)]
      (try
        (begin-drawing!)
        ~@body
        (end-drawing!)
        (finally
-         (.close arena/*current-arena*)))))
+         (.close rarena/*current-arena*)))))
 
 (defn begin-mode-3d!
   "Begin 3D mode with custom camera (3D)"
-  [camera] (raylib_h/BeginMode3D (structs/camera-3d camera)))
+  [camera] (raylib_h/BeginMode3D (rstructs/camera-3d camera)))
 
 (defn end-mode-3d!
   "Ends 3D mode and returns to default 2D orthographic mode"
@@ -237,19 +237,19 @@
 
 (defn gamepad-button-down?
   "Check if a gamepad button is being pressed"
-  [gamepad button] (raylib_h/IsGamepadButtonDown gamepad (enums/gamepad-button button)))
+  [gamepad button] (raylib_h/IsGamepadButtonDown gamepad (renums/gamepad-button button)))
 
 (defn gamepad-button-released?
   "Check if a gamepad button has been released once"
-  [gamepad button] (raylib_h/IsGamepadButtonReleased gamepad (enums/gamepad-button button)))
+  [gamepad button] (raylib_h/IsGamepadButtonReleased gamepad (renums/gamepad-button button)))
 
 (defn gamepad-button-up?
   "Check if a gamepad button is NOT being pressed"
-  [gamepad button] (raylib_h/IsGamepadButtonUp gamepad (enums/gamepad-button button)))
+  [gamepad button] (raylib_h/IsGamepadButtonUp gamepad (renums/gamepad-button button)))
 
 (defn get-gamepad-button-pressed!
   "Get the last gamepad button pressed"
-  [] (enums/gamepad-button (raylib_h/GetGamepadButtonPressed)))
+  [] (renums/gamepad-button (raylib_h/GetGamepadButtonPressed)))
 
 (defn get-gamepad-axis-count!
   "Get gamepad axis count for a gamepad"
@@ -257,7 +257,7 @@
 
 (defn get-gamepad-axis-movement!
   "Get axis movement value for a gamepad axis"
-  [gamepad axis] (raylib_h/GetGamepadAxisMovement gamepad (enums/gamepad-axis axis)))
+  [gamepad axis] (raylib_h/GetGamepadAxisMovement gamepad (renums/gamepad-axis axis)))
 
 (defn set-gamepad-mappings!
   "Set internal gamepad mappings (SDL_GameControllerDB)"
@@ -266,19 +266,19 @@
 ;; Input-related functions: mouse
 (defn mouse-button-pressed?
   "Check if a mouse button has been pressed once"
-  [button] (raylib_h/IsMouseButtonPressed (enums/mouse-button button)))
+  [button] (raylib_h/IsMouseButtonPressed (renums/mouse-button button)))
 
 (defn mouse-button-down?
   "Check if a mouse button is being pressed"
-  [button] (raylib_h/IsMouseButtonDown (enums/mouse-button button)))
+  [button] (raylib_h/IsMouseButtonDown (renums/mouse-button button)))
 
 (defn mouse-button-released?
   "Check if a mouse button has been released once"
-  [button] (raylib_h/IsMouseButtonReleased (enums/mouse-button button)))
+  [button] (raylib_h/IsMouseButtonReleased (renums/mouse-button button)))
 
 (defn mouse-button-up?
   "Check if a mouse button is NOT being pressed"
-  [button] (raylib_h/IsMouseButtonUp (enums/mouse-button button)))
+  [button] (raylib_h/IsMouseButtonUp (renums/mouse-button button)))
 
 (defn get-mouse-x!
   "Get mouse position X"
@@ -291,12 +291,12 @@
 (defn get-mouse-position!
   "Get mouse position XY"
   ([^Arena arena] (raylib_h/GetMousePosition arena))
-  ([] (structs/get-vector2 (raylib_h/GetMousePosition arena/*current-arena*))))
+  ([] (rstructs/get-vector2 (raylib_h/GetMousePosition rarena/*current-arena*))))
 
 (defn get-mouse-delta!
   "Get mouse delta between frames"
   ([^Arena arena] (raylib_h/GetMouseDelta arena))
-  ([] (structs/get-vector2 (raylib_h/GetMouseDelta arena/*current-arena*))))
+  ([] (rstructs/get-vector2 (raylib_h/GetMouseDelta rarena/*current-arena*))))
 
 (defn set-mouse-position!
   "Set mouse position XY"
@@ -317,11 +317,11 @@
 (defn get-mouse-wheel-move-v!
   "Get mouse wheel movement for both X and Y"
   ([^Arena arena] (raylib_h/GetMouseWheelMoveV arena))
-  ([] (structs/get-vector2 (raylib_h/GetMouseWheelMoveV arena/*current-arena*))))
+  ([] (rstructs/get-vector2 (raylib_h/GetMouseWheelMoveV rarena/*current-arena*))))
 
 (defn set-mouse-cursor!
   "Set mouse cursor"
-  [cursor] (raylib_h/SetMouseCursor (enums/mouse-cursor cursor)))
+  [cursor] (raylib_h/SetMouseCursor (renums/mouse-cursor cursor)))
 
 ;; Input-related functions: touch
 (defn get-touch-x!
@@ -335,7 +335,7 @@
 (defn get-touch-position!
   "Get touch position XY for a touch point index (relative to screen size)"
   ([^Arena arena index] (raylib_h/GetTouchPosition arena index))
-  ([index] (structs/get-vector2 (raylib_h/GetTouchPosition arena/*current-arena* index))))
+  ([index] (rstructs/get-vector2 (raylib_h/GetTouchPosition rarena/*current-arena* index))))
 
 (defn get-touch-point-id!
   "Get touch point identifier for given index"

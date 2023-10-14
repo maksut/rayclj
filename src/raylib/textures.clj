@@ -1,4 +1,9 @@
-(ns raylib.textures "Texture Loading and Drawing Functions (Module: textures)")
+(ns raylib.textures "Texture Loading and Drawing Functions (Module: textures)"
+    (:require [raylib.arena :as arena]
+              [raylib.core :as rcore]
+              [raylib.structs :as rstructs])
+    (:import [raylib raylib_h]
+             [java.lang.foreign Arena]))
 
 ;; Image loading functions
 ;; NOTE: These functions do not require GPU access
@@ -80,12 +85,25 @@
 
 ;; Texture loading functions
 ;; NOTE: These functions require GPU access
+
 ; RLAPI Texture2D LoadTexture(const char *fileName);                                                       ;; Load texture from file into GPU memory (VRAM)
+(defn load-texture!
+  "Load texture from file into GPU memory (VRAM)"
+  ([^Arena arena file-name] (raylib_h/LoadTexture arena (rcore/string file-name)))
+  ([file-name]
+   (rstructs/get-texture
+    (raylib_h/LoadTexture arena/*current-arena* (rcore/string file-name)))))
+
 ; RLAPI Texture2D LoadTextureFromImage(Image image);                                                       ;; Load texture from image data
 ; RLAPI TextureCubemap LoadTextureCubemap(Image image, int layout);                                        ;; Load cubemap from image, multiple image cubemap layouts supported
 ; RLAPI RenderTexture2D LoadRenderTexture(int width, int height);                                          ;; Load texture for rendering (framebuffer)
 ; RLAPI bool IsTextureReady(Texture2D texture);                                                            ;; Check if a texture is ready
+
 ; RLAPI void UnloadTexture(Texture2D texture);                                                             ;; Unload texture from GPU memory (VRAM)
+(defn unload-texture!
+  "Unload texture from GPU memory (VRAM)"
+  [texture] (raylib_h/UnloadTexture (rstructs/texture-2d texture)))
+
 ; RLAPI bool IsRenderTextureReady(RenderTexture2D target);                                                       ;; Check if a render texture is ready
 ; RLAPI void UnloadRenderTexture(RenderTexture2D target);                                                  ;; Unload render texture from GPU memory (VRAM)
 ; RLAPI void UpdateTexture(Texture2D texture, const void *pixels);                                         ;; Update GPU texture with new data
@@ -97,7 +115,12 @@
 ; RLAPI void SetTextureWrap(Texture2D texture, int wrap);                                                  ;; Set texture wrapping mode
 
 ;; Texture drawing functions
+
 ; RLAPI void DrawTexture(Texture2D texture, int posX, int posY, Color tint);                               ;; Draw a Texture2D
+(defn draw-texture!
+  "Draw a Texture2D" [texture x y tint]
+  (raylib_h/DrawTexture (rstructs/texture-2d texture) x y (rstructs/color tint)))
+
 ; RLAPI void DrawTextureV(Texture2D texture, Vector2 position, Color tint);                                ;; Draw a Texture2D with position defined as Vector2
 ; RLAPI void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float scale, Color tint);  ;; Draw a Texture2D with extended parameters
 ; RLAPI void DrawTextureRec(Texture2D texture, Rectangle source, Vector2 position, Color tint);            ;; Draw a part of a texture defined by a rectangle
