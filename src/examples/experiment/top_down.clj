@@ -122,6 +122,7 @@
   (rcore/with-drawing!
     (rcore/clear-background! :white)
     (rtext/draw-fps! 10 40)
+    (rtext/draw-fps'! 10 60)
     (draw-player player)
     (draw-cursor cursor)
     (doseq [p projectiles] (draw-projectile p))

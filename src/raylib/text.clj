@@ -18,10 +18,24 @@
 ; RLAPI bool ExportFontAsCode(Font font, const char *fileName);                               ;; Export font as code file, returns true on success
 
 ;; Text drawing functions
-; RLAPI void DrawFPS(int posX, int posY);                                                     ;; Draw current FPS
 (defn draw-fps!
   "Draw current FPS"
-  [pos-x pos-y] (raylib_h/DrawFPS pos-x pos-y))
+  [pos-x pos-y]
+  (raylib_h/DrawFPS pos-x pos-y))
+
+(defn draw-fps'!
+  "Draw current FPS"
+  [pos-x pos-y]
+  ; implemeting our own DrawFPS because raylib's GetFPS has a static variable
+  ; it hangs on fps value from previous windows
+  (let [fps (rcore/get-fps'!)
+        color (cond
+                (< fps 15) :red
+                (< fps 30) :orange
+                :else :lime)
+        fps (rcore/string (format "%2d FPS" fps))]
+    (raylib_h/DrawText fps pos-x pos-y 20 (rstructs/color color))))
+
 ; RLAPI void DrawText(const char *text, int posX, int posY, int fontSize, Color color);       ;; Draw text (using default font)
 (defn draw-text!
   "Draw text (using default font)"

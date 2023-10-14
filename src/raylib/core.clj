@@ -181,9 +181,39 @@
   "Set target FPS (maximum)"
   [fps] (raylib_h/SetTargetFPS fps))
 
+(def fps-step (let [capture-frames-count 30
+                    average-times-seconds 0.5]
+                (double (/ average-times-seconds capture-frames-count))))
+
 (defn get-fps!
   "Get current FPS"
-  [] (raylib_h/GetFPS))
+  []
+  (raylib_h/GetFPS))
+
+;; TODO: move these global vars
+(def frame-times (atom
+                  {:frames (float-array 10)
+                   :index (int 0)
+                   :frame-total 0.0}))
+
+(defn add-frame-time [{:keys [^floats frames index frame-total]} new-time]
+  (let [frame-size (alength frames)
+        old-time (aget frames index)
+        new-total (+ new-time (- frame-total old-time))]
+    (aset frames index ^float new-time)
+    {:index (mod (inc index) frame-size)
+     :frames frames
+     :frame-total new-total}))
+
+(defn get-fps'!
+  "Get current FPS"
+  []
+  ; implementing our own because raylib's GetFPS has a static variable
+  ; that hangs on fps values from the previous windows
+  (let [new-time (raylib_h/GetFrameTime)
+        {:keys [frame-total ^floats frames]} (swap! frame-times add-frame-time new-time)
+        frame-count (alength frames)]
+    (int (/ 1.0 (/ frame-total frame-count)))))
 
 (defn get-frame-time!
   "Get time in seconds for last frame drawn (delta time)"
