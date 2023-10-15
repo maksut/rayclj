@@ -12,9 +12,12 @@
     Image
     Texture
     RenderTexture
+    NPatchInfo
+    GlyphInfo
+    Font
     Camera3D
     Camera2D]
-   [java.lang.foreign Arena MemorySegment]))
+   [java.lang.foreign Arena MemoryLayout MemorySegment]))
 
 (set! *warn-on-reflection* true)
 
@@ -32,28 +35,51 @@
 ;; Structures Definition
 ;;
 
-(defn get-vector2 [^MemorySegment seg]
-  [(Vector2/x$get seg) (Vector2/y$get seg)])
+;; TODO: move these utility fns into an impl ns
+(defn as-slice
+  [^MemorySegment seg index element-size]
+  (.asSlice seg (* index element-size)))
+
+(defn get-array-fn
+  [^MemoryLayout elem-layout get-fn]
+  (let [element-size (.byteSize elem-layout)]
+    (fn [^MemorySegment seg size]
+      (mapv (fn [i] (get-fn (as-slice seg i element-size))) (range size)))))
+
+(defn array-fn
+  [^MemoryLayout elem-layout set-fn]
+  (let [element-size (.byteSize elem-layout)]
+    (fn to-array
+      ([^Arena arena elems]
+       (let [size (count elems)
+             array-layout (MemoryLayout/sequenceLayout size elem-layout)
+             seg (.allocate arena array-layout)]
+         (dorun
+          (map-indexed (fn [i elem] (set-fn (as-slice seg i element-size) elem)) elems))
+         seg))
+      ([elems] (passthrough elems to-array rarena/*current-arena*)))))
+
+(defn get-vector2
+  [^MemorySegment seg]
+  [(Vector2/x$get seg)
+   (Vector2/y$get seg)])
 
 (defn set-vector2!
-  ([^MemorySegment seg index [x y]]
-   (Vector2/x$set seg index x)
-   (Vector2/y$set seg index y)
-   seg)
-  ([^MemorySegment seg [x y]] (set-vector2! seg 0 [x y])))
+  [^MemorySegment seg [x y]]
+  (Vector2/x$set seg x)
+  (Vector2/y$set seg y)
+  seg)
 
 (defn vector2
   "Vector2, 2 components"
   ([^Arena arena v] (set-vector2! (.allocate arena (Vector2/$LAYOUT)) v))
   ([v] (passthrough v vector2 rarena/*current-arena*)))
 
-(defn vector2-array
-  ([^Arena arena vectors]
-   (let [size (count vectors)
-         seg (Vector2/allocateArray size arena)]
-     (doall (map-indexed (fn [i v] (set-vector2! seg i v)) vectors))
-     seg))
-  ([vectors] (vector2-array rarena/*current-arena* vectors)))
+(def vector2-array
+  (array-fn (Vector2/$LAYOUT) set-vector2!))
+
+(def get-vector2-array
+  (get-array-fn (Vector2/$LAYOUT) get-vector2))
 
 (defn get-vector3 [^MemorySegment seg]
   [(Vector3/x$get seg)
@@ -151,6 +177,12 @@
      (set-color! (.allocate arena (Color/$LAYOUT)) c)))
   ([c] (passthrough c color rarena/*current-arena*)))
 
+(def color-array
+  (array-fn (Color/$LAYOUT) set-color!))
+
+(def get-color-array
+  (get-array-fn (Color/$LAYOUT) get-color))
+
 (def predefined-colors
   (into
    {}
@@ -181,6 +213,12 @@
    (set-rectangle! (.allocate arena (Rectangle/$LAYOUT)) r))
   ([r] (passthrough r rectangle rarena/*current-arena*)))
 
+(def rectangle-array
+  (array-fn (Rectangle/$LAYOUT) set-rectangle!))
+
+(def get-rectangle-array
+  (get-array-fn (Rectangle/$LAYOUT) get-rectangle))
+
 (defn get-image [^MemorySegment seg]
   {:data (Image/data$get seg)
    :width (Image/width$get seg)
@@ -207,6 +245,12 @@
   ([^Arena arena img]
    (set-image! (.allocate arena (Image/$LAYOUT)) img))
   ([img] (passthrough img image rarena/*current-arena*)))
+
+(def image-array
+  (array-fn (Image/$LAYOUT) set-image!))
+
+(def get-image-array
+  (get-array-fn (Image/$LAYOUT) get-image))
 
 (defn get-texture [^MemorySegment seg]
   {:id (Texture/id$get seg)
@@ -265,6 +309,104 @@
 (def render-texture-2d
   "RenderTexture2D, same as RenderTexture"
   render-texture)
+
+(defn set-npatch-info! [^MemorySegment seg {:keys [source left top right bottom layout]}]
+  (set-rectangle! (NPatchInfo/source$slice seg) source)
+  (NPatchInfo/left$set seg left)
+  (NPatchInfo/top$set seg top)
+  (NPatchInfo/right$set seg right)
+  (NPatchInfo/bottom$set seg bottom)
+  (NPatchInfo/layout$set seg layout)
+  seg)
+
+(defn get-npatch-info [^MemorySegment seg]
+  {:source (get-rectangle (NPatchInfo/source$slice seg))
+   :left (NPatchInfo/left$get seg)
+   :top (NPatchInfo/top$get seg)
+   :right (NPatchInfo/right$get seg)
+   :bottom (NPatchInfo/bottom$get seg)
+   :layout (NPatchInfo/layout$get seg)})
+
+(defn npatch-info
+  "NPatchInfo, n-patch layout info
+   Rectangle source;       // Texture source rectangle
+   int left;               // Left border offset
+   int top;                // Top border offset
+   int right;              // Right border offset
+   int bottom;             // Bottom border offset
+   int layout;             // Layout of the n-patch: 3x3, 1x3 or 3x1"
+  ([^Arena arena n]
+   (set-npatch-info! (.allocate arena (NPatchInfo/$LAYOUT)) n))
+  ([n] (passthrough n npatch-info rarena/*current-arena*)))
+
+(defn get-glyph-info
+  [^MemorySegment seg]
+  {:value (GlyphInfo/value$get seg)
+   :offset-x (GlyphInfo/offsetX$get seg)
+   :offset-y (GlyphInfo/offsetY$get seg)
+   :advance-x (GlyphInfo/advanceX$get seg)
+   :image (get-image (GlyphInfo/image$slice seg))})
+
+(defn set-glyph-info!
+  [^MemorySegment seg {:keys [value offset-x offset-y advance-x image]}]
+  (GlyphInfo/value$set seg value)
+  (GlyphInfo/offsetX$set seg offset-x)
+  (GlyphInfo/offsetY$set seg offset-y)
+  (GlyphInfo/advanceX$set seg advance-x)
+  (set-image! (GlyphInfo/image$slice seg) image)
+  seg)
+
+(defn glyph-info
+  "GlyphInfo, font characters glyphs info
+   int value;              // Character value (Unicode)
+   int offsetX;            // Character offset X when drawing
+   int offsetY;            // Character offset Y when drawing
+   int advanceX;           // Character advance position X
+   Image image;            // Character image data"
+  ([^Arena arena g]
+   (set-glyph-info! (.allocate arena (GlyphInfo/$LAYOUT)) g))
+  ([g] (passthrough g glyph-info rarena/*current-arena*)))
+
+(def glyph-info-array
+  (array-fn (GlyphInfo/$LAYOUT) set-glyph-info!))
+
+(def get-glyph-info-array
+  (get-array-fn (GlyphInfo/$LAYOUT) get-glyph-info))
+
+; TODO: test this
+(defn get-font
+  [^MemorySegment seg]
+  (let [array-size (Font/glyphCount$get seg)]
+    {:base-size (Font/baseSize$get seg)
+     :glyph-count    array-size
+     :glyph-padding (Font/glyphPadding$get seg)
+     :texture (get-texture (Font/texture$slice seg))
+     :recs (get-rectangle-array (Font/recs$get seg) array-size)
+     :glyphs (get-glyph-info-array (Font/glyphs$get seg) array-size)}))
+
+(defn set-font!
+  ([^Arena arena ^MemorySegment seg {:keys [base-size glyph-count glyph-padding texture recs glyphs]}]
+   (Font/baseSize$set seg base-size)
+   (Font/glyphCount$set seg glyph-count)
+   (Font/glyphPadding$set seg glyph-padding)
+   (set-texture! (Font/texture$slice seg) texture)
+   (Font/recs$set seg (rectangle-array arena recs))
+   (Font/glyphs$set seg (glyph-info-array arena glyphs))
+   seg)
+  ([^MemorySegment seg font]
+   (set-font! rarena/*current-arena* seg font)))
+
+(defn font
+  "Font, font texture and GlyphInfo array data
+   int baseSize;           // Base size (default chars height)
+   int glyphCount;         // Number of glyph characters
+   int glyphPadding;       // Padding around the glyph characters
+   Texture2D texture;      // Texture atlas containing the glyphs
+   Rectangle *recs;        // Rectangles in texture for the glyphs
+   GlyphInfo *glyphs;      // Glyphs info data"
+  ([^Arena arena f]
+   (set-font! (.allocate arena (Font/$LAYOUT)) f))
+  ([f] (passthrough f font rarena/*current-arena*)))
 
 (defn get-camera-3d [^MemorySegment seg]
   {:position (get-vector3 (Camera3D/position$slice seg))

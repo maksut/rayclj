@@ -1,73 +1,59 @@
 (ns examples.shapes.basic-shapes
-  (:require [raylib.core :as rc]
-            [raylib.text :as rt]
-            [raylib.enums :as enums]
-            [raylib.shapes :as rs]))
+  (:require [raylib.core :as rcore]
+            [raylib.text :as rtext]
+            [raylib.shapes :as rshapes]))
 
 (let [screen-width 800
       screen-height 450]
 
-  (rc/init-window! screen-width screen-height "raylib [shapes] example - basic shapes drawing")
+  (rcore/init-window! screen-width screen-height "raylib [shapes] example - basic shapes drawing")
 
-  (rc/set-target-fps! 60) ; Set our game to run at 60 frames-per-second
+  (rcore/set-target-fps! 60) ; Set our game to run at 60 frames-per-second
 
   (loop [rotation 0.0]
-    (when-not (rc/window-should-close?) ; Detect window close button or ESC key
-      (rc/with-drawing!
+    (when-not (rcore/window-should-close?) ; Detect window close button or ESC key
+      (rcore/with-drawing!
         ; Draw
-        (rc/clear-background! ::enums/white)
+        (rcore/clear-background! :white)
 
-        (rt/draw-text! "some basic shapes available on raylib" 20 20 20 ::enums/darkgray)
+        (rtext/draw-text! "some basic shapes available on raylib" 20 20 20 :darkgray)
 
-        (rt/draw-fps! 50 50)
+        (rtext/draw-fps! 50 50)
 
         ; Circle shapes and lines
-        (rs/draw-circle! (/ screen-width 5) 120 35 ::enums/darkblue)
-        (rs/draw-circle-gradient! (/ screen-width 5) 220 60 ::enums/green ::enums/skyblue)
-        (rs/draw-circle-lines! (/ screen-width 5) 340 80 ::enums/darkblue)
+        (rshapes/draw-circle! (/ screen-width 5) 120 35 :darkblue)
+        (rshapes/draw-circle-gradient! (/ screen-width 5) 220 60 :green :skyblue)
+        (rshapes/draw-circle-lines! (/ screen-width 5) 340 80 :darkblue)
 
         ; Rectangle shapes and lines
-        (rs/draw-rectangle! (- (* 2 (/ screen-width 4)) 60) 100 120 60 ::enums/red)
-        (rs/draw-rectangle-gradient-h! (- (* 2 (/ screen-width 4)) 90) 170 180 130 ::enums/maroon ::enums/gold)
-        (rs/draw-rectangle-lines! (- (* 2 (/ screen-width 4)) 40) 320 80 60 ::enums/orange) ; NOTE: Uses QUADS internally, not lines
+        (rshapes/draw-rectangle! (- (* 2 (/ screen-width 4)) 60) 100 120 60 :red)
+        (rshapes/draw-rectangle-gradient-h! (- (* 2 (/ screen-width 4)) 90) 170 180 130 :maroon :gold)
+        (rshapes/draw-rectangle-lines! (- (* 2 (/ screen-width 4)) 40) 320 80 60 :orange) ; NOTE: Uses QUADS internally, not lines
 
         ; Triangle shapes and lines
-        (rs/draw-triangle!
+        (rshapes/draw-triangle!
          [(* 3 (/ screen-width 4)) 80]
          [(- (* 3 (/ screen-width 4)) 60) 150]
          [(+ (* 3 (/ screen-width 4)) 60) 150]
-         ::enums/violet)
+         :violet)
 
-        (rs/draw-triangle-lines!
+        (rshapes/draw-triangle-lines!
          [(* 3 (/ screen-width 4)) 160]
          [(- (* 3 (/ screen-width 4)) 20) 230]
          [(+ (* 3 (/ screen-width 4)) 20) 230]
-         ::enums/darkblue)
+         :darkblue)
 
         ; Polygon shapes and lines
         (let [poly-center [(* 3 (/ screen-width 4)) 330]]
-          (rs/draw-poly! poly-center 6 80 rotation ::enums/brown)
-          (rs/draw-poly-lines! poly-center 6 90 rotation ::enums/brown)
-          (rs/draw-poly-lines-ex! poly-center 6 85 rotation 6 ::enums/beige))
+          (rshapes/draw-poly! poly-center 6 80 rotation :brown)
+          (rshapes/draw-poly-lines! poly-center 6 90 rotation :brown)
+          (rshapes/draw-poly-lines-ex! poly-center 6 85 rotation 6 :beige))
 
        ; NOTE: We draw all LINES based shapes together to optimize internal drawing,
        ; this way, all LINES are rendered in a single draw pass
-        (rs/draw-line! 18 42 (- screen-width 18) 42 ::enums/black))
+        (rshapes/draw-line! 18 42 (- screen-width 18) 42 :black))
 
       ; Loop
       (recur (+ rotation 0.2))))
 
-  (rc/close-window!)) ; De-Initialization
-
-(comment
-  (import java.util.WeakHashMap)
-
-  (def compute-if-not-exists
-    (let [weak-map (WeakHashMap.)]
-      (fn [f arg]
-        (let [exists (.get weak-map arg)]
-          (if (nil? exists)
-            (let [value (f arg)]
-              (.put weak-map arg value)
-              value)
-            exists))))))
+  (rcore/close-window!)) ; De-Initialization

@@ -36,10 +36,10 @@
         fps (rcore/string (format "%2d FPS" fps))]
     (raylib_h/DrawText fps pos-x pos-y 20 (rstructs/color color))))
 
-; RLAPI void DrawText(const char *text, int posX, int posY, int fontSize, Color color);       ;; Draw text (using default font)
 (defn draw-text!
   "Draw text (using default font)"
   [text x y font-size color] (raylib_h/DrawText (rcore/string text) x y font-size (rstructs/color color)))
+
 ; RLAPI void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint); ;; Draw text using font and additional parameters
 ; RLAPI void DrawTextPro(Font font, const char *text, Vector2 position, Vector2 origin, float rotation, float fontSize, float spacing, Color tint); ;; Draw text using Font and pro parameters (rotation)
 ; RLAPI void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float fontSize, Color tint); ;; Draw one character (codepoint)

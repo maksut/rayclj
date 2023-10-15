@@ -212,8 +212,11 @@
   ; that hangs on fps values from the previous windows
   (let [new-time (raylib_h/GetFrameTime)
         {:keys [frame-total ^floats frames]} (swap! frame-times add-frame-time new-time)
-        frame-count (alength frames)]
-    (int (/ 1.0 (/ frame-total frame-count)))))
+        frame-count (alength frames)
+        frame-average (/ frame-total frame-count)]
+    (if (= frame-average 0)
+      0
+      (int (/ 1.0 frame-average)))))
 
 (defn get-frame-time!
   "Get time in seconds for last frame drawn (delta time)"
