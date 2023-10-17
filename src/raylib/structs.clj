@@ -378,7 +378,7 @@
   [^MemorySegment seg]
   (let [array-size (Font/glyphCount$get seg)]
     {:base-size (Font/baseSize$get seg)
-     :glyph-count    array-size
+     :glyph-count array-size
      :glyph-padding (Font/glyphPadding$get seg)
      :texture (get-texture (Font/texture$slice seg))
      :recs (get-rectangle-array (Font/recs$get seg) array-size)

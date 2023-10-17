@@ -1,12 +1,22 @@
 (ns raylib.text "Font Loading and Text Drawing Functions (Module: text)"
     (:require
      [raylib.core :as rcore]
-     [raylib.structs :as rstructs])
-    (:import [raylib raylib_h]))
+     [raylib.structs :as rstructs]
+     [raylib.arena :as rarena])
+    (:import [raylib raylib_h]
+             [java.lang.foreign Arena]))
 
 ;; Font loading/unloading functions
 ; RLAPI Font GetFontDefault(void);                                                            ;; Get the default Font
+
 ; RLAPI Font LoadFont(const char *fileName);                                                  ;; Load font from file into GPU memory (VRAM)
+(defn load-font!
+  "Load font from file into GPU memory (VRAM)"
+  ([^Arena arena file-name] (raylib_h/LoadFont arena (rcore/string arena file-name)))
+  ([file-name]
+   (rstructs/get-font
+    (raylib_h/LoadFont rarena/*current-arena* (rcore/string file-name)))))
+
 ; RLAPI Font LoadFontEx(const char *fileName, int fontSize, int *fontChars, int glyphCount);  ;; Load font from file with extended parameters, use NULL for fontChars and 0 for glyphCount to load the default character set
 ; RLAPI Font LoadFontFromImage(Image image, Color key, int firstChar);                        ;; Load font from Image (XNA style)
 ; RLAPI Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int dataSize, int fontSize, int *fontChars, int glyphCount); ;; Load font from memory buffer, fileType refers to extension: i.e. '.ttf'
@@ -14,7 +24,12 @@
 ; RLAPI GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSize, int *fontChars, int glyphCount, int type); ;; Load font data for further use
 ; RLAPI Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **recs, int glyphCount, int fontSize, int padding, int packMethod); ;; Generate image font atlas using chars info
 ; RLAPI void UnloadFontData(GlyphInfo *chars, int glyphCount);                                ;; Unload font chars info data (RAM)
+
 ; RLAPI void UnloadFont(Font font);                                                           ;; Unload font from GPU memory (VRAM)
+(defn unload-font!
+  "Unload font from GPU memory (VRAM)"
+  [font] (raylib_h/UnloadFont (rstructs/font font)))
+
 ; RLAPI bool ExportFontAsCode(Font font, const char *fileName);                               ;; Export font as code file, returns true on success
 
 ;; Text drawing functions

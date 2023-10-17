@@ -7,6 +7,13 @@
 
 (set! *warn-on-reflection* true)
 
+;; TODO: utility macro, move elsewhere
+(defmacro apply-return-first [f & args]
+  "applies f to args then returns value of first arg"
+  `(let [first-arg# ~(first args)]
+     (~f first-arg# ~@(rest args))
+     first-arg#))
+
 ;; Image loading functions
 ;; NOTE: These functions do not require GPU access
 
@@ -240,162 +247,204 @@
 (defn image-format!
   "Convert image data to desired format"
   ([^Arena arena image new-format]
-   (raylib_h/ImageFormat (rstructs/image arena image) new-format))
+   (apply-return-first raylib_h/ImageFormat (rstructs/image arena image) new-format))
   ([image new-format]
-   (raylib_h/ImageFormat (rstructs/image image) new-format)))
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageFormat (rstructs/image image) new-format))))
 
 (defn image-to-pot!
   "Convert image to POT (power-of-two)"
   ([^Arena arena image fill-color]
-   (raylib_h/ImageToPOT (rstructs/image arena image) (rstructs/color arena fill-color)))
+   (apply-return-first raylib_h/ImageToPOT (rstructs/image arena image) (rstructs/color arena fill-color)))
   ([image fill-color]
-   (raylib_h/ImageToPOT (rstructs/image image) (rstructs/color fill-color))))
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageToPOT (rstructs/image image) (rstructs/color fill-color)))))
 
 (defn image-crop!
   "Crop an image to a defined rectangle"
   ([^Arena arena image rectangle-crop]
-   (raylib_h/ImageCrop (rstructs/image arena image) (rstructs/rectangle arena rectangle-crop)))
+   (apply-return-first raylib_h/ImageCrop (rstructs/image arena image) (rstructs/rectangle arena rectangle-crop)))
   ([image rectangle-crop]
-   (raylib_h/ImageCrop (rstructs/image image) (rstructs/rectangle rectangle-crop))))
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageCrop (rstructs/image image) (rstructs/rectangle rectangle-crop)))))
 
 (defn image-alpha-crop!
   "Crop image depending on alpha value"
   ([^Arena arena image threshold]
-   (raylib_h/ImageAlphaCrop (rstructs/image arena image) threshold))
+   (apply-return-first raylib_h/ImageAlphaCrop (rstructs/image arena image) threshold))
   ([image threshold]
-   (raylib_h/ImageAlphaCrop (rstructs/image image) threshold)))
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageAlphaCrop (rstructs/image image) threshold))))
 
 (defn image-alpha-clear!
   "Clear alpha channel to desired color"
   ([^Arena arena image color threshold]
-   (raylib_h/ImageAlphaClear (rstructs/image arena image) (rstructs/color arena color) threshold))
+   (apply-return-first raylib_h/ImageAlphaClear (rstructs/image arena image) (rstructs/color arena color) threshold))
   ([image color threshold]
-   (raylib_h/ImageAlphaClear (rstructs/image image) (rstructs/color color) threshold)))
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageAlphaClear (rstructs/image image) (rstructs/color color) threshold))))
 
 (defn image-alpha-mask!
   "Apply alpha mask to image"
   ([^Arena arena image alpha-mask]
-   (raylib_h/ImageAlphaMask (rstructs/image arena image) (rstructs/image arena alpha-mask)))
+   (apply-return-first raylib_h/ImageAlphaMask (rstructs/image arena image) (rstructs/image arena alpha-mask)))
   ([image alpha-mask]
-   (raylib_h/ImageAlphaMask (rstructs/image image) (rstructs/image alpha-mask))))
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageAlphaMask (rstructs/image image) (rstructs/image alpha-mask)))))
 
 (defn image-alpha-premultiply!
   "Premultiply alpha channel"
   ([^Arena arena image]
-   (raylib_h/ImageAlphaPremultiply (rstructs/image arena image)))
+   (apply-return-first raylib_h/ImageAlphaPremultiply (rstructs/image arena image)))
   ([image]
-   (raylib_h/ImageAlphaPremultiply (rstructs/image image))))
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageAlphaPremultiply (rstructs/image image)))))
 
 (defn image-blur-gaussian!
   "Apply Gaussian blur using a box blur approximation"
   ([^Arena arena image blur-size]
-   (raylib_h/ImageBlurGaussian (rstructs/image arena image) blur-size))
+   (apply-return-first raylib_h/ImageBlurGaussian (rstructs/image arena image) blur-size))
   ([image blur-size]
-   (raylib_h/ImageBlurGaussian (rstructs/image image) blur-size)))
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageBlurGaussian (rstructs/image image) blur-size))))
 
 (defn image-resize!
   "Resize image (Bicubic scaling algorithm)"
   ([^Arena arena image new-width new-height]
-   (raylib_h/ImageResize (rstructs/image arena image) new-width new-height))
+   (apply-return-first raylib_h/ImageResize (rstructs/image arena image) new-width new-height))
   ([image new-width new-height]
-   (raylib_h/ImageResize (rstructs/image image) new-width new-height)))
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageResize (rstructs/image image) new-width new-height))))
 
 (defn image-resize-nn!
   "Resize image (Nearest-Neighbor scaling algorithm)"
   ([^Arena arena image new-width new-height]
-   (raylib_h/ImageResizeNN (rstructs/image arena image) new-width new-height))
+   (apply-return-first raylib_h/ImageResizeNN (rstructs/image arena image) new-width new-height))
   ([image new-width new-height]
-   (raylib_h/ImageResizeNN (rstructs/image image) new-width new-height)))
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageResizeNN (rstructs/image image) new-width new-height))))
 
 (defn image-resize-canvas!
   "Resize canvas and fill with color"
   ([^Arena arena image new-width new-height offset-x offset-y fill-color]
-   (raylib_h/ImageResizeCanvas
-    (rstructs/image arena image)
-    new-width
-    new-height
-    offset-x
-    offset-y
-    (rstructs/color arena fill-color)))
+   (apply-return-first raylib_h/ImageResizeCanvas
+                       (rstructs/image arena image)
+                       new-width
+                       new-height
+                       offset-x
+                       offset-y
+                       (rstructs/color arena fill-color)))
   ([image new-width new-height offset-x offset-y fill-color]
-   (raylib_h/ImageResizeCanvas
-    (rstructs/image image)
-    new-width
-    new-height
-    offset-x
-    offset-y
-    (rstructs/color fill-color))))
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageResizeCanvas
+                        (rstructs/image image)
+                        new-width
+                        new-height
+                        offset-x
+                        offset-y
+                        (rstructs/color fill-color)))))
 
 (defn image-mipmaps!
   "Compute all mipmap levels for a provided image"
-  ([^Arena arena image] (raylib_h/ImageMipmaps (rstructs/image arena image)))
-  ([image] (raylib_h/ImageMipmaps (rstructs/image image))))
+  ([^Arena arena image]
+   (apply-return-first raylib_h/ImageMipmaps (rstructs/image arena image)))
+  ([image]
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageMipmaps (rstructs/image image)))))
 
 (defn image-dither!
   "Dither image data to 16bpp or lower (Floyd-Steinberg dithering)"
   ([^Arena arena image r-bpp g-bpp b-bpp a-bpp]
-   (raylib_h/ImageDither (rstructs/image arena image) r-bpp g-bpp b-bpp a-bpp))
+   (apply-return-first raylib_h/ImageDither (rstructs/image arena image) r-bpp g-bpp b-bpp a-bpp))
   ([image r-bpp g-bpp b-bpp a-bpp]
-   (raylib_h/ImageDither (rstructs/image image) r-bpp g-bpp b-bpp a-bpp)))
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageDither (rstructs/image image) r-bpp g-bpp b-bpp a-bpp))))
 
 (defn image-flip-vertical!
   "Flip image vertically"
-  ([^Arena arena image] (raylib_h/ImageFlipVertical (rstructs/image arena image)))
-  ([image] (raylib_h/ImageFlipVertical (rstructs/image image))))
+  ([^Arena arena image]
+   (apply-return-first raylib_h/ImageFlipVertical (rstructs/image arena image)))
+  ([image]
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageFlipVertical (rstructs/image image)))))
 
 (defn image-flip-horizontal!
   "Flip image horizontally"
-  ([^Arena arena image] (raylib_h/ImageFlipHorizontal (rstructs/image arena image)))
-  ([image] (raylib_h/ImageFlipHorizontal (rstructs/image image))))
+  ([^Arena arena image]
+   (apply-return-first raylib_h/ImageFlipHorizontal (rstructs/image arena image)))
+  ([image]
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageFlipHorizontal (rstructs/image image)))))
 
 (defn image-rotate-cw!
   "Rotate image clockwise 90deg"
-  ([^Arena arena image] (raylib_h/ImageRotateCW (rstructs/image arena image)))
-  ([image] (raylib_h/ImageRotateCW (rstructs/image image))))
+  ([^Arena arena image]
+   (apply-return-first raylib_h/ImageRotateCW (rstructs/image arena image)))
+  ([image]
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageRotateCW (rstructs/image image)))))
 
 (defn image-rotate-ccw!
   "Rotate image counter-clockwise 90deg"
-  ([^Arena arena image] (raylib_h/ImageRotateCCW (rstructs/image arena image)))
-  ([image] (raylib_h/ImageRotateCCW (rstructs/image image))))
+  ([^Arena arena image]
+   (apply-return-first raylib_h/ImageRotateCCW (rstructs/image arena image)))
+  ([image]
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageRotateCCW (rstructs/image image)))))
 
 (defn image-color-tint!
   "Modify image color: tint"
   ([^Arena arena image color]
-   (raylib_h/ImageColorTint (rstructs/image arena image) (rstructs/color arena color)))
-  ([image color] (raylib_h/ImageColorTint (rstructs/image image) (rstructs/color color))))
+   (apply-return-first raylib_h/ImageColorTint (rstructs/image arena image) (rstructs/color arena color)))
+  ([image color]
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageColorTint (rstructs/image image) (rstructs/color color)))))
 
 (defn image-color-invert!
   "Modify image color: invert"
-  ([^Arena arena image] (raylib_h/ImageColorInvert (rstructs/image arena image)))
-  ([image] (raylib_h/ImageColorInvert (rstructs/image image))))
+  ([^Arena arena image]
+   (apply-return-first raylib_h/ImageColorInvert (rstructs/image arena image)))
+  ([image]
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageColorInvert (rstructs/image image)))))
 
 (defn image-color-grayscale!
   "Modify image color: grayscale"
-  ([^Arena arena image] (raylib_h/ImageColorGrayscale (rstructs/image arena image)))
-  ([image] (raylib_h/ImageColorGrayscale (rstructs/image image))))
+  ([^Arena arena image]
+   (apply-return-first raylib_h/ImageColorGrayscale (rstructs/image arena image)))
+  ([image]
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageColorGrayscale (rstructs/image image)))))
 
 (defn image-color-contrast!
   "Modify image color: contrast (-100 to 100)"
-  ([^Arena arena image contrast] (raylib_h/ImageColorContrast (rstructs/image arena image) contrast))
-  ([image contrast] (raylib_h/ImageColorContrast (rstructs/image image) contrast)))
+  ([^Arena arena image contrast]
+   (apply-return-first raylib_h/ImageColorContrast (rstructs/image arena image) contrast))
+  ([image contrast]
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageColorContrast (rstructs/image image) contrast))))
 
 (defn image-color-brightness!
   "Modify image color: brightness (-255 to 255)"
-  ([^Arena arena image brightness] (raylib_h/ImageColorBrightness (rstructs/image arena image) brightness))
-  ([image brightness] (raylib_h/ImageColorBrightness (rstructs/image image) brightness)))
+  ([^Arena arena image brightness]
+   (apply-return-first raylib_h/ImageColorBrightness (rstructs/image arena image) brightness))
+  ([image brightness]
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageColorBrightness (rstructs/image image) brightness))))
 
 (defn image-color-replace!
   "Modify image color: replace color"
   ([^Arena arena image color replace]
-   (raylib_h/ImageColorReplace
-    (rstructs/image arena image)
-    (rstructs/color arena color)
-    (rstructs/color arena replace)))
+   (apply-return-first raylib_h/ImageColorReplace
+                       (rstructs/image arena image)
+                       (rstructs/color arena color)
+                       (rstructs/color arena replace)))
   ([image color replace]
-   (raylib_h/ImageColorReplace
-    (rstructs/image image)
-    (rstructs/color color)
-    (rstructs/color replace))))
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageColorReplace
+                        (rstructs/image image)
+                        (rstructs/color color)
+                        (rstructs/color replace)))))
 
 ; TODO: test return value of this function
 (defn load-image-colors!
@@ -451,204 +500,226 @@
 (defn image-clear-background!
   "Clear image background with given color"
   ([^Arena arena image color]
-   (raylib_h/ImageClearBackground (rstructs/image arena image) (rstructs/color arena color)))
+   (apply-return-first raylib_h/ImageClearBackground (rstructs/image arena image) (rstructs/color arena color)))
   ([image color]
-   (raylib_h/ImageClearBackground (rstructs/image image) (rstructs/color color))))
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageClearBackground (rstructs/image image) (rstructs/color color)))))
 
 (defn image-draw-pixel!
   "Draw pixel within an image"
   ([^Arena arena image pos-x pos-y color]
-   (raylib_h/ImageDrawPixel (rstructs/image arena image) pos-x pos-y (rstructs/color arena color)))
+   (apply-return-first raylib_h/ImageDrawPixel (rstructs/image arena image) pos-x pos-y (rstructs/color arena color)))
   ([image pos-x pos-y color]
-   (raylib_h/ImageDrawPixel (rstructs/image image) pos-x pos-y (rstructs/color color))))
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageDrawPixel (rstructs/image image) pos-x pos-y (rstructs/color color)))))
 
 (defn image-draw-pixel-v!
   "Draw pixel within an image (Vector version)"
   ([^Arena arena image position-v color]
-   (raylib_h/ImageDrawPixelV
-    (rstructs/image arena image) (rstructs/vector2 arena position-v) (rstructs/color arena color)))
+   (apply-return-first
+    raylib_h/ImageDrawPixelV
+    (rstructs/image arena image)
+    (rstructs/vector2 arena position-v)
+    (rstructs/color arena color)))
   ([image position-v color]
-   (raylib_h/ImageDrawPixelV
-    (rstructs/image image) (rstructs/vector2 position-v) (rstructs/color color))))
+   (rstructs/get-image
+    (apply-return-first
+     raylib_h/ImageDrawPixelV
+     (rstructs/image image)
+     (rstructs/vector2 position-v)
+     (rstructs/color color)))))
 
 (defn image-draw-line!
   "Draw line within an image"
   ([^Arena arena image start-pos-x start-pos-y end-pos-x end-pos-y color]
-   (raylib_h/ImageDrawLine
-    (rstructs/image arena image) start-pos-x start-pos-y end-pos-x end-pos-y (rstructs/color arena color)))
+   (apply-return-first
+    raylib_h/ImageDrawLine (rstructs/image arena image) start-pos-x start-pos-y end-pos-x end-pos-y (rstructs/color arena color)))
   ([image start-pos-x start-pos-y end-pos-x end-pos-y color]
-   (raylib_h/ImageDrawLine
-    (rstructs/image image) start-pos-x start-pos-y end-pos-x end-pos-y (rstructs/color color))))
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageDrawLine
+                        (rstructs/image image) start-pos-x start-pos-y end-pos-x end-pos-y (rstructs/color color)))))
 
 (defn image-draw-line-v!
   "Draw line within an image (Vector version)"
   ([^Arena arena image start-v end-v color]
-   (raylib_h/ImageDrawLineV
-    (rstructs/image arena image)
-    (rstructs/vector2 arena start-v)
-    (rstructs/vector2 arena end-v)
-    (rstructs/color arena color)))
+   (apply-return-first raylib_h/ImageDrawLineV
+                       (rstructs/image arena image)
+                       (rstructs/vector2 arena start-v)
+                       (rstructs/vector2 arena end-v)
+                       (rstructs/color arena color)))
   ([image start-v end-v color]
-   (raylib_h/ImageDrawLineV
-    (rstructs/image image)
-    (rstructs/vector2 start-v)
-    (rstructs/vector2 end-v)
-    (rstructs/color color))))
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageDrawLineV
+                        (rstructs/image image)
+                        (rstructs/vector2 start-v)
+                        (rstructs/vector2 end-v)
+                        (rstructs/color color)))))
 
 (defn image-draw-circle!
   "Draw a filled circle within an image"
   ([^Arena arena image center-x center-y radius color]
-   (raylib_h/ImageDrawCircle (rstructs/image arena image) center-x center-y radius (rstructs/color arena color)))
+   (apply-return-first raylib_h/ImageDrawCircle (rstructs/image arena image) center-x center-y radius (rstructs/color arena color)))
   ([image center-x center-y radius color]
-   (raylib_h/ImageDrawCircle (rstructs/image image) center-x center-y radius (rstructs/color color))))
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageDrawCircle (rstructs/image image) center-x center-y radius (rstructs/color color)))))
 
 (defn image-draw-circle-v!
   "Draw a filled circle within an image (Vector version)"
   ([^Arena arena image center-v radius color]
-   (raylib_h/ImageDrawCircleV
-    (rstructs/image arena image)
-    (rstructs/vector2 arena center-v)
-    radius
-    (rstructs/color arena color)))
+   (apply-return-first raylib_h/ImageDrawCircleV
+                       (rstructs/image arena image)
+                       (rstructs/vector2 arena center-v)
+                       radius
+                       (rstructs/color arena color)))
   ([image center-v radius color]
-   (raylib_h/ImageDrawCircleV
-    (rstructs/image image)
-    (rstructs/vector2 center-v)
-    radius
-    (rstructs/color color))))
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageDrawCircleV
+                        (rstructs/image image)
+                        (rstructs/vector2 center-v)
+                        radius
+                        (rstructs/color color)))))
 
 (defn image-draw-circle-lines!
   "Draw circle outline within an image"
   ([^Arena arena image center-x center-y radius color]
-   (raylib_h/ImageDrawCircleLines
-    (rstructs/image arena image) center-x center-y radius (rstructs/color arena color)))
+   (apply-return-first raylib_h/ImageDrawCircleLines
+                       (rstructs/image arena image) center-x center-y radius (rstructs/color arena color)))
   ([image center-x center-y radius color]
-   (raylib_h/ImageDrawCircleLines
-    (rstructs/image image) center-x center-y radius (rstructs/color color))))
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageDrawCircleLines
+                        (rstructs/image image) center-x center-y radius (rstructs/color color)))))
 
 (defn image-draw-circle-lines-v!
   "Draw circle outline within an image (Vector version)"
   ([^Arena arena image center-v radius color]
-   (raylib_h/ImageDrawCircleLinesV
-    (rstructs/image arena image)
-    (rstructs/vector2 arena center-v)
-    radius
-    (rstructs/color arena color)))
+   (apply-return-first raylib_h/ImageDrawCircleLinesV
+                       (rstructs/image arena image)
+                       (rstructs/vector2 arena center-v)
+                       radius
+                       (rstructs/color arena color)))
   ([image center-v radius color]
-   (raylib_h/ImageDrawCircleLinesV
-    (rstructs/image image)
-    (rstructs/vector2 center-v)
-    radius
-    (rstructs/color color))))
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageDrawCircleLinesV
+                        (rstructs/image image)
+                        (rstructs/vector2 center-v)
+                        radius
+                        (rstructs/color color)))))
 
 (defn image-draw-rectangle!
   "Draw rectangle within an image"
   ([^Arena arena image pos-x pos-y width height color]
-   (raylib_h/ImageDrawRectangle
-    (rstructs/image arena image) pos-x pos-y width height (rstructs/color arena color)))
+   (apply-return-first raylib_h/ImageDrawRectangle
+                       (rstructs/image arena image) pos-x pos-y width height (rstructs/color arena color)))
   ([image pos-x pos-y width height color]
-   (raylib_h/ImageDrawRectangle
-    (rstructs/image image) pos-x pos-y width height (rstructs/color color))))
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageDrawRectangle
+                        (rstructs/image image) pos-x pos-y width height (rstructs/color color)))))
 
 (defn image-draw-rectangle-v!
   "Draw rectangle within an image (Vector version)"
   ([^Arena arena image pos-v size-v color]
-   (raylib_h/ImageDrawRectangleV
-    (rstructs/image arena image)
-    (rstructs/vector2 arena pos-v)
-    (rstructs/vector2 arena size-v)
-    (rstructs/color arena color)))
+   (apply-return-first raylib_h/ImageDrawRectangleV
+                       (rstructs/image arena image)
+                       (rstructs/vector2 arena pos-v)
+                       (rstructs/vector2 arena size-v)
+                       (rstructs/color arena color)))
   ([image pos-v size-v color]
-   (raylib_h/ImageDrawRectangleV
-    (rstructs/image image)
-    (rstructs/vector2 pos-v)
-    (rstructs/vector2 size-v)
-    (rstructs/color color))))
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageDrawRectangleV
+                        (rstructs/image image)
+                        (rstructs/vector2 pos-v)
+                        (rstructs/vector2 size-v)
+                        (rstructs/color color)))))
 
 (defn image-draw-rectangle-rec!
   "Draw rectangle within an image"
   ([^Arena arena image rec color]
-   (raylib_h/ImageDrawRectangleRec
-    (rstructs/image arena image)
-    (rstructs/rectangle arena rec)
-    (rstructs/color arena color)))
+   (apply-return-first raylib_h/ImageDrawRectangleRec
+                       (rstructs/image arena image)
+                       (rstructs/rectangle arena rec)
+                       (rstructs/color arena color)))
   ([image rec color]
-   (raylib_h/ImageDrawRectangleRec
-    (rstructs/image image)
-    (rstructs/rectangle rec)
-    (rstructs/color color))))
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageDrawRectangleRec
+                        (rstructs/image image)
+                        (rstructs/rectangle rec)
+                        (rstructs/color color)))))
 
 (defn image-draw-rectangle-lines!
   "Draw rectangle lines within an image"
   ([^Arena arena image rec thick color]
-   (raylib_h/ImageDrawRectangleLines
-    (rstructs/image arena image)
-    (rstructs/rectangle arena rec)
-    thick
-    (rstructs/color arena color)))
+   (apply-return-first raylib_h/ImageDrawRectangleLines
+                       (rstructs/image arena image)
+                       (rstructs/rectangle arena rec)
+                       thick
+                       (rstructs/color arena color)))
   ([image rec thick color]
-   (raylib_h/ImageDrawRectangleLines
-    (rstructs/image image)
-    (rstructs/rectangle rec)
-    thick
-    (rstructs/color color))))
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageDrawRectangleLines
+                        (rstructs/image image)
+                        (rstructs/rectangle rec)
+                        thick
+                        (rstructs/color color)))))
 
 (defn image-draw!
   "Draw a source image within a destination image (tint applied to source)"
   ([^Arena arena image src-image src-rec dst-rec tint-color]
-   (raylib_h/ImageDraw
-    (rstructs/image arena image)
-    (rstructs/image arena src-image)
-    (rstructs/rectangle arena src-rec)
-    (rstructs/rectangle arena dst-rec)
-    (rstructs/color arena tint-color)))
+   (apply-return-first raylib_h/ImageDraw
+                       (rstructs/image arena image)
+                       (rstructs/image arena src-image)
+                       (rstructs/rectangle arena src-rec)
+                       (rstructs/rectangle arena dst-rec)
+                       (rstructs/color arena tint-color)))
   ([image src-image src-rec dst-rec tint-color]
-   (raylib_h/ImageDraw
-    (rstructs/image image)
-    (rstructs/image src-image)
-    (rstructs/rectangle src-rec)
-    (rstructs/rectangle dst-rec)
-    (rstructs/color tint-color))))
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageDraw
+                        (rstructs/image image)
+                        (rstructs/image src-image)
+                        (rstructs/rectangle src-rec)
+                        (rstructs/rectangle dst-rec)
+                        (rstructs/color tint-color)))))
 
 (defn image-draw-text!
   "Draw text (using default font) within an image (destination)"
   ([^Arena arena image text pos-x pos-y font-size color]
-   (raylib_h/ImageDrawText
-    (rstructs/image arena image)
-    (rcore/string arena text)
-    pos-x
-    pos-y
-    font-size
-    (rstructs/color arena color)))
+   (apply-return-first raylib_h/ImageDrawText
+                       (rstructs/image arena image)
+                       (rcore/string arena text)
+                       pos-x
+                       pos-y
+                       font-size
+                       (rstructs/color arena color)))
   ([image text pos-x pos-y font-size color]
-   (raylib_h/ImageDrawText
-    (rstructs/image image)
-    (rcore/string text)
-    pos-x
-    pos-y
-    font-size
-    (rstructs/color color))))
+   (rstructs/get-image (apply-return-first
+                        raylib_h/ImageDrawText
+                        (rstructs/image image)
+                        (rcore/string text)
+                        pos-x
+                        pos-y
+                        font-size
+                        (rstructs/color color)))))
 
 (defn image-draw-text-ex!
   "Draw text (custom sprite font) within an image (destination)"
   ([^Arena arena image font text position-v font-size spacing tint-color]
-   (raylib_h/ImageDrawTextEx
-    (rstructs/image arena image)
-    font
-    (rcore/string arena text)
-    (rstructs/vector2 position-v)
-    font-size
-    spacing
-    (rstructs/color arena tint-color)))
+   (apply-return-first raylib_h/ImageDrawTextEx
+                       (rstructs/image arena image)
+                       (rstructs/font font)
+                       (rcore/string arena text)
+                       (rstructs/vector2 position-v)
+                       font-size
+                       spacing
+                       (rstructs/color arena tint-color)))
   ([image font text position-v font-size spacing tint-color]
-   (raylib_h/ImageDrawTextEx
-    (rstructs/image image)
-    font
-    (rcore/string text)
-    (rstructs/vector2 position-v)
-    font-size
-    spacing
-    (rstructs/color tint-color))))
+   (rstructs/get-image
+    (apply-return-first raylib_h/ImageDrawTextEx
+                        (rstructs/image image)
+                        (rstructs/font font)
+                        (rcore/string text)
+                        (rstructs/vector2 position-v)
+                        font-size
+                        spacing
+                        (rstructs/color tint-color)))))
 
 ;; Texture loading functions
 ;; NOTE: These functions require GPU access
@@ -792,7 +863,7 @@
     (rstructs/vector2 position-v)
     (rstructs/color tint-color))))
 
-(defn draw-texture-pro
+(defn draw-texture-pro!
   "Draw a part of a texture defined by a rectangle with 'pro' parameters"
   ([^Arena arena texture src-rec dest-rec origin-v rotation tint-color]
    (raylib_h/DrawTexturePro
@@ -811,7 +882,7 @@
     rotation
     (rstructs/color tint-color))))
 
-(defn draw-texture-n-patch
+(defn draw-texture-n-patch!
   "Draws a texture (or part of it) that stretches or shrinks nicely"
   ([^Arena arena texture npatch-info dest-rec origin-v rotation tint-color]
    (raylib_h/DrawTextureNPatch
