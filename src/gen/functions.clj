@@ -25,8 +25,9 @@
   int width
   int height
   const char * title"
-  [width height title]
-  (raylib_h/InitWindow width height (string title)))
+  ([^Arena arena width height title]
+   (raylib_h/InitWindow width height (string arena title)))
+  ([width height title] (raylib_h/InitWindow width height (string title))))
 
 (defn window-should-close?
   "Check if KEY_ESCAPE pressed or Close icon pressed"
@@ -127,8 +128,8 @@
 (defn set-window-title
   "Set title for window (only PLATFORM_DESKTOP)
   const char * title"
-  [title]
-  (raylib_h/SetWindowTitle (string title)))
+  ([^Arena arena title] (raylib_h/SetWindowTitle (string arena title)))
+  ([title] (raylib_h/SetWindowTitle (string title))))
 
 (defn set-window-position
   "Set window position on screen (only PLATFORM_DESKTOP)
@@ -252,8 +253,8 @@
 (defn set-clipboard-text
   "Set clipboard text content
   const char * text"
-  [text]
-  (raylib_h/SetClipboardText (string text)))
+  ([^Arena arena text] (raylib_h/SetClipboardText (string arena text)))
+  ([text] (raylib_h/SetClipboardText (string text))))
 
 (defn get-clipboard-text
   "Get clipboard text content"
@@ -408,7 +409,9 @@
   const char * vsFileName
   const char * fsFileName"
   ([^Arena arena vs-file-name fs-file-name]
-   (raylib_h/LoadShader arena (string vs-file-name) (string fs-file-name)))
+   (raylib_h/LoadShader arena
+                        (string arena vs-file-name)
+                        (string arena fs-file-name)))
   ([vs-file-name fs-file-name]
    (rstructs/shader (raylib_h/LoadShader rarena/*current-arena*
                                          (string vs-file-name)
@@ -419,7 +422,9 @@
   const char * vsCode
   const char * fsCode"
   ([^Arena arena vs-code fs-code]
-   (raylib_h/LoadShaderFromMemory arena (string vs-code) (string fs-code)))
+   (raylib_h/LoadShaderFromMemory arena
+                                  (string arena vs-code)
+                                  (string arena fs-code)))
   ([vs-code fs-code]
    (rstructs/shader (raylib_h/LoadShaderFromMemory rarena/*current-arena*
                                                    (string vs-code)
@@ -435,16 +440,22 @@
   "Get shader uniform location
   Shader shader
   const char * uniformName"
-  [shader uniform-name]
-  (raylib_h/GetShaderLocation (rstructs/shader shader) (string uniform-name)))
+  ([^Arena arena shader uniform-name]
+   (raylib_h/GetShaderLocation (rstructs/shader arena shader)
+                               (string arena uniform-name)))
+  ([shader uniform-name]
+   (raylib_h/GetShaderLocation (rstructs/shader shader) (string uniform-name))))
 
 (defn get-shader-location-attrib
   "Get shader attribute location
   Shader shader
   const char * attribName"
-  [shader attrib-name]
-  (raylib_h/GetShaderLocationAttrib (rstructs/shader shader)
-                                    (string attrib-name)))
+  ([^Arena arena shader attrib-name]
+   (raylib_h/GetShaderLocationAttrib (rstructs/shader arena shader)
+                                     (string arena attrib-name)))
+  ([shader attrib-name]
+   (raylib_h/GetShaderLocationAttrib (rstructs/shader shader)
+                                     (string attrib-name))))
 
 (defn set-shader-value
   "Set shader uniform value
@@ -504,8 +515,8 @@
   Camera camera"
   ([^Arena arena mouse-position camera]
    (raylib_h/GetMouseRay arena
-                         (rstructs/vector2 mouse-position)
-                         (rstructs/camera3d camera)))
+                         (rstructs/vector2 arena mouse-position)
+                         (rstructs/camera3d arena camera)))
   ([mouse-position camera]
    (rstructs/ray (raylib_h/GetMouseRay rarena/*current-arena*
                                        (rstructs/vector2 mouse-position)
@@ -515,7 +526,7 @@
   "Get camera transform matrix (view matrix)
   Camera camera"
   ([^Arena arena camera]
-   (raylib_h/GetCameraMatrix arena (rstructs/camera3d camera)))
+   (raylib_h/GetCameraMatrix arena (rstructs/camera3d arena camera)))
   ([camera]
    (rstructs/matrix (raylib_h/GetCameraMatrix rarena/*current-arena*
                                               (rstructs/camera3d camera)))))
@@ -524,7 +535,7 @@
   "Get camera 2d transform matrix
   Camera2D camera"
   ([^Arena arena camera]
-   (raylib_h/GetCameraMatrix2D arena (rstructs/camera2d camera)))
+   (raylib_h/GetCameraMatrix2D arena (rstructs/camera2d arena camera)))
   ([camera]
    (rstructs/matrix (raylib_h/GetCameraMatrix2D rarena/*current-arena*
                                                 (rstructs/camera2d camera)))))
@@ -535,8 +546,8 @@
   Camera camera"
   ([^Arena arena position camera]
    (raylib_h/GetWorldToScreen arena
-                              (rstructs/vector3 position)
-                              (rstructs/camera3d camera)))
+                              (rstructs/vector3 arena position)
+                              (rstructs/camera3d arena camera)))
   ([position camera]
    (rstructs/vector2 (raylib_h/GetWorldToScreen rarena/*current-arena*
                                                 (rstructs/vector3 position)
@@ -548,8 +559,8 @@
   Camera2D camera"
   ([^Arena arena position camera]
    (raylib_h/GetScreenToWorld2D arena
-                                (rstructs/vector2 position)
-                                (rstructs/camera2d camera)))
+                                (rstructs/vector2 arena position)
+                                (rstructs/camera2d arena camera)))
   ([position camera]
    (rstructs/vector2 (raylib_h/GetScreenToWorld2D rarena/*current-arena*
                                                   (rstructs/vector2 position)
@@ -563,8 +574,8 @@
   int height"
   ([^Arena arena position camera width height]
    (raylib_h/GetWorldToScreenEx arena
-                                (rstructs/vector3 position)
-                                (rstructs/camera3d camera)
+                                (rstructs/vector3 arena position)
+                                (rstructs/camera3d arena camera)
                                 width
                                 height))
   ([position camera width height]
@@ -580,8 +591,8 @@
   Camera2D camera"
   ([^Arena arena position camera]
    (raylib_h/GetWorldToScreen2D arena
-                                (rstructs/vector2 position)
-                                (rstructs/camera2d camera)))
+                                (rstructs/vector2 arena position)
+                                (rstructs/camera2d arena camera)))
   ([position camera]
    (rstructs/vector2 (raylib_h/GetWorldToScreen2D rarena/*current-arena*
                                                   (rstructs/vector2 position)
@@ -621,8 +632,9 @@
 (defn take-screenshot
   "Takes a screenshot of current screen (filename extension defines format)
   const char * fileName"
-  [file-name]
-  (raylib_h/TakeScreenshot (string file-name)))
+  ([^Arena arena file-name]
+   (raylib_h/TakeScreenshot (string arena file-name)))
+  ([file-name] (raylib_h/TakeScreenshot (string file-name))))
 
 (defn set-config-flags
   "Setup init configuration flags (view FLAGS)
@@ -635,8 +647,9 @@
   int logLevel
   const char * text
   ... args"
-  [log-level text args]
-  (raylib_h/TraceLog log-level (string text) args))
+  ([^Arena arena log-level text args]
+   (raylib_h/TraceLog log-level (string arena text) args))
+  ([log-level text args] (raylib_h/TraceLog log-level (string text) args)))
 
 (defn set-trace-log-level
   "Set the current threshold (minimum) log level
@@ -666,8 +679,8 @@
 (defn open-url
   "Open URL with default system browser (if available)
   const char * url"
-  [url]
-  (raylib_h/OpenURL (string url)))
+  ([^Arena arena url] (raylib_h/OpenURL (string arena url)))
+  ([url] (raylib_h/OpenURL (string url))))
 
 (defn set-trace-log-callback
   "Set custom trace log
@@ -703,8 +716,10 @@
   "Load file data as byte array (read)
   const char * fileName
   unsigned int * bytesRead"
-  [file-name bytes-read]
-  (raylib_h/LoadFileData (string file-name) bytes-read))
+  ([^Arena arena file-name bytes-read]
+   (raylib_h/LoadFileData (string arena file-name) bytes-read))
+  ([file-name bytes-read]
+   (raylib_h/LoadFileData (string file-name) bytes-read)))
 
 (defn unload-file-data
   "Unload file data allocated by LoadFileData()
@@ -717,22 +732,27 @@
   const char * fileName
   void * data
   unsigned int bytesToWrite"
-  [file-name data bytes-to-write]
-  (raylib_h/SaveFileData (string file-name) data bytes-to-write))
+  ([^Arena arena file-name data bytes-to-write]
+   (raylib_h/SaveFileData (string arena file-name) data bytes-to-write))
+  ([file-name data bytes-to-write]
+   (raylib_h/SaveFileData (string file-name) data bytes-to-write)))
 
 (defn export-data-as-code?
   "Export data to code (.h), returns true on success
   const unsigned char * data
   unsigned int size
   const char * fileName"
-  [data size file-name]
-  (raylib_h/ExportDataAsCode data size (string file-name)))
+  ([^Arena arena data size file-name]
+   (raylib_h/ExportDataAsCode data size (string arena file-name)))
+  ([data size file-name]
+   (raylib_h/ExportDataAsCode data size (string file-name))))
 
 (defn load-file-text
   "Load text data from file (read), returns a '\\0' terminated string
   const char * fileName"
-  [file-name]
-  (raylib_h/LoadFileText (string file-name)))
+  ([^Arena arena file-name]
+   (raylib_h/LoadFileText (string arena file-name)))
+  ([file-name] (raylib_h/LoadFileText (string file-name))))
 
 (defn unload-file-text
   "Unload file text data allocated by LoadFileText()
@@ -744,63 +764,72 @@
   "Save text data to file (write), string must be '\\0' terminated, returns true on success
   const char * fileName
   char * text"
-  [file-name text]
-  (raylib_h/SaveFileText (string file-name) text))
+  ([^Arena arena file-name text]
+   (raylib_h/SaveFileText (string arena file-name) text))
+  ([file-name text] (raylib_h/SaveFileText (string file-name) text)))
 
 (defn file-exists?
   "Check if file exists
   const char * fileName"
-  [file-name]
-  (raylib_h/FileExists (string file-name)))
+  ([^Arena arena file-name] (raylib_h/FileExists (string arena file-name)))
+  ([file-name] (raylib_h/FileExists (string file-name))))
 
 (defn directory-exists?
   "Check if a directory path exists
   const char * dirPath"
-  [dir-path]
-  (raylib_h/DirectoryExists (string dir-path)))
+  ([^Arena arena dir-path]
+   (raylib_h/DirectoryExists (string arena dir-path)))
+  ([dir-path] (raylib_h/DirectoryExists (string dir-path))))
 
 (defn file-extension?
   "Check file extension (including point: .png, .wav)
   const char * fileName
   const char * ext"
-  [file-name ext]
-  (raylib_h/IsFileExtension (string file-name) (string ext)))
+  ([^Arena arena file-name ext]
+   (raylib_h/IsFileExtension (string arena file-name) (string arena ext)))
+  ([file-name ext] (raylib_h/IsFileExtension (string file-name) (string ext))))
 
 (defn get-file-length
   "Get file length in bytes (NOTE: GetFileSize() conflicts with windows.h)
   const char * fileName"
-  [file-name]
-  (raylib_h/GetFileLength (string file-name)))
+  ([^Arena arena file-name]
+   (raylib_h/GetFileLength (string arena file-name)))
+  ([file-name] (raylib_h/GetFileLength (string file-name))))
 
 (defn get-file-extension
   "Get pointer to extension for a filename string (includes dot: '.png')
   const char * fileName"
-  [file-name]
-  (raylib_h/GetFileExtension (string file-name)))
+  ([^Arena arena file-name]
+   (raylib_h/GetFileExtension (string arena file-name)))
+  ([file-name] (raylib_h/GetFileExtension (string file-name))))
 
 (defn get-file-name
   "Get pointer to filename for a path string
   const char * filePath"
-  [file-path]
-  (raylib_h/GetFileName (string file-path)))
+  ([^Arena arena file-path]
+   (raylib_h/GetFileName (string arena file-path)))
+  ([file-path] (raylib_h/GetFileName (string file-path))))
 
 (defn get-file-name-without-ext
   "Get filename string without extension (uses static string)
   const char * filePath"
-  [file-path]
-  (raylib_h/GetFileNameWithoutExt (string file-path)))
+  ([^Arena arena file-path]
+   (raylib_h/GetFileNameWithoutExt (string arena file-path)))
+  ([file-path] (raylib_h/GetFileNameWithoutExt (string file-path))))
 
 (defn get-directory-path
   "Get full path for a given fileName with path (uses static string)
   const char * filePath"
-  [file-path]
-  (raylib_h/GetDirectoryPath (string file-path)))
+  ([^Arena arena file-path]
+   (raylib_h/GetDirectoryPath (string arena file-path)))
+  ([file-path] (raylib_h/GetDirectoryPath (string file-path))))
 
 (defn get-prev-directory-path
   "Get previous directory path for a given path (uses static string)
   const char * dirPath"
-  [dir-path]
-  (raylib_h/GetPrevDirectoryPath (string dir-path)))
+  ([^Arena arena dir-path]
+   (raylib_h/GetPrevDirectoryPath (string arena dir-path)))
+  ([dir-path] (raylib_h/GetPrevDirectoryPath (string dir-path))))
 
 (defn get-working-directory
   "Get current working directory (uses static string)"
@@ -815,20 +844,20 @@
 (defn change-directory?
   "Change working directory, return true on success
   const char * dir"
-  [dir]
-  (raylib_h/ChangeDirectory (string dir)))
+  ([^Arena arena dir] (raylib_h/ChangeDirectory (string arena dir)))
+  ([dir] (raylib_h/ChangeDirectory (string dir))))
 
 (defn path-file?
   "Check if a given path is a file or a directory
   const char * path"
-  [path]
-  (raylib_h/IsPathFile (string path)))
+  ([^Arena arena path] (raylib_h/IsPathFile (string arena path)))
+  ([path] (raylib_h/IsPathFile (string path))))
 
 (defn load-directory-files
   "Load directory filepaths
   const char * dirPath"
   ([^Arena arena dir-path]
-   (raylib_h/LoadDirectoryFiles arena (string dir-path)))
+   (raylib_h/LoadDirectoryFiles arena (string arena dir-path)))
   ([dir-path]
    (rstructs/file-path-list (raylib_h/LoadDirectoryFiles rarena/*current-arena*
                                                          (string dir-path)))))
@@ -840,8 +869,8 @@
   bool scanSubdirs"
   ([^Arena arena base-path filter scan-subdirs]
    (raylib_h/LoadDirectoryFilesEx arena
-                                  (string base-path)
-                                  (string filter)
+                                  (string arena base-path)
+                                  (string arena filter)
                                   scan-subdirs))
   ([base-path filter scan-subdirs]
    (rstructs/file-path-list (raylib_h/LoadDirectoryFilesEx
@@ -877,8 +906,9 @@
 (defn get-file-mod-time
   "Get file modification time (last write time)
   const char * fileName"
-  [file-name]
-  (raylib_h/GetFileModTime (string file-name)))
+  ([^Arena arena file-name]
+   (raylib_h/GetFileModTime (string arena file-name)))
+  ([file-name] (raylib_h/GetFileModTime (string file-name))))
 
 (defn compress-data
   "Compress data (DEFLATE algorithm), memory must be MemFree()
@@ -1012,8 +1042,9 @@
 (defn set-gamepad-mappings
   "Set internal gamepad mappings (SDL_GameControllerDB)
   const char * mappings"
-  [mappings]
-  (raylib_h/SetGamepadMappings (string mappings)))
+  ([^Arena arena mappings]
+   (raylib_h/SetGamepadMappings (string arena mappings)))
+  ([mappings] (raylib_h/SetGamepadMappings (string mappings))))
 
 (defn mouse-button-pressed?
   "Check if a mouse button has been pressed once
@@ -1745,8 +1776,8 @@
   Rectangle rec2"
   ([^Arena arena rec1 rec2]
    (raylib_h/GetCollisionRec arena
-                             (rstructs/rectangle rec1)
-                             (rstructs/rectangle rec2)))
+                             (rstructs/rectangle arena rec1)
+                             (rstructs/rectangle arena rec2)))
   ([rec1 rec2]
    (rstructs/rectangle (raylib_h/GetCollisionRec rarena/*current-arena*
                                                  (rstructs/rectangle rec1)
@@ -1755,7 +1786,8 @@
 (defn load-image
   "Load image from file into CPU memory (RAM)
   const char * fileName"
-  ([^Arena arena file-name] (raylib_h/LoadImage arena (string file-name)))
+  ([^Arena arena file-name]
+   (raylib_h/LoadImage arena (string arena file-name)))
   ([file-name]
    (rstructs/image (raylib_h/LoadImage rarena/*current-arena*
                                        (string file-name)))))
@@ -1769,7 +1801,7 @@
   int headerSize"
   ([^Arena arena file-name width height format header-size]
    (raylib_h/LoadImageRaw arena
-                          (string file-name)
+                          (string arena file-name)
                           width
                           height
                           format
@@ -1787,7 +1819,7 @@
   const char * fileName
   int * frames"
   ([^Arena arena file-name frames]
-   (raylib_h/LoadImageAnim arena (string file-name) frames))
+   (raylib_h/LoadImageAnim arena (string arena file-name) frames))
   ([file-name frames]
    (rstructs/image (raylib_h/LoadImageAnim rarena/*current-arena*
                                            (string file-name)
@@ -1799,7 +1831,10 @@
   const unsigned char * fileData
   int dataSize"
   ([^Arena arena file-type file-data data-size]
-   (raylib_h/LoadImageFromMemory arena (string file-type) file-data data-size))
+   (raylib_h/LoadImageFromMemory arena
+                                 (string arena file-type)
+                                 file-data
+                                 data-size))
   ([file-type file-data data-size]
    (rstructs/image (raylib_h/LoadImageFromMemory rarena/*current-arena*
                                                  (string file-type)
@@ -1810,7 +1845,7 @@
   "Load image from GPU texture data
   Texture2D texture"
   ([^Arena arena texture]
-   (raylib_h/LoadImageFromTexture arena (rstructs/texture texture)))
+   (raylib_h/LoadImageFromTexture arena (rstructs/texture arena texture)))
   ([texture]
    (rstructs/image (raylib_h/LoadImageFromTexture rarena/*current-arena*
                                                   (rstructs/texture texture)))))
@@ -1836,15 +1871,20 @@
   "Export image data to file, returns true on success
   Image image
   const char * fileName"
-  [image file-name]
-  (raylib_h/ExportImage (rstructs/image image) (string file-name)))
+  ([^Arena arena image file-name]
+   (raylib_h/ExportImage (rstructs/image arena image) (string arena file-name)))
+  ([image file-name]
+   (raylib_h/ExportImage (rstructs/image image) (string file-name))))
 
 (defn export-image-as-code?
   "Export image as code file defining an array of bytes, returns true on success
   Image image
   const char * fileName"
-  [image file-name]
-  (raylib_h/ExportImageAsCode (rstructs/image image) (string file-name)))
+  ([^Arena arena image file-name]
+   (raylib_h/ExportImageAsCode (rstructs/image arena image)
+                               (string arena file-name)))
+  ([image file-name]
+   (raylib_h/ExportImageAsCode (rstructs/image image) (string file-name))))
 
 (defn gen-image-color
   "Generate image: plain color
@@ -1852,7 +1892,7 @@
   int height
   Color color"
   ([^Arena arena width height color]
-   (raylib_h/GenImageColor arena width height (rstructs/color color)))
+   (raylib_h/GenImageColor arena width height (rstructs/color arena color)))
   ([width height color]
    (rstructs/image (raylib_h/GenImageColor rarena/*current-arena*
                                            width
@@ -1869,8 +1909,8 @@
    (raylib_h/GenImageGradientV arena
                                width
                                height
-                               (rstructs/color top)
-                               (rstructs/color bottom)))
+                               (rstructs/color arena top)
+                               (rstructs/color arena bottom)))
   ([width height top bottom]
    (rstructs/image (raylib_h/GenImageGradientV rarena/*current-arena*
                                                width
@@ -1888,8 +1928,8 @@
    (raylib_h/GenImageGradientH arena
                                width
                                height
-                               (rstructs/color left)
-                               (rstructs/color right)))
+                               (rstructs/color arena left)
+                               (rstructs/color arena right)))
   ([width height left right]
    (rstructs/image (raylib_h/GenImageGradientH rarena/*current-arena*
                                                width
@@ -1909,8 +1949,8 @@
                                     width
                                     height
                                     density
-                                    (rstructs/color inner)
-                                    (rstructs/color outer)))
+                                    (rstructs/color arena inner)
+                                    (rstructs/color arena outer)))
   ([width height density inner outer]
    (rstructs/image (raylib_h/GenImageGradientRadial rarena/*current-arena*
                                                     width
@@ -1933,8 +1973,8 @@
                              height
                              checks-x
                              checks-y
-                             (rstructs/color col1)
-                             (rstructs/color col2)))
+                             (rstructs/color arena col1)
+                             (rstructs/color arena col2)))
   ([width height checks-x checks-y col1 col2]
    (rstructs/image (raylib_h/GenImageChecked rarena/*current-arena*
                                              width
@@ -1991,7 +2031,7 @@
   int height
   const char * text"
   ([^Arena arena width height text]
-   (raylib_h/GenImageText arena width height (string text)))
+   (raylib_h/GenImageText arena width height (string arena text)))
   ([width height text]
    (rstructs/image (raylib_h/GenImageText rarena/*current-arena*
                                           width
@@ -2001,7 +2041,8 @@
 (defn image-copy
   "Create an image duplicate (useful for transformations)
   Image image"
-  ([^Arena arena image] (raylib_h/ImageCopy arena (rstructs/image image)))
+  ([^Arena arena image]
+   (raylib_h/ImageCopy arena (rstructs/image arena image)))
   ([image]
    (rstructs/image (raylib_h/ImageCopy rarena/*current-arena*
                                        (rstructs/image image)))))
@@ -2012,8 +2053,8 @@
   Rectangle rec"
   ([^Arena arena image rec]
    (raylib_h/ImageFromImage arena
-                            (rstructs/image image)
-                            (rstructs/rectangle rec)))
+                            (rstructs/image arena image)
+                            (rstructs/rectangle arena rec)))
   ([image rec]
    (rstructs/image (raylib_h/ImageFromImage rarena/*current-arena*
                                             (rstructs/image image)
@@ -2025,7 +2066,10 @@
   int fontSize
   Color color"
   ([^Arena arena text font-size color]
-   (raylib_h/ImageText arena (string text) font-size (rstructs/color color)))
+   (raylib_h/ImageText arena
+                       (string arena text)
+                       font-size
+                       (rstructs/color arena color)))
   ([text font-size color]
    (rstructs/image (raylib_h/ImageText rarena/*current-arena*
                                        (string text)
@@ -2041,11 +2085,11 @@
   Color tint"
   ([^Arena arena font text font-size spacing tint]
    (raylib_h/ImageTextEx arena
-                         (rstructs/font font)
-                         (string text)
+                         (rstructs/font arena font)
+                         (string arena text)
                          font-size
                          spacing
-                         (rstructs/color tint)))
+                         (rstructs/color arena tint)))
   ([font text font-size spacing tint]
    (rstructs/image (raylib_h/ImageTextEx rarena/*current-arena*
                                          (rstructs/font font)
@@ -2258,7 +2302,7 @@
   Image image
   float threshold"
   ([^Arena arena image threshold]
-   (raylib_h/GetImageAlphaBorder arena (rstructs/image image) threshold))
+   (raylib_h/GetImageAlphaBorder arena (rstructs/image arena image) threshold))
   ([image threshold]
    (rstructs/rectangle (raylib_h/GetImageAlphaBorder rarena/*current-arena*
                                                      (rstructs/image image)
@@ -2270,7 +2314,7 @@
   int x
   int y"
   ([^Arena arena image x y]
-   (raylib_h/GetImageColor arena (rstructs/image image) x y))
+   (raylib_h/GetImageColor arena (rstructs/image arena image) x y))
   ([image x y]
    (rstructs/color (raylib_h/GetImageColor rarena/*current-arena*
                                            (rstructs/image image)
@@ -2455,13 +2499,20 @@
   int posY
   int fontSize
   Color color"
-  [dst text pos-x pos-y font-size color]
-  (raylib_h/ImageDrawText dst
-                          (string text)
-                          pos-x
-                          pos-y
-                          font-size
-                          (rstructs/color color)))
+  ([^Arena arena dst text pos-x pos-y font-size color]
+   (raylib_h/ImageDrawText dst
+                           (string arena text)
+                           pos-x
+                           pos-y
+                           font-size
+                           (rstructs/color arena color)))
+  ([dst text pos-x pos-y font-size color]
+   (raylib_h/ImageDrawText dst
+                           (string text)
+                           pos-x
+                           pos-y
+                           font-size
+                           (rstructs/color color))))
 
 (defn image-draw-text-ex
   "Draw text (custom sprite font) within an image (destination)
@@ -2472,20 +2523,28 @@
   float fontSize
   float spacing
   Color tint"
-  [dst font text position font-size spacing tint]
-  (raylib_h/ImageDrawTextEx dst
-                            (rstructs/font font)
-                            (string text)
-                            (rstructs/vector2 position)
-                            font-size
-                            spacing
-                            (rstructs/color tint)))
+  ([^Arena arena dst font text position font-size spacing tint]
+   (raylib_h/ImageDrawTextEx dst
+                             (rstructs/font arena font)
+                             (string arena text)
+                             (rstructs/vector2 arena position)
+                             font-size
+                             spacing
+                             (rstructs/color arena tint)))
+  ([dst font text position font-size spacing tint]
+   (raylib_h/ImageDrawTextEx dst
+                             (rstructs/font font)
+                             (string text)
+                             (rstructs/vector2 position)
+                             font-size
+                             spacing
+                             (rstructs/color tint))))
 
 (defn load-texture
   "Load texture from file into GPU memory (VRAM)
   const char * fileName"
   ([^Arena arena file-name]
-   (raylib_h/LoadTexture arena (string file-name)))
+   (raylib_h/LoadTexture arena (string arena file-name)))
   ([file-name]
    (rstructs/texture (raylib_h/LoadTexture rarena/*current-arena*
                                            (string file-name)))))
@@ -2494,7 +2553,7 @@
   "Load texture from image data
   Image image"
   ([^Arena arena image]
-   (raylib_h/LoadTextureFromImage arena (rstructs/image image)))
+   (raylib_h/LoadTextureFromImage arena (rstructs/image arena image)))
   ([image]
    (rstructs/texture (raylib_h/LoadTextureFromImage rarena/*current-arena*
                                                     (rstructs/image image)))))
@@ -2504,7 +2563,7 @@
   Image image
   int layout"
   ([^Arena arena image layout]
-   (raylib_h/LoadTextureCubemap arena (rstructs/image image) layout))
+   (raylib_h/LoadTextureCubemap arena (rstructs/image arena image) layout))
   ([image layout]
    (rstructs/texture (raylib_h/LoadTextureCubemap rarena/*current-arena*
                                                   (rstructs/image image)
@@ -2666,7 +2725,7 @@
   Color color
   float alpha"
   ([^Arena arena color alpha]
-   (raylib_h/Fade arena (rstructs/color color) alpha))
+   (raylib_h/Fade arena (rstructs/color arena color) alpha))
   ([color alpha]
    (rstructs/color
      (raylib_h/Fade rarena/*current-arena* (rstructs/color color) alpha))))
@@ -2681,7 +2740,7 @@
   "Get Color normalized as float [0..1]
   Color color"
   ([^Arena arena color]
-   (raylib_h/ColorNormalize arena (rstructs/color color)))
+   (raylib_h/ColorNormalize arena (rstructs/color arena color)))
   ([color]
    (rstructs/vector4 (raylib_h/ColorNormalize rarena/*current-arena*
                                               (rstructs/color color)))))
@@ -2690,7 +2749,7 @@
   "Get Color from normalized values [0..1]
   Vector4 normalized"
   ([^Arena arena normalized]
-   (raylib_h/ColorFromNormalized arena (rstructs/vector4 normalized)))
+   (raylib_h/ColorFromNormalized arena (rstructs/vector4 arena normalized)))
   ([normalized]
    (rstructs/color (raylib_h/ColorFromNormalized rarena/*current-arena*
                                                  (rstructs/vector4
@@ -2699,7 +2758,8 @@
 (defn color-to-hsv
   "Get HSV values for a Color, hue [0..360], saturation/value [0..1]
   Color color"
-  ([^Arena arena color] (raylib_h/ColorToHSV arena (rstructs/color color)))
+  ([^Arena arena color]
+   (raylib_h/ColorToHSV arena (rstructs/color arena color)))
   ([color]
    (rstructs/vector3 (raylib_h/ColorToHSV rarena/*current-arena*
                                           (rstructs/color color)))))
@@ -2720,7 +2780,9 @@
   Color color
   Color tint"
   ([^Arena arena color tint]
-   (raylib_h/ColorTint arena (rstructs/color color) (rstructs/color tint)))
+   (raylib_h/ColorTint arena
+                       (rstructs/color arena color)
+                       (rstructs/color arena tint)))
   ([color tint]
    (rstructs/color (raylib_h/ColorTint rarena/*current-arena*
                                        (rstructs/color color)
@@ -2731,7 +2793,7 @@
   Color color
   float factor"
   ([^Arena arena color factor]
-   (raylib_h/ColorBrightness arena (rstructs/color color) factor))
+   (raylib_h/ColorBrightness arena (rstructs/color arena color) factor))
   ([color factor]
    (rstructs/color (raylib_h/ColorBrightness rarena/*current-arena*
                                              (rstructs/color color)
@@ -2742,7 +2804,7 @@
   Color color
   float contrast"
   ([^Arena arena color contrast]
-   (raylib_h/ColorContrast arena (rstructs/color color) contrast))
+   (raylib_h/ColorContrast arena (rstructs/color arena color) contrast))
   ([color contrast]
    (rstructs/color (raylib_h/ColorContrast rarena/*current-arena*
                                            (rstructs/color color)
@@ -2753,7 +2815,7 @@
   Color color
   float alpha"
   ([^Arena arena color alpha]
-   (raylib_h/ColorAlpha arena (rstructs/color color) alpha))
+   (raylib_h/ColorAlpha arena (rstructs/color arena color) alpha))
   ([color alpha]
    (rstructs/color (raylib_h/ColorAlpha rarena/*current-arena*
                                         (rstructs/color color)
@@ -2766,9 +2828,9 @@
   Color tint"
   ([^Arena arena dst src tint]
    (raylib_h/ColorAlphaBlend arena
-                             (rstructs/color dst)
-                             (rstructs/color src)
-                             (rstructs/color tint)))
+                             (rstructs/color arena dst)
+                             (rstructs/color arena src)
+                             (rstructs/color arena tint)))
   ([dst src tint]
    (rstructs/color (raylib_h/ColorAlphaBlend rarena/*current-arena*
                                              (rstructs/color dst)
@@ -2816,7 +2878,8 @@
 (defn load-font
   "Load font from file into GPU memory (VRAM)
   const char * fileName"
-  ([^Arena arena file-name] (raylib_h/LoadFont arena (string file-name)))
+  ([^Arena arena file-name]
+   (raylib_h/LoadFont arena (string arena file-name)))
   ([file-name]
    (rstructs/font (raylib_h/LoadFont rarena/*current-arena*
                                      (string file-name)))))
@@ -2829,7 +2892,7 @@
   int glyphCount"
   ([^Arena arena file-name font-size font-chars glyph-count]
    (raylib_h/LoadFontEx arena
-                        (string file-name)
+                        (string arena file-name)
                         font-size
                         font-chars
                         glyph-count))
@@ -2847,8 +2910,8 @@
   int firstChar"
   ([^Arena arena image key first-char]
    (raylib_h/LoadFontFromImage arena
-                               (rstructs/image image)
-                               (rstructs/color key)
+                               (rstructs/image arena image)
+                               (rstructs/color arena key)
                                first-char))
   ([image key first-char]
    (rstructs/font (raylib_h/LoadFontFromImage rarena/*current-arena*
@@ -2867,7 +2930,7 @@
   ([^Arena arena file-type file-data data-size font-size font-chars
     glyph-count]
    (raylib_h/LoadFontFromMemory arena
-                                (string file-type)
+                                (string arena file-type)
                                 file-data
                                 data-size
                                 font-size
@@ -2946,8 +3009,11 @@
   "Export font as code file, returns true on success
   Font font
   const char * fileName"
-  [font file-name]
-  (raylib_h/ExportFontAsCode (rstructs/font font) (string file-name)))
+  ([^Arena arena font file-name]
+   (raylib_h/ExportFontAsCode (rstructs/font arena font)
+                              (string arena file-name)))
+  ([font file-name]
+   (raylib_h/ExportFontAsCode (rstructs/font font) (string file-name))))
 
 (defn draw-fps
   "Draw current FPS
@@ -2963,12 +3029,18 @@
   int posY
   int fontSize
   Color color"
-  [text pos-x pos-y font-size color]
-  (raylib_h/DrawText (string text)
-                     pos-x
-                     pos-y
-                     font-size
-                     (rstructs/color color)))
+  ([^Arena arena text pos-x pos-y font-size color]
+   (raylib_h/DrawText (string arena text)
+                      pos-x
+                      pos-y
+                      font-size
+                      (rstructs/color arena color)))
+  ([text pos-x pos-y font-size color]
+   (raylib_h/DrawText (string text)
+                      pos-x
+                      pos-y
+                      font-size
+                      (rstructs/color color))))
 
 (defn draw-text-ex
   "Draw text using font and additional parameters
@@ -2978,13 +3050,20 @@
   float fontSize
   float spacing
   Color tint"
-  [font text position font-size spacing tint]
-  (raylib_h/DrawTextEx (rstructs/font font)
-                       (string text)
-                       (rstructs/vector2 position)
-                       font-size
-                       spacing
-                       (rstructs/color tint)))
+  ([^Arena arena font text position font-size spacing tint]
+   (raylib_h/DrawTextEx (rstructs/font arena font)
+                        (string arena text)
+                        (rstructs/vector2 arena position)
+                        font-size
+                        spacing
+                        (rstructs/color arena tint)))
+  ([font text position font-size spacing tint]
+   (raylib_h/DrawTextEx (rstructs/font font)
+                        (string text)
+                        (rstructs/vector2 position)
+                        font-size
+                        spacing
+                        (rstructs/color tint))))
 
 (defn draw-text-pro
   "Draw text using Font and pro parameters (rotation)
@@ -2996,15 +3075,24 @@
   float fontSize
   float spacing
   Color tint"
-  [font text position origin rotation font-size spacing tint]
-  (raylib_h/DrawTextPro (rstructs/font font)
-                        (string text)
-                        (rstructs/vector2 position)
-                        (rstructs/vector2 origin)
-                        rotation
-                        font-size
-                        spacing
-                        (rstructs/color tint)))
+  ([^Arena arena font text position origin rotation font-size spacing tint]
+   (raylib_h/DrawTextPro (rstructs/font arena font)
+                         (string arena text)
+                         (rstructs/vector2 arena position)
+                         (rstructs/vector2 arena origin)
+                         rotation
+                         font-size
+                         spacing
+                         (rstructs/color arena tint)))
+  ([font text position origin rotation font-size spacing tint]
+   (raylib_h/DrawTextPro (rstructs/font font)
+                         (string text)
+                         (rstructs/vector2 position)
+                         (rstructs/vector2 origin)
+                         rotation
+                         font-size
+                         spacing
+                         (rstructs/color tint))))
 
 (defn draw-text-codepoint
   "Draw one character (codepoint)
@@ -3042,8 +3130,9 @@
   "Measure string width for default font
   const char * text
   int fontSize"
-  [text font-size]
-  (raylib_h/MeasureText (string text) font-size))
+  ([^Arena arena text font-size]
+   (raylib_h/MeasureText (string arena text) font-size))
+  ([text font-size] (raylib_h/MeasureText (string text) font-size)))
 
 (defn measure-text-ex
   "Measure string size for Font
@@ -3053,8 +3142,8 @@
   float spacing"
   ([^Arena arena font text font-size spacing]
    (raylib_h/MeasureTextEx arena
-                           (rstructs/font font)
-                           (string text)
+                           (rstructs/font arena font)
+                           (string arena text)
                            font-size
                            spacing))
   ([font text font-size spacing]
@@ -3076,7 +3165,7 @@
   Font font
   int codepoint"
   ([^Arena arena font codepoint]
-   (raylib_h/GetGlyphInfo arena (rstructs/font font) codepoint))
+   (raylib_h/GetGlyphInfo arena (rstructs/font arena font) codepoint))
   ([font codepoint]
    (rstructs/glyph-info (raylib_h/GetGlyphInfo rarena/*current-arena*
                                                (rstructs/font font)
@@ -3087,7 +3176,7 @@
   Font font
   int codepoint"
   ([^Arena arena font codepoint]
-   (raylib_h/GetGlyphAtlasRec arena (rstructs/font font) codepoint))
+   (raylib_h/GetGlyphAtlasRec arena (rstructs/font arena font) codepoint))
   ([font codepoint]
    (rstructs/rectangle (raylib_h/GetGlyphAtlasRec rarena/*current-arena*
                                                   (rstructs/font font)
@@ -3110,8 +3199,9 @@
   "Load all codepoints from a UTF-8 text string, codepoints count returned by parameter
   const char * text
   int * count"
-  [text count]
-  (raylib_h/LoadCodepoints (string text) count))
+  ([^Arena arena text count]
+   (raylib_h/LoadCodepoints (string arena text) count))
+  ([text count] (raylib_h/LoadCodepoints (string text) count)))
 
 (defn unload-codepoints
   "Unload codepoints data from memory
@@ -3122,29 +3212,34 @@
 (defn get-codepoint-count
   "Get total number of codepoints in a UTF-8 encoded string
   const char * text"
-  [text]
-  (raylib_h/GetCodepointCount (string text)))
+  ([^Arena arena text] (raylib_h/GetCodepointCount (string arena text)))
+  ([text] (raylib_h/GetCodepointCount (string text))))
 
 (defn get-codepoint
   "Get next codepoint in a UTF-8 encoded string, 0x3f('?') is returned on failure
   const char * text
   int * codepointSize"
-  [text codepoint-size]
-  (raylib_h/GetCodepoint (string text) codepoint-size))
+  ([^Arena arena text codepoint-size]
+   (raylib_h/GetCodepoint (string arena text) codepoint-size))
+  ([text codepoint-size] (raylib_h/GetCodepoint (string text) codepoint-size)))
 
 (defn get-codepoint-next
   "Get next codepoint in a UTF-8 encoded string, 0x3f('?') is returned on failure
   const char * text
   int * codepointSize"
-  [text codepoint-size]
-  (raylib_h/GetCodepointNext (string text) codepoint-size))
+  ([^Arena arena text codepoint-size]
+   (raylib_h/GetCodepointNext (string arena text) codepoint-size))
+  ([text codepoint-size]
+   (raylib_h/GetCodepointNext (string text) codepoint-size)))
 
 (defn get-codepoint-previous
   "Get previous codepoint in a UTF-8 encoded string, 0x3f('?') is returned on failure
   const char * text
   int * codepointSize"
-  [text codepoint-size]
-  (raylib_h/GetCodepointPrevious (string text) codepoint-size))
+  ([^Arena arena text codepoint-size]
+   (raylib_h/GetCodepointPrevious (string arena text) codepoint-size))
+  ([text codepoint-size]
+   (raylib_h/GetCodepointPrevious (string text) codepoint-size)))
 
 (defn codepoint-to-utf8
   "Encode one codepoint into UTF-8 byte array (array length returned as parameter)
@@ -3157,107 +3252,117 @@
   "Copy one string to another, returns bytes copied
   char * dst
   const char * src"
-  [dst src]
-  (raylib_h/TextCopy dst (string src)))
+  ([^Arena arena dst src] (raylib_h/TextCopy dst (string arena src)))
+  ([dst src] (raylib_h/TextCopy dst (string src))))
 
 (defn text-is-equal?
   "Check if two text string are equal
   const char * text1
   const char * text2"
-  [text1 text2]
-  (raylib_h/TextIsEqual (string text1) (string text2)))
+  ([^Arena arena text1 text2]
+   (raylib_h/TextIsEqual (string arena text1) (string arena text2)))
+  ([text1 text2] (raylib_h/TextIsEqual (string text1) (string text2))))
 
 (defn text-length
   "Get text length, checks for '\\0' ending
   const char * text"
-  [text]
-  (raylib_h/TextLength (string text)))
+  ([^Arena arena text] (raylib_h/TextLength (string arena text)))
+  ([text] (raylib_h/TextLength (string text))))
 
 (defn text-format
   "Text formatting with variables (sprintf() style)
   const char * text
   ... args"
-  [text args]
-  (raylib_h/TextFormat (string text) args))
+  ([^Arena arena text args] (raylib_h/TextFormat (string arena text) args))
+  ([text args] (raylib_h/TextFormat (string text) args)))
 
 (defn text-subtext
   "Get a piece of a text string
   const char * text
   int position
   int length"
-  [text position length]
-  (raylib_h/TextSubtext (string text) position length))
+  ([^Arena arena text position length]
+   (raylib_h/TextSubtext (string arena text) position length))
+  ([text position length] (raylib_h/TextSubtext (string text) position length)))
 
 (defn text-replace
   "Replace text string (WARNING: memory must be freed!)
   char * text
   const char * replace
   const char * by"
-  [text replace by]
-  (raylib_h/TextReplace text (string replace) (string by)))
+  ([^Arena arena text replace by]
+   (raylib_h/TextReplace text (string arena replace) (string arena by)))
+  ([text replace by] (raylib_h/TextReplace text (string replace) (string by))))
 
 (defn text-insert
   "Insert text in a position (WARNING: memory must be freed!)
   const char * text
   const char * insert
   int position"
-  [text insert position]
-  (raylib_h/TextInsert (string text) (string insert) position))
+  ([^Arena arena text insert position]
+   (raylib_h/TextInsert (string arena text) (string arena insert) position))
+  ([text insert position]
+   (raylib_h/TextInsert (string text) (string insert) position)))
 
 (defn text-join
   "Join text strings with delimiter
   const char ** textList
   int count
   const char * delimiter"
-  [text-list count delimiter]
-  (raylib_h/TextJoin text-list count (string delimiter)))
+  ([^Arena arena text-list count delimiter]
+   (raylib_h/TextJoin text-list count (string arena delimiter)))
+  ([text-list count delimiter]
+   (raylib_h/TextJoin text-list count (string delimiter))))
 
 (defn text-split
   "Split text into multiple strings
   const char * text
   char delimiter
   int * count"
-  [text delimiter count]
-  (raylib_h/TextSplit (string text) delimiter count))
+  ([^Arena arena text delimiter count]
+   (raylib_h/TextSplit (string arena text) delimiter count))
+  ([text delimiter count] (raylib_h/TextSplit (string text) delimiter count)))
 
 (defn text-append
   "Append text at specific position and move cursor!
   char * text
   const char * append
   int * position"
-  [text append position]
-  (raylib_h/TextAppend text (string append) position))
+  ([^Arena arena text append position]
+   (raylib_h/TextAppend text (string arena append) position))
+  ([text append position] (raylib_h/TextAppend text (string append) position)))
 
 (defn text-find-index
   "Find first text occurrence within a string
   const char * text
   const char * find"
-  [text find]
-  (raylib_h/TextFindIndex (string text) (string find)))
+  ([^Arena arena text find]
+   (raylib_h/TextFindIndex (string arena text) (string arena find)))
+  ([text find] (raylib_h/TextFindIndex (string text) (string find))))
 
 (defn text-to-upper
   "Get upper case version of provided string
   const char * text"
-  [text]
-  (raylib_h/TextToUpper (string text)))
+  ([^Arena arena text] (raylib_h/TextToUpper (string arena text)))
+  ([text] (raylib_h/TextToUpper (string text))))
 
 (defn text-to-lower
   "Get lower case version of provided string
   const char * text"
-  [text]
-  (raylib_h/TextToLower (string text)))
+  ([^Arena arena text] (raylib_h/TextToLower (string arena text)))
+  ([text] (raylib_h/TextToLower (string text))))
 
 (defn text-to-pascal
   "Get Pascal case notation version of provided string
   const char * text"
-  [text]
-  (raylib_h/TextToPascal (string text)))
+  ([^Arena arena text] (raylib_h/TextToPascal (string arena text)))
+  ([text] (raylib_h/TextToPascal (string text))))
 
 (defn text-to-integer
   "Get integer value from text (negative values not supported)
   const char * text"
-  [text]
-  (raylib_h/TextToInteger (string text)))
+  ([^Arena arena text] (raylib_h/TextToInteger (string arena text)))
+  ([text] (raylib_h/TextToInteger (string text))))
 
 (defn draw-line3d
   "Draw a line in 3D world space
@@ -3519,7 +3624,8 @@
 (defn load-model
   "Load model from files (meshes and materials)
   const char * fileName"
-  ([^Arena arena file-name] (raylib_h/LoadModel arena (string file-name)))
+  ([^Arena arena file-name]
+   (raylib_h/LoadModel arena (string arena file-name)))
   ([file-name]
    (rstructs/model (raylib_h/LoadModel rarena/*current-arena*
                                        (string file-name)))))
@@ -3528,7 +3634,7 @@
   "Load model from generated mesh (default material)
   Mesh mesh"
   ([^Arena arena mesh]
-   (raylib_h/LoadModelFromMesh arena (rstructs/mesh mesh)))
+   (raylib_h/LoadModelFromMesh arena (rstructs/mesh arena mesh)))
   ([mesh]
    (rstructs/model (raylib_h/LoadModelFromMesh rarena/*current-arena*
                                                (rstructs/mesh mesh)))))
@@ -3549,7 +3655,7 @@
   "Compute model bounding box limits (considers all meshes)
   Model model"
   ([^Arena arena model]
-   (raylib_h/GetModelBoundingBox arena (rstructs/model model)))
+   (raylib_h/GetModelBoundingBox arena (rstructs/model arena model)))
   ([model]
    (rstructs/bounding-box (raylib_h/GetModelBoundingBox rarena/*current-arena*
                                                         (rstructs/model
@@ -3717,14 +3823,16 @@
   "Export mesh data to file, returns true on success
   Mesh mesh
   const char * fileName"
-  [mesh file-name]
-  (raylib_h/ExportMesh (rstructs/mesh mesh) (string file-name)))
+  ([^Arena arena mesh file-name]
+   (raylib_h/ExportMesh (rstructs/mesh arena mesh) (string arena file-name)))
+  ([mesh file-name]
+   (raylib_h/ExportMesh (rstructs/mesh mesh) (string file-name))))
 
 (defn get-mesh-bounding-box
   "Compute mesh bounding box limits
   Mesh mesh"
   ([^Arena arena mesh]
-   (raylib_h/GetMeshBoundingBox arena (rstructs/mesh mesh)))
+   (raylib_h/GetMeshBoundingBox arena (rstructs/mesh arena mesh)))
   ([mesh]
    (rstructs/bounding-box (raylib_h/GetMeshBoundingBox rarena/*current-arena*
                                                        (rstructs/mesh mesh)))))
@@ -3840,8 +3948,8 @@
   Vector3 size"
   ([^Arena arena heightmap size]
    (raylib_h/GenMeshHeightmap arena
-                              (rstructs/image heightmap)
-                              (rstructs/vector3 size)))
+                              (rstructs/image arena heightmap)
+                              (rstructs/vector3 arena size)))
   ([heightmap size]
    (rstructs/mesh (raylib_h/GenMeshHeightmap rarena/*current-arena*
                                              (rstructs/image heightmap)
@@ -3853,8 +3961,8 @@
   Vector3 cubeSize"
   ([^Arena arena cubicmap cube-size]
    (raylib_h/GenMeshCubicmap arena
-                             (rstructs/image cubicmap)
-                             (rstructs/vector3 cube-size)))
+                             (rstructs/image arena cubicmap)
+                             (rstructs/vector3 arena cube-size)))
   ([cubicmap cube-size]
    (rstructs/mesh (raylib_h/GenMeshCubicmap rarena/*current-arena*
                                             (rstructs/image cubicmap)
@@ -3864,8 +3972,10 @@
   "Load materials from model file
   const char * fileName
   int * materialCount"
-  [file-name material-count]
-  (raylib_h/LoadMaterials (string file-name) material-count))
+  ([^Arena arena file-name material-count]
+   (raylib_h/LoadMaterials (string arena file-name) material-count))
+  ([file-name material-count]
+   (raylib_h/LoadMaterials (string file-name) material-count)))
 
 (defn material-ready?
   "Check if a material is ready
@@ -3899,8 +4009,10 @@
   "Load model animations from file
   const char * fileName
   unsigned int * animCount"
-  [file-name anim-count]
-  (raylib_h/LoadModelAnimations (string file-name) anim-count))
+  ([^Arena arena file-name anim-count]
+   (raylib_h/LoadModelAnimations (string arena file-name) anim-count))
+  ([file-name anim-count]
+   (raylib_h/LoadModelAnimations (string file-name) anim-count)))
 
 (defn update-model-animation
   "Update model animation pose
@@ -3970,8 +4082,8 @@
   float radius"
   ([^Arena arena ray center radius]
    (raylib_h/GetRayCollisionSphere arena
-                                   (rstructs/ray ray)
-                                   (rstructs/vector3 center)
+                                   (rstructs/ray arena ray)
+                                   (rstructs/vector3 arena center)
                                    radius))
   ([ray center radius]
    (rstructs/ray-collision (raylib_h/GetRayCollisionSphere
@@ -3986,8 +4098,8 @@
   BoundingBox box"
   ([^Arena arena ray box]
    (raylib_h/GetRayCollisionBox arena
-                                (rstructs/ray ray)
-                                (rstructs/bounding-box box)))
+                                (rstructs/ray arena ray)
+                                (rstructs/bounding-box arena box)))
   ([ray box]
    (rstructs/ray-collision (raylib_h/GetRayCollisionBox rarena/*current-arena*
                                                         (rstructs/ray ray)
@@ -4001,9 +4113,9 @@
   Matrix transform"
   ([^Arena arena ray mesh transform]
    (raylib_h/GetRayCollisionMesh arena
-                                 (rstructs/ray ray)
-                                 (rstructs/mesh mesh)
-                                 (rstructs/matrix transform)))
+                                 (rstructs/ray arena ray)
+                                 (rstructs/mesh arena mesh)
+                                 (rstructs/matrix arena transform)))
   ([ray mesh transform]
    (rstructs/ray-collision (raylib_h/GetRayCollisionMesh rarena/*current-arena*
                                                          (rstructs/ray ray)
@@ -4019,10 +4131,10 @@
   Vector3 p3"
   ([^Arena arena ray p1 p2 p3]
    (raylib_h/GetRayCollisionTriangle arena
-                                     (rstructs/ray ray)
-                                     (rstructs/vector3 p1)
-                                     (rstructs/vector3 p2)
-                                     (rstructs/vector3 p3)))
+                                     (rstructs/ray arena ray)
+                                     (rstructs/vector3 arena p1)
+                                     (rstructs/vector3 arena p2)
+                                     (rstructs/vector3 arena p3)))
   ([ray p1 p2 p3]
    (rstructs/ray-collision (raylib_h/GetRayCollisionTriangle
                              rarena/*current-arena*
@@ -4040,11 +4152,11 @@
   Vector3 p4"
   ([^Arena arena ray p1 p2 p3 p4]
    (raylib_h/GetRayCollisionQuad arena
-                                 (rstructs/ray ray)
-                                 (rstructs/vector3 p1)
-                                 (rstructs/vector3 p2)
-                                 (rstructs/vector3 p3)
-                                 (rstructs/vector3 p4)))
+                                 (rstructs/ray arena ray)
+                                 (rstructs/vector3 arena p1)
+                                 (rstructs/vector3 arena p2)
+                                 (rstructs/vector3 arena p3)
+                                 (rstructs/vector3 arena p4)))
   ([ray p1 p2 p3 p4]
    (rstructs/ray-collision (raylib_h/GetRayCollisionQuad rarena/*current-arena*
                                                          (rstructs/ray ray)
@@ -4078,7 +4190,8 @@
 (defn load-wave
   "Load wave data from file
   const char * fileName"
-  ([^Arena arena file-name] (raylib_h/LoadWave arena (string file-name)))
+  ([^Arena arena file-name]
+   (raylib_h/LoadWave arena (string arena file-name)))
   ([file-name]
    (rstructs/wave (raylib_h/LoadWave rarena/*current-arena*
                                      (string file-name)))))
@@ -4089,7 +4202,10 @@
   const unsigned char * fileData
   int dataSize"
   ([^Arena arena file-type file-data data-size]
-   (raylib_h/LoadWaveFromMemory arena (string file-type) file-data data-size))
+   (raylib_h/LoadWaveFromMemory arena
+                                (string arena file-type)
+                                file-data
+                                data-size))
   ([file-type file-data data-size]
    (rstructs/wave (raylib_h/LoadWaveFromMemory rarena/*current-arena*
                                                (string file-type)
@@ -4105,7 +4221,8 @@
 (defn load-sound
   "Load sound from file
   const char * fileName"
-  ([^Arena arena file-name] (raylib_h/LoadSound arena (string file-name)))
+  ([^Arena arena file-name]
+   (raylib_h/LoadSound arena (string arena file-name)))
   ([file-name]
    (rstructs/sound (raylib_h/LoadSound rarena/*current-arena*
                                        (string file-name)))))
@@ -4114,7 +4231,7 @@
   "Load sound from wave data
   Wave wave"
   ([^Arena arena wave]
-   (raylib_h/LoadSoundFromWave arena (rstructs/wave wave)))
+   (raylib_h/LoadSoundFromWave arena (rstructs/wave arena wave)))
   ([wave]
    (rstructs/sound (raylib_h/LoadSoundFromWave rarena/*current-arena*
                                                (rstructs/wave wave)))))
@@ -4149,15 +4266,20 @@
   "Export wave data to file, returns true on success
   Wave wave
   const char * fileName"
-  [wave file-name]
-  (raylib_h/ExportWave (rstructs/wave wave) (string file-name)))
+  ([^Arena arena wave file-name]
+   (raylib_h/ExportWave (rstructs/wave arena wave) (string arena file-name)))
+  ([wave file-name]
+   (raylib_h/ExportWave (rstructs/wave wave) (string file-name))))
 
 (defn export-wave-as-code?
   "Export wave sample data to code (.h), returns true on success
   Wave wave
   const char * fileName"
-  [wave file-name]
-  (raylib_h/ExportWaveAsCode (rstructs/wave wave) (string file-name)))
+  ([^Arena arena wave file-name]
+   (raylib_h/ExportWaveAsCode (rstructs/wave arena wave)
+                              (string arena file-name)))
+  ([wave file-name]
+   (raylib_h/ExportWaveAsCode (rstructs/wave wave) (string file-name))))
 
 (defn play-sound
   "Play a sound
@@ -4213,7 +4335,8 @@
 (defn wave-copy
   "Copy a wave to a new wave
   Wave wave"
-  ([^Arena arena wave] (raylib_h/WaveCopy arena (rstructs/wave wave)))
+  ([^Arena arena wave]
+   (raylib_h/WaveCopy arena (rstructs/wave arena wave)))
   ([wave]
    (rstructs/wave (raylib_h/WaveCopy rarena/*current-arena*
                                      (rstructs/wave wave)))))
@@ -4251,7 +4374,7 @@
   "Load music stream from file
   const char * fileName"
   ([^Arena arena file-name]
-   (raylib_h/LoadMusicStream arena (string file-name)))
+   (raylib_h/LoadMusicStream arena (string arena file-name)))
   ([file-name]
    (rstructs/music (raylib_h/LoadMusicStream rarena/*current-arena*
                                              (string file-name)))))
@@ -4262,7 +4385,10 @@
   const unsigned char * data
   int dataSize"
   ([^Arena arena file-type data data-size]
-   (raylib_h/LoadMusicStreamFromMemory arena (string file-type) data data-size))
+   (raylib_h/LoadMusicStreamFromMemory arena
+                                       (string arena file-type)
+                                       data
+                                       data-size))
   ([file-type data data-size]
    (rstructs/music (raylib_h/LoadMusicStreamFromMemory rarena/*current-arena*
                                                        (string file-type)

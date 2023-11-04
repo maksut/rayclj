@@ -159,12 +159,15 @@
       (partial pprint-struct-fns out-file all-struct-names)
       structs))))
 
-(defn coerced-args [all-struct-names {:keys [name type]}]
+(defn coerced-arg [all-struct-names needs-arena? {:keys [name type]}]
   (let [struct-name (get all-struct-names type)
         name (symbol (to-kebab-case name))]
     (cond
-      (c-string? type) `(~'string ~name)
-      struct-name `(~(symbol (str "rstructs/" (to-kebab-case struct-name))) ~name)
+      (c-string? type) (if needs-arena? `(~'string ~'arena ~name) `(~'string ~name))
+      struct-name (let [struct-fn (symbol (str "rstructs/" (to-kebab-case struct-name)))]
+                    (if needs-arena?
+                      `(~struct-fn ~'arena ~name)
+                      `(~struct-fn ~name)))
       :else name)))
 
 (defn kebabize-fn-name [name return-type]
@@ -177,15 +180,26 @@
   (let [java-fn (symbol (str "raylib_h/" name))
         clj-fn (symbol (kebabize-fn-name name returnType))
         args (mapv (comp symbol to-kebab-case :name) params)
-        coerced-args (mapv (partial coerced-args all-struct-names) params)
-        struct-return (to-kebab-case (get all-struct-names returnType))]
-    (if struct-return
+        struct-return (to-kebab-case (get all-struct-names returnType))
+        needs-arena (some (comp c-string? :type) params)
+        coerced-args (mapv (partial coerced-arg all-struct-names false) params)
+        coerced-args-arena (mapv (partial coerced-arg all-struct-names true) params)]
+    (cond
+      struct-return
       `(~'defn ~clj-fn
                ~(doc-str function)
                ([:CARETArena ~'arena ~@args]
-                (~java-fn ~'arena ~@coerced-args))
+                (~java-fn ~'arena ~@coerced-args-arena))
                (~args
                 (~(symbol (str "rstructs/" struct-return)) (~java-fn ~'rarena/*current-arena* ~@coerced-args))))
+      needs-arena
+      `(~'defn ~clj-fn
+               ~(doc-str function)
+               ([:CARETArena ~'arena ~@args]
+                (~java-fn ~@coerced-args-arena))
+               (~args
+                (~java-fn ~@coerced-args)))
+      :else
       `(~'defn ~clj-fn
                ~(doc-str function)
                ~args
@@ -266,7 +280,7 @@
 
   (def init-window (:InitWindow functions-by-name))
   (get-fn all-struct-names init-window)
-  (mapv (partial coerced-args all-struct-names) (:params init-window))
+  (mapv (partial coerced-arg all-struct-names) (:params init-window))
 
   (generate-functions raylib-api)
 
