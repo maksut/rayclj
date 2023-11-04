@@ -159,8 +159,17 @@
       (partial pprint-struct-fns out-file all-struct-names)
       structs))))
 
-(defn coerced-arg [all-struct-names needs-arena? {:keys [name type]}]
+(defn find-enum-map [function-name arg-name]
+  (cond
+    (and (re-find #"Key" function-name) (= arg-name "key")) (symbol "renums/keyboard-key")
+    (and (re-find #"MouseButton" function-name) (= arg-name "button")) (symbol "renums/mouse-button")
+    (and (re-find #"GamepadButton" function-name) (= arg-name "button")) (symbol "renums/gamepad-button"))
+  ;; TODO: rest of the enums
+  )
+
+(defn coerced-arg [all-struct-names function-name needs-arena? {:keys [name type]}]
   (let [struct-name (get all-struct-names type)
+        enum-map (find-enum-map function-name name)
         name (symbol (to-kebab-case name))]
     (cond
       (c-string? type) (if needs-arena? `(~'string ~'arena ~name) `(~'string ~name))
@@ -168,6 +177,7 @@
                     (if needs-arena?
                       `(~struct-fn ~'arena ~name)
                       `(~struct-fn ~name)))
+      enum-map `(if (keyword? ~name) (~enum-map ~name) ~name)
       :else name)))
 
 (defn kebabize-fn-name [name return-type]
@@ -182,8 +192,8 @@
         args (mapv (comp symbol to-kebab-case :name) params)
         struct-return (to-kebab-case (get all-struct-names returnType))
         needs-arena (some (comp c-string? :type) params)
-        coerced-args (mapv (partial coerced-arg all-struct-names false) params)
-        coerced-args-arena (mapv (partial coerced-arg all-struct-names true) params)]
+        coerced-args (mapv (partial coerced-arg all-struct-names name false) params)
+        coerced-args-arena (mapv (partial coerced-arg all-struct-names name true) params)]
     (cond
       struct-return
       `(~'defn ~clj-fn

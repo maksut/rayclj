@@ -27,10 +27,10 @@
         (rl/clear-background {:r 0 :g 0 :b 0 :a 255})
         (rl/clear-background :white)
         (rl/draw-circle-v ball-position 40 ball-color)
-        (rl/draw-text "move ball with mouse and click mouse button to change color" 10 10 20 :darkgray))
-      (rl/end-drawing))
+        (rl/draw-text "move ball with mouse and click mouse button to change color" 10 10 20 :darkgray)
+        (rl/end-drawing)
 
         ;; Loop
-    (recur ball-color))
+        (recur ball-color))))
 
   (rl/close-window)) ;; De-Initialization

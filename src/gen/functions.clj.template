@@ -11,8 +11,6 @@
 ;; Utility Functions
 ;;
 
-(defn keycode [key] (if (keyword? key) (renums/keyboard-key key) key))
-
 (defn get-string [^MemorySegment seg]
   (.getUtf8String seg 0))
 

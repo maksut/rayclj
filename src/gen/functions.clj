@@ -874,10 +874,10 @@
                                   scan-subdirs))
   ([base-path filter scan-subdirs]
    (rstructs/file-path-list (raylib_h/LoadDirectoryFilesEx
-                              rarena/*current-arena*
-                              (string base-path)
-                              (string filter)
-                              scan-subdirs))))
+                             rarena/*current-arena*
+                             (string base-path)
+                             (string filter)
+                             scan-subdirs))))
 
 (defn unload-directory-files
   "Unload filepaths
@@ -895,7 +895,7 @@
   ([^Arena arena] (raylib_h/LoadDroppedFiles arena))
   ([]
    (rstructs/file-path-list (raylib_h/LoadDroppedFiles
-                              rarena/*current-arena*))))
+                             rarena/*current-arena*))))
 
 (defn unload-dropped-files
   "Unload dropped filepaths
@@ -945,31 +945,36 @@
   "Check if a key has been pressed once
   int key"
   [key]
-  (raylib_h/IsKeyPressed key))
+  (raylib_h/IsKeyPressed
+   (if (clojure.core/keyword? key) (renums/keyboard-key key) key)))
 
 (defn key-down?
   "Check if a key is being pressed
   int key"
   [key]
-  (raylib_h/IsKeyDown key))
+  (raylib_h/IsKeyDown
+   (if (clojure.core/keyword? key) (renums/keyboard-key key) key)))
 
 (defn key-released?
   "Check if a key has been released once
   int key"
   [key]
-  (raylib_h/IsKeyReleased key))
+  (raylib_h/IsKeyReleased
+   (if (clojure.core/keyword? key) (renums/keyboard-key key) key)))
 
 (defn key-up?
   "Check if a key is NOT being pressed
   int key"
   [key]
-  (raylib_h/IsKeyUp key))
+  (raylib_h/IsKeyUp
+   (if (clojure.core/keyword? key) (renums/keyboard-key key) key)))
 
 (defn set-exit-key
   "Set a custom key to exit program (default is ESC)
   int key"
   [key]
-  (raylib_h/SetExitKey key))
+  (raylib_h/SetExitKey
+   (if (clojure.core/keyword? key) (renums/keyboard-key key) key)))
 
 (defn get-key-pressed
   "Get key pressed (keycode), call it multiple times for keys queued, returns 0 when the queue is empty"
@@ -998,28 +1003,36 @@
   int gamepad
   int button"
   [gamepad button]
-  (raylib_h/IsGamepadButtonPressed gamepad button))
+  (raylib_h/IsGamepadButtonPressed
+   gamepad
+   (if (clojure.core/keyword? button) (renums/gamepad-button button) button)))
 
 (defn gamepad-button-down?
   "Check if a gamepad button is being pressed
   int gamepad
   int button"
   [gamepad button]
-  (raylib_h/IsGamepadButtonDown gamepad button))
+  (raylib_h/IsGamepadButtonDown
+   gamepad
+   (if (clojure.core/keyword? button) (renums/gamepad-button button) button)))
 
 (defn gamepad-button-released?
   "Check if a gamepad button has been released once
   int gamepad
   int button"
   [gamepad button]
-  (raylib_h/IsGamepadButtonReleased gamepad button))
+  (raylib_h/IsGamepadButtonReleased
+   gamepad
+   (if (clojure.core/keyword? button) (renums/gamepad-button button) button)))
 
 (defn gamepad-button-up?
   "Check if a gamepad button is NOT being pressed
   int gamepad
   int button"
   [gamepad button]
-  (raylib_h/IsGamepadButtonUp gamepad button))
+  (raylib_h/IsGamepadButtonUp
+   gamepad
+   (if (clojure.core/keyword? button) (renums/gamepad-button button) button)))
 
 (defn get-gamepad-button-pressed
   "Get the last gamepad button pressed"
@@ -1050,25 +1063,29 @@
   "Check if a mouse button has been pressed once
   int button"
   [button]
-  (raylib_h/IsMouseButtonPressed button))
+  (raylib_h/IsMouseButtonPressed
+   (if (clojure.core/keyword? button) (renums/mouse-button button) button)))
 
 (defn mouse-button-down?
   "Check if a mouse button is being pressed
   int button"
   [button]
-  (raylib_h/IsMouseButtonDown button))
+  (raylib_h/IsMouseButtonDown
+   (if (clojure.core/keyword? button) (renums/mouse-button button) button)))
 
 (defn mouse-button-released?
   "Check if a mouse button has been released once
   int button"
   [button]
-  (raylib_h/IsMouseButtonReleased button))
+  (raylib_h/IsMouseButtonReleased
+   (if (clojure.core/keyword? button) (renums/mouse-button button) button)))
 
 (defn mouse-button-up?
   "Check if a mouse button is NOT being pressed
   int button"
   [button]
-  (raylib_h/IsMouseButtonUp button))
+  (raylib_h/IsMouseButtonUp
+   (if (clojure.core/keyword? button) (renums/mouse-button button) button)))
 
 (defn get-mouse-x "Get mouse position X" [] (raylib_h/GetMouseX))
 
@@ -1993,7 +2010,7 @@
    (raylib_h/GenImageWhiteNoise arena width height factor))
   ([width height factor]
    (rstructs/image
-     (raylib_h/GenImageWhiteNoise rarena/*current-arena* width height factor))))
+    (raylib_h/GenImageWhiteNoise rarena/*current-arena* width height factor))))
 
 (defn gen-image-perlin-noise
   "Generate image: perlin noise
@@ -2577,7 +2594,7 @@
    (raylib_h/LoadRenderTexture arena width height))
   ([width height]
    (rstructs/render-texture
-     (raylib_h/LoadRenderTexture rarena/*current-arena* width height))))
+    (raylib_h/LoadRenderTexture rarena/*current-arena* width height))))
 
 (defn texture-ready?
   "Check if a texture is ready
@@ -2728,7 +2745,7 @@
    (raylib_h/Fade arena (rstructs/color arena color) alpha))
   ([color alpha]
    (rstructs/color
-     (raylib_h/Fade rarena/*current-arena* (rstructs/color color) alpha))))
+    (raylib_h/Fade rarena/*current-arena* (rstructs/color color) alpha))))
 
 (defn color-to-int
   "Get hexadecimal value for a Color
@@ -2753,7 +2770,7 @@
   ([normalized]
    (rstructs/color (raylib_h/ColorFromNormalized rarena/*current-arena*
                                                  (rstructs/vector4
-                                                   normalized)))))
+                                                  normalized)))))
 
 (defn color-to-hsv
   "Get HSV values for a Color, hue [0..360], saturation/value [0..1]
@@ -2773,7 +2790,7 @@
    (raylib_h/ColorFromHSV arena hue saturation value))
   ([hue saturation value]
    (rstructs/color
-     (raylib_h/ColorFromHSV rarena/*current-arena* hue saturation value))))
+    (raylib_h/ColorFromHSV rarena/*current-arena* hue saturation value))))
 
 (defn color-tint
   "Get color multiplied with another color
@@ -2852,7 +2869,7 @@
    (raylib_h/GetPixelColor arena src-ptr format))
   ([src-ptr format]
    (rstructs/color
-     (raylib_h/GetPixelColor rarena/*current-arena* src-ptr format))))
+    (raylib_h/GetPixelColor rarena/*current-arena* src-ptr format))))
 
 (defn set-pixel-color
   "Set color formatted into destination pixel pointer
@@ -3659,7 +3676,7 @@
   ([model]
    (rstructs/bounding-box (raylib_h/GetModelBoundingBox rarena/*current-arena*
                                                         (rstructs/model
-                                                          model)))))
+                                                         model)))))
 
 (defn draw-model
   "Draw a model (with texture if set)
@@ -3861,7 +3878,7 @@
    (raylib_h/GenMeshPlane arena width length res-x res-z))
   ([width length res-x res-z]
    (rstructs/mesh
-     (raylib_h/GenMeshPlane rarena/*current-arena* width length res-x res-z))))
+    (raylib_h/GenMeshPlane rarena/*current-arena* width length res-x res-z))))
 
 (defn gen-mesh-cube
   "Generate cuboid mesh
@@ -3872,7 +3889,7 @@
    (raylib_h/GenMeshCube arena width height length))
   ([width height length]
    (rstructs/mesh
-     (raylib_h/GenMeshCube rarena/*current-arena* width height length))))
+    (raylib_h/GenMeshCube rarena/*current-arena* width height length))))
 
 (defn gen-mesh-sphere
   "Generate sphere mesh (standard sphere)
@@ -3883,7 +3900,7 @@
    (raylib_h/GenMeshSphere arena radius rings slices))
   ([radius rings slices]
    (rstructs/mesh
-     (raylib_h/GenMeshSphere rarena/*current-arena* radius rings slices))))
+    (raylib_h/GenMeshSphere rarena/*current-arena* radius rings slices))))
 
 (defn gen-mesh-hemi-sphere
   "Generate half-sphere mesh (no bottom cap)
@@ -3894,7 +3911,7 @@
    (raylib_h/GenMeshHemiSphere arena radius rings slices))
   ([radius rings slices]
    (rstructs/mesh
-     (raylib_h/GenMeshHemiSphere rarena/*current-arena* radius rings slices))))
+    (raylib_h/GenMeshHemiSphere rarena/*current-arena* radius rings slices))))
 
 (defn gen-mesh-cylinder
   "Generate cylinder mesh
@@ -3905,7 +3922,7 @@
    (raylib_h/GenMeshCylinder arena radius height slices))
   ([radius height slices]
    (rstructs/mesh
-     (raylib_h/GenMeshCylinder rarena/*current-arena* radius height slices))))
+    (raylib_h/GenMeshCylinder rarena/*current-arena* radius height slices))))
 
 (defn gen-mesh-cone
   "Generate cone/pyramid mesh
@@ -3916,7 +3933,7 @@
    (raylib_h/GenMeshCone arena radius height slices))
   ([radius height slices]
    (rstructs/mesh
-     (raylib_h/GenMeshCone rarena/*current-arena* radius height slices))))
+    (raylib_h/GenMeshCone rarena/*current-arena* radius height slices))))
 
 (defn gen-mesh-torus
   "Generate torus mesh
@@ -3928,7 +3945,7 @@
    (raylib_h/GenMeshTorus arena radius size rad-seg sides))
   ([radius size rad-seg sides]
    (rstructs/mesh
-     (raylib_h/GenMeshTorus rarena/*current-arena* radius size rad-seg sides))))
+    (raylib_h/GenMeshTorus rarena/*current-arena* radius size rad-seg sides))))
 
 (defn gen-mesh-knot
   "Generate trefoil knot mesh
@@ -3940,7 +3957,7 @@
    (raylib_h/GenMeshKnot arena radius size rad-seg sides))
   ([radius size rad-seg sides]
    (rstructs/mesh
-     (raylib_h/GenMeshKnot rarena/*current-arena* radius size rad-seg sides))))
+    (raylib_h/GenMeshKnot rarena/*current-arena* radius size rad-seg sides))))
 
 (defn gen-mesh-heightmap
   "Generate heightmap mesh from image data
@@ -4087,10 +4104,10 @@
                                    radius))
   ([ray center radius]
    (rstructs/ray-collision (raylib_h/GetRayCollisionSphere
-                             rarena/*current-arena*
-                             (rstructs/ray ray)
-                             (rstructs/vector3 center)
-                             radius))))
+                            rarena/*current-arena*
+                            (rstructs/ray ray)
+                            (rstructs/vector3 center)
+                            radius))))
 
 (defn get-ray-collision-box
   "Get collision info between ray and box
@@ -4104,7 +4121,7 @@
    (rstructs/ray-collision (raylib_h/GetRayCollisionBox rarena/*current-arena*
                                                         (rstructs/ray ray)
                                                         (rstructs/bounding-box
-                                                          box)))))
+                                                         box)))))
 
 (defn get-ray-collision-mesh
   "Get collision info between ray and mesh
@@ -4121,7 +4138,7 @@
                                                          (rstructs/ray ray)
                                                          (rstructs/mesh mesh)
                                                          (rstructs/matrix
-                                                           transform)))))
+                                                          transform)))))
 
 (defn get-ray-collision-triangle
   "Get collision info between ray and triangle
@@ -4137,11 +4154,11 @@
                                      (rstructs/vector3 arena p3)))
   ([ray p1 p2 p3]
    (rstructs/ray-collision (raylib_h/GetRayCollisionTriangle
-                             rarena/*current-arena*
-                             (rstructs/ray ray)
-                             (rstructs/vector3 p1)
-                             (rstructs/vector3 p2)
-                             (rstructs/vector3 p3)))))
+                            rarena/*current-arena*
+                            (rstructs/ray ray)
+                            (rstructs/vector3 p1)
+                            (rstructs/vector3 p2)
+                            (rstructs/vector3 p3)))))
 
 (defn get-ray-collision-quad
   "Get collision info between ray and quad
@@ -4164,7 +4181,7 @@
                                                          (rstructs/vector3 p2)
                                                          (rstructs/vector3 p3)
                                                          (rstructs/vector3
-                                                           p4)))))
+                                                          p4)))))
 
 (defn init-audio-device
   "Initialize audio device and context"
