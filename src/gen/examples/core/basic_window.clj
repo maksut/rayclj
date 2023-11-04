@@ -1,4 +1,4 @@
-(ns gen.examples.basic-window
+(ns gen.examples.core.basic-window
   (:require [gen.functions :as rl]
             [gen.structs :as rstructs]))
 
@@ -14,10 +14,9 @@
     ;;----------------------------------------------------------------------------------
 
     ;; Draw
-    (rl/begin-drawing)
-    (rl/clear-background :white)
-    (rl/draw-text "Hello, World!" 190 200 20 :lightgray)
-    (rl/end-drawing))
+    (rl/with-drawing
+      (rl/clear-background :white)
+      (rl/draw-text "Hello, World!" 190 200 20 :lightgray)))
 
   ;; De-Initialization
   (rl/close-window)) ;; Close window and OpenGL context

@@ -18,3 +18,12 @@
   ([str] (.allocateUtf8String rarena/*current-arena* str))
   ([^Arena arena str] (.allocateUtf8String arena str)))
 
+(defmacro with-drawing [& body]
+  `(binding [rarena/*current-arena* (rarena/confined-arena!)]
+     (try
+       (begin-drawing)
+       ~@body
+       (end-drawing)
+       (finally
+         (.close rarena/*current-arena*)))))
+

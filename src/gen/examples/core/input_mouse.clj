@@ -1,4 +1,4 @@
-(ns gen.examples.input-mouse
+(ns gen.examples.core.input-mouse
   (:require [gen.functions :as rl]))
 
 (let [screen-width 800
@@ -23,12 +23,11 @@
               :else ball-color)]
 
         ;; Draw
-        (rl/begin-drawing)
-        (rl/clear-background {:r 0 :g 0 :b 0 :a 255})
-        (rl/clear-background :white)
-        (rl/draw-circle-v ball-position 40 ball-color)
-        (rl/draw-text "move ball with mouse and click mouse button to change color" 10 10 20 :darkgray)
-        (rl/end-drawing)
+        (rl/with-drawing
+          (rl/clear-background {:r 0 :g 0 :b 0 :a 255})
+          (rl/clear-background :white)
+          (rl/draw-circle-v ball-position 40 ball-color)
+          (rl/draw-text "move ball with mouse and click mouse button to change color" 10 10 20 :darkgray))
 
         ;; Loop
         (recur ball-color))))

@@ -201,7 +201,7 @@
                ([:CARETArena ~'arena ~@args]
                 (~java-fn ~'arena ~@coerced-args-arena))
                (~args
-                (~(symbol (str "rstructs/" struct-return)) (~java-fn ~'rarena/*current-arena* ~@coerced-args))))
+                (~(symbol (str "rstructs/get-" struct-return)) (~java-fn ~'rarena/*current-arena* ~@coerced-args))))
       needs-arena
       `(~'defn ~clj-fn
                ~(doc-str function)
