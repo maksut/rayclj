@@ -1,0 +1,32 @@
+(ns gen.enums)
+
+(def predefined-colors
+  "Some Basic Colors
+   NOTE: Custom raylib color palette for amazing visuals on WHITE background"
+  {:lightgray {:r 200 :g 200 :b 200 :a 255}  ;; Light Gray
+   :gray {:r 130 :g 130 :b 130 :a 255}       ;; Gray
+   :darkgray {:r 80 :g 80 :b 80 :a 255}      ;; Dark Gray
+   :yellow {:r 253 :g 249 :b 0 :a 255}       ;; Yellow
+   :gold {:r 255 :g 203 :b 0 :a 255}         ;; Gold
+   :orange {:r 255 :g 161 :b 0 :a 255}       ;; Orange
+   :pink {:r 255 :g 109 :b 194 :a 255}       ;; Pink
+   :red {:r 230 :g 41 :b 55 :a 255}          ;; Red
+   :maroon {:r 190 :g 33 :b 55 :a 255}       ;; Maroon
+   :green {:r 0 :g 228 :b 48 :a 255}         ;; Green
+   :lime {:r 0 :g 158 :b 47 :a 255}          ;; Lime
+   :darkgreen {:r 0 :g 117 :b 44 :a 255}     ;; Dark Green
+   :skyblue {:r 102 :g 191 :b 255 :a 255}    ;; Sky Blue
+   :blue {:r 0 :g 121 :b 241 :a 255}         ;; Blue
+   :darkblue {:r 0 :g 82 :b 172 :a 255}      ;; Dark Blue
+   :purple {:r 200 :g 122 :b 255 :a 255}     ;; Purple
+   :violet {:r 135 :g 60 :b 190 :a 255}      ;; Violet
+   :darkpurple {:r 112 :g 31 :b 126 :a 255}  ;; Dark Purple
+   :beige {:r 211 :g 176 :b 131 :a 255}      ;; Beige
+   :brown {:r 127 :g 106 :b 79 :a 255}       ;; Brown
+   :darkbrown {:r 76 :g 63 :b 47 :a 255}     ;; Dark Brown
+   :white {:r 255 :g 255 :b 255 :a 255}      ;; White
+   :black {:r 0 :g 0 :b 0 :a 255}            ;; Black
+   :blank {:r 0 :g 0 :b 0 :a 0}              ;; Blank (Transparent)
+   :magenta {:r 255 :g 0 :b 255 :a 255}      ;; Magenta
+   :raywhite {:r 245 :g 245 :b 245 :a 255}}) ;; Raylib White (raylib logo)
+

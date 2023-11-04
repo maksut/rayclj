@@ -114,7 +114,7 @@
 (defn vector4
   "Vector4, 4 components"
   ([^Arena arena v]
-   (set-vector4! (.allocate arena (Vector3/$LAYOUT)) v))
+   (set-vector4! (.allocate arena (Vector4/$LAYOUT)) v))
   ([v] (passthrough v vector4 rarena/*current-arena*)))
 
 (def quaternion

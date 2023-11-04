@@ -1,0 +1,39 @@
+(ns gen.structs
+  (:require [raylib.arena :as rarena]
+            [gen.enums :as renums])
+  (:import
+   [java.lang.foreign Arena MemoryLayout MemorySegment]))
+
+(set! *warn-on-reflection* true)
+
+;;
+;; Structures Definition
+;;
+
+;; TODO: move these utility fns into an impl ns
+(defn as-slice
+  [^MemorySegment seg index element-size]
+  (.asSlice seg (* index element-size)))
+
+(defn get-array-fn
+  [^MemoryLayout elem-layout get-fn]
+  (let [element-size (.byteSize elem-layout)]
+    (fn [^MemorySegment seg size]
+      (mapv (fn [i] (get-fn (as-slice seg i element-size))) (range size)))))
+
+(defn array-fn
+  [^MemoryLayout elem-layout set-fn]
+  (let [element-size (.byteSize elem-layout)]
+    (fn to-array
+      ([^Arena arena elems]
+       (let [size (count elems)
+             array-layout (MemoryLayout/sequenceLayout size elem-layout)
+             seg (.allocate arena array-layout)]
+         (dorun
+          (map-indexed (fn [i elem] (set-fn (as-slice seg i element-size) elem)) elems))
+         seg))
+      ([elems]
+       (if (instance? MemorySegment elems)
+         elems
+         (to-array rarena/*current-arena* elems))))))
+
