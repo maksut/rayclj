@@ -211,6 +211,11 @@
    :a (raylib.Color/a$get seg)})
 
 (defn set-color
+  "Color, 4 components, R8G8B8A8 (32bit)
+  unsigned char r; // Color red value
+  unsigned char g; // Color green value
+  unsigned char b; // Color blue value
+  unsigned char a; // Color alpha value"
   [^MemorySegment seg {:keys [r g b a]}]
   (raylib.Color/r$set seg (unchecked-byte r))
   (raylib.Color/g$set seg (unchecked-byte g))
@@ -221,6 +226,11 @@
 (declare predefined-colors)
 
 (defn color
+  "Color, 4 components, R8G8B8A8 (32bit)
+  unsigned char r; // Color red value
+  unsigned char g; // Color green value
+  unsigned char b; // Color blue value
+  unsigned char a; // Color alpha value"
   ([^Arena arena c]
    (if (keyword? c)
      (predefined-colors c)
@@ -520,12 +530,13 @@
   Rectangle * recs // Rectangles in texture for the glyphs
   GlyphInfo * glyphs // Glyphs info data"
   [^MemorySegment seg]
-  {:baseSize (raylib.Font/baseSize$get seg),
-   :glyphCount (raylib.Font/glyphCount$get seg),
-   :glyphPadding (raylib.Font/glyphPadding$get seg),
-   :texture (get-texture (raylib.Font/texture$slice seg)),
-   :recs (raylib.Font/recs$get seg),
-   :glyphs (raylib.Font/glyphs$get seg)})
+  (let [array-size (raylib.Font/glyphCount$get seg)]
+    {:base-size (raylib.Font/baseSize$get seg),
+     :glyph-count array-size,
+     :glyph-padding (raylib.Font/glyphPadding$get seg),
+     :texture (get-texture (raylib.Font/texture$slice seg)),
+     :recs (get-rectangle-array (raylib.Font/recs$get seg) array-size),
+     :glyphs (get-glyph-info-array (raylib.Font/glyphs$get seg) array-size)}))
 
 (defn set-font
   "Font, font texture and GlyphInfo array data
@@ -535,15 +546,16 @@
   Texture2D texture // Texture atlas containing the glyphs
   Rectangle * recs // Rectangles in texture for the glyphs
   GlyphInfo * glyphs // Glyphs info data"
-  [^MemorySegment seg
-   {:keys [baseSize glyphCount glyphPadding texture recs glyphs]}]
-  (raylib.Font/baseSize$set seg baseSize)
-  (raylib.Font/glyphCount$set seg glyphCount)
-  (raylib.Font/glyphPadding$set seg glyphPadding)
-  (set-texture (raylib.Font/texture$slice seg) texture)
-  (raylib.Font/recs$set seg recs)
-  (raylib.Font/glyphs$set seg glyphs)
-  seg)
+  ([^Arena arena ^MemorySegment seg
+    {:keys [base-size glyph-count glyph-padding texture recs glyphs]}]
+   (raylib.Font/baseSize$set seg base-size)
+   (raylib.Font/glyphCount$set seg glyph-count)
+   (raylib.Font/glyphPadding$set seg glyph-padding)
+   (set-texture (raylib.Font/texture$slice seg) texture)
+   (raylib.Font/recs$set seg (rectangle-array arena recs))
+   (raylib.Font/glyphs$set seg (glyph-info-array arena glyphs))
+   seg)
+  ([seg font] (set-font rarena/*current-arena* seg font)))
 
 (defn font
   "Font, font texture and GlyphInfo array data

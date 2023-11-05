@@ -99,6 +99,7 @@
 (defn pprint [f]
   (-> (zp/zprint-str f)
       (string/replace #":EL" "\n")
+      (string/replace #"\\n" "\n")
       (string/replace #":CARET" "^")))
 
 (defn get-all-struct-names [raylib-api]
@@ -168,7 +169,8 @@
   )
 
 (defn coerced-arg [all-struct-names function-name needs-arena? {:keys [name type]}]
-  (let [struct-name (get all-struct-names type)
+  (let [pointer-type (second (pointer? type))
+        struct-name (get all-struct-names (or pointer-type type))
         enum-map (find-enum-map function-name name)
         name (symbol (to-kebab-case name))]
     (cond
@@ -186,8 +188,50 @@
         name (to-kebab-case name)]
     name))
 
+(def first-arg-is-return
+  #{"ImageFormat"
+    "ImageToPOT"
+    "ImageCrop"
+    "ImageAlphaCrop"
+    "ImageAlphaClear"
+    "ImageAlphaMask"
+    "ImageAlphaPremultiply"
+    "ImageBlurGaussian"
+    "ImageResize"
+    "ImageResizeNN"
+    "ImageResizeCanvas"
+    "ImageMipmaps"
+    "ImageDither"
+    "ImageFlipVertical"
+    "ImageFlipHorizontal"
+    "ImageRotateCW"
+    "ImageRotateCCW"
+    "ImageColorTint"
+    "ImageColorInvert"
+    "ImageColorGrayscale"
+    "ImageColorContrast"
+    "ImageColorBrightness"
+    "ImageColorReplace"
+    "ImageClearBackground"
+    "ImageDrawPixel"
+    "ImageDrawPixelV"
+    "ImageDrawLine"
+    "ImageDrawLineV"
+    "ImageDrawCircle"
+    "ImageDrawCircleV"
+    "ImageDrawCircleLines"
+    "ImageDrawCircleLinesV"
+    "ImageDrawRectangle"
+    "ImageDrawRectangleV"
+    "ImageDrawRectangleRec"
+    "ImageDrawRectangleLines"
+    "ImageDraw"
+    "ImageDrawText"
+    "ImageDrawTextEx"})
+
 (defn get-fn [all-struct-names {:keys [name params returnType] :as function}]
-  (let [java-fn (symbol (str "raylib_h/" name))
+  (let [return-first-arg (first-arg-is-return name)
+        java-fn (symbol (str "raylib_h/" name))
         clj-fn (symbol (kebabize-fn-name name returnType))
         args (mapv (comp symbol to-kebab-case :name) params)
         struct-return (to-kebab-case (get all-struct-names returnType))
@@ -195,6 +239,17 @@
         coerced-args (mapv (partial coerced-arg all-struct-names name false) params)
         coerced-args-arena (mapv (partial coerced-arg all-struct-names name true) params)]
     (cond
+      return-first-arg
+      (let [type (:type (first params))
+            first-type (second (pointer? type))
+            struct-name (to-kebab-case (get all-struct-names first-type))
+            struct (symbol (str "rstructs/get-" struct-name))]
+        `(~'defn ~clj-fn
+                 ~(doc-str function)
+                 ~args
+                 (~'let [~'first-arg ~(first coerced-args)]
+                        (~java-fn ~'first-arg ~@(rest coerced-args))
+                        (~struct ~'first-arg))))
       struct-return
       `(~'defn ~clj-fn
                ~(doc-str function)
