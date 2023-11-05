@@ -45,6 +45,7 @@
    :window-transparent       16  ;; Set to allow transparent framebuffer
    :window-highdpi           8192 ;; Set to support HighDPI
    :window-mouse-passthrough 16384 ;; Set to support mouse passthrough, only supported when FLAG_WINDOW_UNDECORATED
+   :borderless-windowed-mode 32768 ;; Set to run program in borderless windowed mode
    :msaa-4x-hint             32 ;; Set to try enabling MSAA 4X
    :interlaced-hint          65536 ;; Set to try enabling interlaced video format (for V3D)
   })
@@ -311,17 +312,20 @@
    :uncompressed-r32          8 ;; 32 bpp (1 channel - float)
    :uncompressed-r32g32b32    9 ;; 32*3 bpp (3 channels - float)
    :uncompressed-r32g32b32a32 10 ;; 32*4 bpp (4 channels - float)
-   :compressed-dxt1-rgb       11 ;; 4 bpp (no alpha)
-   :compressed-dxt1-rgba      12 ;; 4 bpp (1 bit alpha)
-   :compressed-dxt3-rgba      13 ;; 8 bpp
-   :compressed-dxt5-rgba      14 ;; 8 bpp
-   :compressed-etc1-rgb       15 ;; 4 bpp
-   :compressed-etc2-rgb       16 ;; 4 bpp
-   :compressed-etc2-eac-rgba  17 ;; 8 bpp
-   :compressed-pvrt-rgb       18 ;; 4 bpp
-   :compressed-pvrt-rgba      19 ;; 4 bpp
-   :compressed-astc-4x4-rgba  20 ;; 8 bpp
-   :compressed-astc-8x8-rgba  21 ;; 2 bpp
+   :uncompressed-r16          11 ;; 16 bpp (1 channel - half float)
+   :uncompressed-r16g16b16    12 ;; 16*3 bpp (3 channels - half float)
+   :uncompressed-r16g16b16a16 13 ;; 16*4 bpp (4 channels - half float)
+   :compressed-dxt1-rgb       14 ;; 4 bpp (no alpha)
+   :compressed-dxt1-rgba      15 ;; 4 bpp (1 bit alpha)
+   :compressed-dxt3-rgba      16 ;; 8 bpp
+   :compressed-dxt5-rgba      17 ;; 8 bpp
+   :compressed-etc1-rgb       18 ;; 4 bpp
+   :compressed-etc2-rgb       19 ;; 4 bpp
+   :compressed-etc2-eac-rgba  20 ;; 8 bpp
+   :compressed-pvrt-rgb       21 ;; 4 bpp
+   :compressed-pvrt-rgba      22 ;; 4 bpp
+   :compressed-astc-4x4-rgba  23 ;; 8 bpp
+   :compressed-astc-8x8-rgba  24 ;; 2 bpp
   })
 
 (def texture-filter

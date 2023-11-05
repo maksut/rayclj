@@ -139,7 +139,13 @@
     struct))
 
 (defn process-api [{:keys [structs functions] :as raylib-api}]
-  (let [blacklisted-structs #{"Material" "BoneInfo" "VrStereoConfig" "VrDeviceInfo"}
+  (let [blacklisted-structs
+        #{"Material"
+          "BoneInfo"
+          "VrStereoConfig"
+          "VrDeviceInfo"
+          "ModelAnimation"
+          "AutomationEvent"}
         structs (filter #(not (blacklisted-structs (:name %))) structs)
         structs (map add-as-vector structs)
         structs (map add-docstring structs)
@@ -151,14 +157,14 @@
 
 (defn generate-structs [raylib-api]
   (let [out-file "src/gen/structs.clj"
-        raylib-api (process-api raylib-api)
         structs (:structs raylib-api)
         all-struct-names (get-all-struct-names raylib-api)]
     (spit out-file (slurp "src/gen/structs.clj.template"))
     (dorun
      (map
       (partial pprint-struct-fns out-file all-struct-names)
-      structs))))
+      structs))
+    raylib-api))
 
 (defn find-enum-map [function-name arg-name]
   (cond
@@ -278,14 +284,14 @@
 
 (defn generate-functions [raylib-api]
   (let [out-file "src/gen/functions.clj"
-        raylib-api (process-api raylib-api)
         functions (:functions raylib-api)
         all-struct-names (get-all-struct-names raylib-api)]
     (spit out-file (slurp "src/gen/functions.clj.template"))
     (dorun
      (map
       (partial pprint-fn out-file all-struct-names)
-      functions))))
+      functions))
+    raylib-api))
 
 (defn enum-value-prefix [enum]
   (loop [value-names (map :name (:values enum))
@@ -317,14 +323,26 @@
 
 (defn generate-enums [raylib-api]
   (let [out-file "src/gen/enums.clj"
-        raylib-api (process-api raylib-api)
         enums (:enums raylib-api)
         clj-enums (map pprint-enum enums)
         str-enums (apply str (interleave clj-enums (repeat "\n\n")))]
     (spit out-file (slurp "src/gen/enums.clj.template"))
-    (spit out-file str-enums :append true)))
+    (spit out-file str-enums :append true)
+    raylib-api))
+
+(defn generate-all []
+  (let [raylib-api (slurp "native/raylib_linux_amd64/api/raylib_api.json")
+        raylib-api (json/read-value raylib-api json/keyword-keys-object-mapper)]
+    (-> raylib-api
+        (process-api)
+        (generate-enums)
+        (generate-structs)
+        (generate-functions))
+    nil))
 
 (comment
+  (generate-all)
+
   (defonce raylib-api-json
     (slurp "https://raw.githubusercontent.com/raysan5/raylib/4.5.0/parser/output/raylib_api.json"))
 

@@ -36,15 +36,15 @@
    (raylib_h/InitWindow width height (string arena title)))
   ([width height title] (raylib_h/InitWindow width height (string title))))
 
-(defn window-should-close?
-  "Check if KEY_ESCAPE pressed or Close icon pressed"
-  []
-  (raylib_h/WindowShouldClose))
-
 (defn close-window
   "Close window and unload OpenGL context"
   []
   (raylib_h/CloseWindow))
+
+(defn window-should-close?
+  "Check if application should close (KEY_ESCAPE pressed or windows close icon clicked)"
+  []
+  (raylib_h/WindowShouldClose))
 
 (defn window-ready?
   "Check if window has been initialized successfully"
@@ -104,6 +104,11 @@
   []
   (raylib_h/ToggleFullscreen))
 
+(defn toggle-borderless-windowed
+  "Toggle window state: borderless windowed (only PLATFORM_DESKTOP)"
+  []
+  (raylib_h/ToggleBorderlessWindowed))
+
 (defn maximize-window
   "Set window state: maximized, if resizable (only PLATFORM_DESKTOP)"
   []
@@ -133,7 +138,7 @@
   (raylib_h/SetWindowIcons (rstructs/image images) count))
 
 (defn set-window-title
-  "Set title for window (only PLATFORM_DESKTOP)
+  "Set title for window (only PLATFORM_DESKTOP and PLATFORM_WEB)
   const char * title"
   ([^Arena arena title] (raylib_h/SetWindowTitle (string arena title)))
   ([title] (raylib_h/SetWindowTitle (string title))))
@@ -146,7 +151,7 @@
   (raylib_h/SetWindowPosition x y))
 
 (defn set-window-monitor
-  "Set monitor for the current window (fullscreen mode)
+  "Set monitor for the current window
   int monitor"
   [monitor]
   (raylib_h/SetWindowMonitor monitor))
@@ -157,6 +162,13 @@
   int height"
   [width height]
   (raylib_h/SetWindowMinSize width height))
+
+(defn set-window-max-size
+  "Set window maximum dimensions (for FLAG_WINDOW_RESIZABLE)
+  int width
+  int height"
+  [width height]
+  (raylib_h/SetWindowMaxSize width height))
 
 (defn set-window-size
   "Set window dimensions
@@ -170,6 +182,11 @@
   float opacity"
   [opacity]
   (raylib_h/SetWindowOpacity opacity))
+
+(defn set-window-focused
+  "Set window focused (only PLATFORM_DESKTOP)"
+  []
+  (raylib_h/SetWindowFocused))
 
 (defn get-window-handle
   "Get native window handle"
@@ -254,7 +271,7 @@
    (rstructs/get-vector2 (raylib_h/GetWindowScaleDPI rarena/*current-arena*))))
 
 (defn get-monitor-name
-  "Get the human-readable, UTF-8 encoded name of the primary monitor
+  "Get the human-readable, UTF-8 encoded name of the specified monitor
   int monitor"
   [monitor]
   (raylib_h/GetMonitorName monitor))
@@ -279,22 +296,6 @@
   "Disable waiting for events on EndDrawing(), automatic events polling"
   []
   (raylib_h/DisableEventWaiting))
-
-(defn swap-screen-buffer
-  "Swap back buffer with front buffer (screen drawing)"
-  []
-  (raylib_h/SwapScreenBuffer))
-
-(defn poll-input-events
-  "Register all input events"
-  []
-  (raylib_h/PollInputEvents))
-
-(defn wait-time
-  "Wait for some time (halt program execution)
-  double seconds"
-  [seconds]
-  (raylib_h/WaitTime seconds))
 
 (defn show-cursor "Shows cursor" [] (raylib_h/ShowCursor))
 
@@ -618,8 +619,6 @@
   [fps]
   (raylib_h/SetTargetFPS fps))
 
-(defn get-fps "Get current FPS" [] (raylib_h/GetFPS))
-
 (defn get-frame-time
   "Get time in seconds for last frame drawn (delta time)"
   []
@@ -630,6 +629,30 @@
   []
   (raylib_h/GetTime))
 
+(defn get-fps "Get current FPS" [] (raylib_h/GetFPS))
+
+(defn swap-screen-buffer
+  "Swap back buffer with front buffer (screen drawing)"
+  []
+  (raylib_h/SwapScreenBuffer))
+
+(defn poll-input-events
+  "Register all input events"
+  []
+  (raylib_h/PollInputEvents))
+
+(defn wait-time
+  "Wait for some time (halt program execution)
+  double seconds"
+  [seconds]
+  (raylib_h/WaitTime seconds))
+
+(defn set-random-seed
+  "Set the seed for the random number generator
+  unsigned int seed"
+  [seed]
+  (raylib_h/SetRandomSeed seed))
+
 (defn get-random-value
   "Get a random value between min and max (both included)
   int min
@@ -637,11 +660,19 @@
   [min max]
   (raylib_h/GetRandomValue min max))
 
-(defn set-random-seed
-  "Set the seed for the random number generator
-  unsigned int seed"
-  [seed]
-  (raylib_h/SetRandomSeed seed))
+(defn load-random-sequence
+  "Load random values sequence, no values repeated
+  unsigned int count
+  int min
+  int max"
+  [count min max]
+  (raylib_h/LoadRandomSequence count min max))
+
+(defn unload-random-sequence
+  "Unload random values sequence
+  int * sequence"
+  [sequence]
+  (raylib_h/UnloadRandomSequence sequence))
 
 (defn take-screenshot
   "Takes a screenshot of current screen (filename extension defines format)
@@ -655,6 +686,12 @@
   unsigned int flags"
   [flags]
   (raylib_h/SetConfigFlags flags))
+
+(defn open-url
+  "Open URL with default system browser (if available)
+  const char * url"
+  ([^Arena arena url] (raylib_h/OpenURL (string arena url)))
+  ([url] (raylib_h/OpenURL (string url))))
 
 (defn trace-log
   "Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR...)
@@ -690,12 +727,6 @@
   [ptr]
   (raylib_h/MemFree ptr))
 
-(defn open-url
-  "Open URL with default system browser (if available)
-  const char * url"
-  ([^Arena arena url] (raylib_h/OpenURL (string arena url)))
-  ([url] (raylib_h/OpenURL (string url))))
-
 (defn set-trace-log-callback
   "Set custom trace log
   TraceLogCallback callback"
@@ -729,11 +760,10 @@
 (defn load-file-data
   "Load file data as byte array (read)
   const char * fileName
-  unsigned int * bytesRead"
-  ([^Arena arena file-name bytes-read]
-   (raylib_h/LoadFileData (string arena file-name) bytes-read))
-  ([file-name bytes-read]
-   (raylib_h/LoadFileData (string file-name) bytes-read)))
+  int * dataSize"
+  ([^Arena arena file-name data-size]
+   (raylib_h/LoadFileData (string arena file-name) data-size))
+  ([file-name data-size] (raylib_h/LoadFileData (string file-name) data-size)))
 
 (defn unload-file-data
   "Unload file data allocated by LoadFileData()
@@ -745,21 +775,21 @@
   "Save data to file from byte array (write), returns true on success
   const char * fileName
   void * data
-  unsigned int bytesToWrite"
-  ([^Arena arena file-name data bytes-to-write]
-   (raylib_h/SaveFileData (string arena file-name) data bytes-to-write))
-  ([file-name data bytes-to-write]
-   (raylib_h/SaveFileData (string file-name) data bytes-to-write)))
+  int dataSize"
+  ([^Arena arena file-name data data-size]
+   (raylib_h/SaveFileData (string arena file-name) data data-size))
+  ([file-name data data-size]
+   (raylib_h/SaveFileData (string file-name) data data-size)))
 
 (defn export-data-as-code?
   "Export data to code (.h), returns true on success
   const unsigned char * data
-  unsigned int size
+  int dataSize
   const char * fileName"
-  ([^Arena arena data size file-name]
-   (raylib_h/ExportDataAsCode data size (string arena file-name)))
-  ([data size file-name]
-   (raylib_h/ExportDataAsCode data size (string file-name))))
+  ([^Arena arena data data-size file-name]
+   (raylib_h/ExportDataAsCode data data-size (string arena file-name)))
+  ([data data-size file-name]
+   (raylib_h/ExportDataAsCode data data-size (string file-name))))
 
 (defn load-file-text
   "Load text data from file (read), returns a '\\0' terminated string
@@ -851,7 +881,7 @@
   (raylib_h/GetWorkingDirectory))
 
 (defn get-application-directory
-  "Get the directory if the running application (uses static string)"
+  "Get the directory of the running application (uses static string)"
   []
   (raylib_h/GetApplicationDirectory))
 
@@ -955,11 +985,74 @@
   [data output-size]
   (raylib_h/DecodeDataBase64 data output-size))
 
+(defn load-automation-event-list
+  "Load automation events list from file, NULL for empty list, capacity = MAX_AUTOMATION_EVENTS
+  const char * fileName"
+  ([^Arena arena file-name]
+   (raylib_h/LoadAutomationEventList arena (string arena file-name)))
+  ([file-name]
+   (rstructs/get-automation-event-list (raylib_h/LoadAutomationEventList
+                                         rarena/*current-arena*
+                                         (string file-name)))))
+
+(defn unload-automation-event-list
+  "Unload automation events list from file
+  AutomationEventList * list"
+  [list]
+  (raylib_h/UnloadAutomationEventList (rstructs/automation-event-list list)))
+
+(defn export-automation-event-list?
+  "Export automation events list as text file
+  AutomationEventList list
+  const char * fileName"
+  ([^Arena arena list file-name]
+   (raylib_h/ExportAutomationEventList (rstructs/automation-event-list arena
+                                                                       list)
+                                       (string arena file-name)))
+  ([list file-name]
+   (raylib_h/ExportAutomationEventList (rstructs/automation-event-list list)
+                                       (string file-name))))
+
+(defn set-automation-event-list
+  "Set automation event list to record to
+  AutomationEventList * list"
+  [list]
+  (raylib_h/SetAutomationEventList (rstructs/automation-event-list list)))
+
+(defn set-automation-event-base-frame
+  "Set automation event internal base frame to start recording
+  int frame"
+  [frame]
+  (raylib_h/SetAutomationEventBaseFrame frame))
+
+(defn start-automation-event-recording
+  "Start recording automation events (AutomationEventList must be set)"
+  []
+  (raylib_h/StartAutomationEventRecording))
+
+(defn stop-automation-event-recording
+  "Stop recording automation events"
+  []
+  (raylib_h/StopAutomationEventRecording))
+
+(defn play-automation-event
+  "Play a recorded automation event
+  AutomationEvent event"
+  [event]
+  (raylib_h/PlayAutomationEvent event))
+
 (defn key-pressed?
   "Check if a key has been pressed once
   int key"
   [key]
   (raylib_h/IsKeyPressed
+    (if (clojure.core/keyword? key) (renums/keyboard-key key) key)))
+
+(defn key-pressed-repeat?
+  "Check if a key has been pressed again (Only PLATFORM_DESKTOP)
+  int key"
+  [key]
+  (raylib_h/IsKeyPressedRepeat
     (if (clojure.core/keyword? key) (renums/keyboard-key key) key)))
 
 (defn key-down?
@@ -983,13 +1076,6 @@
   (raylib_h/IsKeyUp
     (if (clojure.core/keyword? key) (renums/keyboard-key key) key)))
 
-(defn set-exit-key
-  "Set a custom key to exit program (default is ESC)
-  int key"
-  [key]
-  (raylib_h/SetExitKey
-    (if (clojure.core/keyword? key) (renums/keyboard-key key) key)))
-
 (defn get-key-pressed
   "Get key pressed (keycode), call it multiple times for keys queued, returns 0 when the queue is empty"
   []
@@ -999,6 +1085,13 @@
   "Get char pressed (unicode), call it multiple times for chars queued, returns 0 when the queue is empty"
   []
   (raylib_h/GetCharPressed))
+
+(defn set-exit-key
+  "Set a custom key to exit program (default is ESC)
+  int key"
+  [key]
+  (raylib_h/SetExitKey
+    (if (clojure.core/keyword? key) (renums/keyboard-key key) key)))
 
 (defn gamepad-available?
   "Check if a gamepad is available
@@ -1191,7 +1284,7 @@
 
 (defn gesture-detected?
   "Check if a gesture have been detected
-  int gesture"
+  unsigned int gesture"
   [gesture]
   (raylib_h/IsGestureDetected gesture))
 
@@ -1349,6 +1442,30 @@
                                 thick
                                 (rstructs/color color)))
 
+(defn draw-line-bspline
+  "Draw a B-Spline line, minimum 4 points
+  Vector2 * points
+  int pointCount
+  float thick
+  Color color"
+  [points point-count thick color]
+  (raylib_h/DrawLineBSpline (rstructs/vector2 points)
+                            point-count
+                            thick
+                            (rstructs/color color)))
+
+(defn draw-line-catmull-rom
+  "Draw a Catmull Rom spline line, minimum 4 points
+  Vector2 * points
+  int pointCount
+  float thick
+  Color color"
+  [points point-count thick color]
+  (raylib_h/DrawLineCatmullRom (rstructs/vector2 points)
+                               point-count
+                               thick
+                               (rstructs/color color)))
+
 (defn draw-line-strip
   "Draw lines sequence
   Vector2 * points
@@ -1432,6 +1549,16 @@
   Color color"
   [center-x center-y radius color]
   (raylib_h/DrawCircleLines center-x center-y radius (rstructs/color color)))
+
+(defn draw-circle-lines-v
+  "Draw circle outline (Vector version)
+  Vector2 center
+  float radius
+  Color color"
+  [center radius color]
+  (raylib_h/DrawCircleLinesV (rstructs/vector2 center)
+                             radius
+                             (rstructs/color color)))
 
 (defn draw-ellipse
   "Draw ellipse
@@ -1857,6 +1984,22 @@
                                               format
                                               header-size))))
 
+(defn load-image-svg
+  "Load image from SVG file data or string with specified size
+  const char * fileNameOrString
+  int width
+  int height"
+  ([^Arena arena file-name-or-string width height]
+   (raylib_h/LoadImageSvg arena
+                          (string arena file-name-or-string)
+                          width
+                          height))
+  ([file-name-or-string width height]
+   (rstructs/get-image (raylib_h/LoadImageSvg rarena/*current-arena*
+                                              (string file-name-or-string)
+                                              width
+                                              height))))
+
 (defn load-image-anim
   "Load image sequence from file (frames appended to image.data)
   const char * fileName
@@ -1921,6 +2064,20 @@
   ([image file-name]
    (raylib_h/ExportImage (rstructs/image image) (string file-name))))
 
+(defn export-image-to-memory
+  "Export image to memory buffer
+  Image image
+  const char * fileType
+  int * fileSize"
+  ([^Arena arena image file-type file-size]
+   (raylib_h/ExportImageToMemory (rstructs/image arena image)
+                                 (string arena file-type)
+                                 file-size))
+  ([image file-type file-size]
+   (raylib_h/ExportImageToMemory (rstructs/image image)
+                                 (string file-type)
+                                 file-size)))
+
 (defn export-image-as-code?
   "Export image as code file defining an array of bytes, returns true on success
   Image image
@@ -1944,43 +2101,27 @@
                                                height
                                                (rstructs/color color)))))
 
-(defn gen-image-gradient-v
-  "Generate image: vertical gradient
+(defn gen-image-gradient-linear
+  "Generate image: linear gradient, direction in degrees [0..360], 0=Vertical gradient
   int width
   int height
-  Color top
-  Color bottom"
-  ([^Arena arena width height top bottom]
-   (raylib_h/GenImageGradientV arena
-                               width
-                               height
-                               (rstructs/color arena top)
-                               (rstructs/color arena bottom)))
-  ([width height top bottom]
-   (rstructs/get-image (raylib_h/GenImageGradientV rarena/*current-arena*
-                                                   width
-                                                   height
-                                                   (rstructs/color top)
-                                                   (rstructs/color bottom)))))
-
-(defn gen-image-gradient-h
-  "Generate image: horizontal gradient
-  int width
-  int height
-  Color left
-  Color right"
-  ([^Arena arena width height left right]
-   (raylib_h/GenImageGradientH arena
-                               width
-                               height
-                               (rstructs/color arena left)
-                               (rstructs/color arena right)))
-  ([width height left right]
-   (rstructs/get-image (raylib_h/GenImageGradientH rarena/*current-arena*
-                                                   width
-                                                   height
-                                                   (rstructs/color left)
-                                                   (rstructs/color right)))))
+  int direction
+  Color start
+  Color end"
+  ([^Arena arena width height direction start end]
+   (raylib_h/GenImageGradientLinear arena
+                                    width
+                                    height
+                                    direction
+                                    (rstructs/color arena start)
+                                    (rstructs/color arena end)))
+  ([width height direction start end]
+   (rstructs/get-image (raylib_h/GenImageGradientLinear rarena/*current-arena*
+                                                        width
+                                                        height
+                                                        direction
+                                                        (rstructs/color start)
+                                                        (rstructs/color end)))))
 
 (defn gen-image-gradient-radial
   "Generate image: radial gradient
@@ -1998,6 +2139,29 @@
                                     (rstructs/color arena outer)))
   ([width height density inner outer]
    (rstructs/get-image (raylib_h/GenImageGradientRadial rarena/*current-arena*
+                                                        width
+                                                        height
+                                                        density
+                                                        (rstructs/color inner)
+                                                        (rstructs/color
+                                                          outer)))))
+
+(defn gen-image-gradient-square
+  "Generate image: square gradient
+  int width
+  int height
+  float density
+  Color inner
+  Color outer"
+  ([^Arena arena width height density inner outer]
+   (raylib_h/GenImageGradientSquare arena
+                                    width
+                                    height
+                                    density
+                                    (rstructs/color arena inner)
+                                    (rstructs/color arena outer)))
+  ([width height density inner outer]
+   (rstructs/get-image (raylib_h/GenImageGradientSquare rarena/*current-arena*
                                                         width
                                                         height
                                                         density
@@ -2289,6 +2453,13 @@
   (let [first-arg (rstructs/image image)]
     (raylib_h/ImageFlipHorizontal first-arg)
     (rstructs/get-image first-arg)))
+
+(defn image-rotate
+  "Rotate image by input angle in degrees (-359 to 359)
+  Image * image
+  int degrees"
+  [image degrees]
+  (raylib_h/ImageRotate (rstructs/image image) degrees))
 
 (defn image-rotate-cw
   "Rotate image clockwise 90deg
@@ -2995,23 +3166,23 @@
                                          (string file-name)))))
 
 (defn load-font-ex
-  "Load font from file with extended parameters, use NULL for fontChars and 0 for glyphCount to load the default character set
+  "Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character setFont
   const char * fileName
   int fontSize
-  int * fontChars
-  int glyphCount"
-  ([^Arena arena file-name font-size font-chars glyph-count]
+  int * codepoints
+  int codepointCount"
+  ([^Arena arena file-name font-size codepoints codepoint-count]
    (raylib_h/LoadFontEx arena
                         (string arena file-name)
                         font-size
-                        font-chars
-                        glyph-count))
-  ([file-name font-size font-chars glyph-count]
+                        codepoints
+                        codepoint-count))
+  ([file-name font-size codepoints codepoint-count]
    (rstructs/get-font (raylib_h/LoadFontEx rarena/*current-arena*
                                            (string file-name)
                                            font-size
-                                           font-chars
-                                           glyph-count))))
+                                           codepoints
+                                           codepoint-count))))
 
 (defn load-font-from-image
   "Load font from Image (XNA style)
@@ -3035,25 +3206,25 @@
   const unsigned char * fileData
   int dataSize
   int fontSize
-  int * fontChars
-  int glyphCount"
-  ([^Arena arena file-type file-data data-size font-size font-chars
-    glyph-count]
+  int * codepoints
+  int codepointCount"
+  ([^Arena arena file-type file-data data-size font-size codepoints
+    codepoint-count]
    (raylib_h/LoadFontFromMemory arena
                                 (string arena file-type)
                                 file-data
                                 data-size
                                 font-size
-                                font-chars
-                                glyph-count))
-  ([file-type file-data data-size font-size font-chars glyph-count]
+                                codepoints
+                                codepoint-count))
+  ([file-type file-data data-size font-size codepoints codepoint-count]
    (rstructs/get-font (raylib_h/LoadFontFromMemory rarena/*current-arena*
                                                    (string file-type)
                                                    file-data
                                                    data-size
                                                    font-size
-                                                   font-chars
-                                                   glyph-count))))
+                                                   codepoints
+                                                   codepoint-count))))
 
 (defn font-ready?
   "Check if a font is ready
@@ -3066,37 +3237,39 @@
   const unsigned char * fileData
   int dataSize
   int fontSize
-  int * fontChars
-  int glyphCount
+  int * codepoints
+  int codepointCount
   int type"
-  [file-data data-size font-size font-chars glyph-count type]
+  [file-data data-size font-size codepoints codepoint-count type]
   (raylib_h/LoadFontData file-data
                          data-size
                          font-size
-                         font-chars
-                         glyph-count
+                         codepoints
+                         codepoint-count
                          type))
 
 (defn gen-image-font-atlas
   "Generate image font atlas using chars info
-  const GlyphInfo * chars
-  Rectangle ** recs
+  const GlyphInfo * glyphs
+  Rectangle ** glyphRecs
   int glyphCount
   int fontSize
   int padding
   int packMethod"
-  ([^Arena arena chars recs glyph-count font-size padding pack-method]
+  ([^Arena arena glyphs glyph-recs glyph-count font-size padding
+    pack-method]
    (raylib_h/GenImageFontAtlas arena
-                               (rstructs/glyph-info arena chars)
-                               (rstructs/rectangle arena recs)
+                               (rstructs/glyph-info arena glyphs)
+                               (rstructs/rectangle arena glyph-recs)
                                glyph-count
                                font-size
                                padding
                                pack-method))
-  ([chars recs glyph-count font-size padding pack-method]
+  ([glyphs glyph-recs glyph-count font-size padding pack-method]
    (rstructs/get-image (raylib_h/GenImageFontAtlas rarena/*current-arena*
-                                                   (rstructs/glyph-info chars)
-                                                   (rstructs/rectangle recs)
+                                                   (rstructs/glyph-info glyphs)
+                                                   (rstructs/rectangle
+                                                     glyph-recs)
                                                    glyph-count
                                                    font-size
                                                    padding
@@ -3104,10 +3277,10 @@
 
 (defn unload-font-data
   "Unload font chars info data (RAM)
-  GlyphInfo * chars
+  GlyphInfo * glyphs
   int glyphCount"
-  [chars glyph-count]
-  (raylib_h/UnloadFontData (rstructs/glyph-info chars) glyph-count))
+  [glyphs glyph-count]
+  (raylib_h/UnloadFontData (rstructs/glyph-info glyphs) glyph-count))
 
 (defn unload-font
   "Unload font from GPU memory (VRAM)
@@ -3222,19 +3395,25 @@
   "Draw multiple character (codepoint)
   Font font
   const int * codepoints
-  int count
+  int codepointCount
   Vector2 position
   float fontSize
   float spacing
   Color tint"
-  [font codepoints count position font-size spacing tint]
+  [font codepoints codepoint-count position font-size spacing tint]
   (raylib_h/DrawTextCodepoints (rstructs/font font)
                                codepoints
-                               count
+                               codepoint-count
                                (rstructs/vector2 position)
                                font-size
                                spacing
                                (rstructs/color tint)))
+
+(defn set-text-line-spacing
+  "Set vertical line spacing when drawing with line-breaks
+  int spacing"
+  [spacing]
+  (raylib_h/SetTextLineSpacing spacing))
 
 (defn measure-text
   "Measure string width for default font
@@ -4122,7 +4301,7 @@
 (defn load-model-animations
   "Load model animations from file
   const char * fileName
-  unsigned int * animCount"
+  int * animCount"
   ([^Arena arena file-name anim-count]
    (raylib_h/LoadModelAnimations (string arena file-name) anim-count))
   ([file-name anim-count]
@@ -4134,30 +4313,27 @@
   ModelAnimation anim
   int frame"
   [model anim frame]
-  (raylib_h/UpdateModelAnimation (rstructs/model model)
-                                 (rstructs/model-animation anim)
-                                 frame))
+  (raylib_h/UpdateModelAnimation (rstructs/model model) anim frame))
 
 (defn unload-model-animation
   "Unload animation data
   ModelAnimation anim"
   [anim]
-  (raylib_h/UnloadModelAnimation (rstructs/model-animation anim)))
+  (raylib_h/UnloadModelAnimation anim))
 
 (defn unload-model-animations
   "Unload animation array data
   ModelAnimation * animations
-  unsigned int count"
-  [animations count]
-  (raylib_h/UnloadModelAnimations (rstructs/model-animation animations) count))
+  int animCount"
+  [animations anim-count]
+  (raylib_h/UnloadModelAnimations animations anim-count))
 
 (defn model-animation-valid?
   "Check model animation skeleton match
   Model model
   ModelAnimation anim"
   [model anim]
-  (raylib_h/IsModelAnimationValid (rstructs/model model)
-                                  (rstructs/model-animation anim)))
+  (raylib_h/IsModelAnimationValid (rstructs/model model) anim))
 
 (defn check-collision-spheres?
   "Check collision between two spheres
@@ -4301,6 +4477,11 @@
   [volume]
   (raylib_h/SetMasterVolume volume))
 
+(defn get-master-volume
+  "Get master volume (listener)"
+  []
+  (raylib_h/GetMasterVolume))
+
 (defn load-wave
   "Load wave data from file
   const char * fileName"
@@ -4350,6 +4531,15 @@
    (rstructs/get-sound (raylib_h/LoadSoundFromWave rarena/*current-arena*
                                                    (rstructs/wave wave)))))
 
+(defn load-sound-alias
+  "Create a new sound that shares the same sample data as the source sound, does not own the sound data
+  Sound source"
+  ([^Arena arena source]
+   (raylib_h/LoadSoundAlias arena (rstructs/sound arena source)))
+  ([source]
+   (rstructs/get-sound (raylib_h/LoadSoundAlias rarena/*current-arena*
+                                                (rstructs/sound source)))))
+
 (defn sound-ready?
   "Checks if a sound is ready
   Sound sound"
@@ -4375,6 +4565,12 @@
   Sound sound"
   [sound]
   (raylib_h/UnloadSound (rstructs/sound sound)))
+
+(defn unload-sound-alias
+  "Unload a sound alias (does not deallocate sample data)
+  Sound alias"
+  [alias]
+  (raylib_h/UnloadSoundAlias (rstructs/sound alias)))
 
 (defn export-wave?
   "Export wave data to file, returns true on success
@@ -4702,7 +4898,7 @@
   (raylib_h/SetAudioStreamCallback (rstructs/audio-stream stream) callback))
 
 (defn attach-audio-stream-processor
-  "Attach audio stream processor to stream
+  "Attach audio stream processor to stream, receives the samples as <float>s
   AudioStream stream
   AudioCallback processor"
   [stream processor]
@@ -4718,7 +4914,7 @@
                                        processor))
 
 (defn attach-audio-mixed-processor
-  "Attach audio stream processor to the entire audio pipeline
+  "Attach audio stream processor to the entire audio pipeline, receives the samples as <float>s
   AudioCallback processor"
   [processor]
   (raylib_h/AttachAudioMixedProcessor processor))

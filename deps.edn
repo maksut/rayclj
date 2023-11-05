@@ -19,7 +19,7 @@
                      com.github.jpmonettas/flow-storm-dbg {:mvn/version "3.7.3"}}
         :jvm-opts ["--enable-preview"
                    "--enable-native-access=ALL-UNNAMED"
-                   "-Djava.library.path=/usr/lib:native/raylib-4.5.0_linux_amd64/lib:native/color"
+                   "-Djava.library.path=/usr/lib:native/raylib_linux_amd64/lib:native/color"
                    ;"-Dclojure.storm.instrumentEnable=true"
                    ;"-Dclojure.storm.instrumentOnlyPrefixes=ffi"
                    ]

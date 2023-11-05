@@ -938,50 +938,6 @@
 
 (def get-model-array (get-array-fn (raylib.Model/$LAYOUT) get-model))
 
-(defn get-model-animation
-  "ModelAnimation
-  int boneCount // Number of bones
-  int frameCount // Number of animation frames
-  BoneInfo * bones // Bones information (skeleton)
-  Transform ** framePoses // Poses array by frame"
-  [^MemorySegment seg]
-  {:boneCount (raylib.ModelAnimation/boneCount$get seg),
-   :frameCount (raylib.ModelAnimation/frameCount$get seg),
-   :bones (raylib.ModelAnimation/bones$get seg),
-   :framePoses (raylib.ModelAnimation/framePoses$get seg)})
-
-(defn set-model-animation
-  "ModelAnimation
-  int boneCount // Number of bones
-  int frameCount // Number of animation frames
-  BoneInfo * bones // Bones information (skeleton)
-  Transform ** framePoses // Poses array by frame"
-  [^MemorySegment seg {:keys [boneCount frameCount bones framePoses]}]
-  (raylib.ModelAnimation/boneCount$set seg boneCount)
-  (raylib.ModelAnimation/frameCount$set seg frameCount)
-  (raylib.ModelAnimation/bones$set seg bones)
-  (raylib.ModelAnimation/framePoses$set seg framePoses)
-  seg)
-
-(defn model-animation
-  "ModelAnimation
-  int boneCount // Number of bones
-  int frameCount // Number of animation frames
-  BoneInfo * bones // Bones information (skeleton)
-  Transform ** framePoses // Poses array by frame"
-  ([^Arena arena v]
-   (set-model-animation (.allocate arena (raylib.ModelAnimation/$LAYOUT)) v))
-  ([v]
-   (if (clojure.core/instance? MemorySegment v)
-     v
-     (model-animation rarena/*current-arena* v))))
-
-(def model-animation-array
-  (array-fn (raylib.ModelAnimation/$LAYOUT) set-model-animation))
-
-(def get-model-animation-array
-  (get-array-fn (raylib.ModelAnimation/$LAYOUT) get-model-animation))
-
 (defn get-ray
   "Ray, ray for raycasting
   Vector3 position // Ray position (origin)
@@ -1301,4 +1257,45 @@
 
 (def get-file-path-list-array
   (get-array-fn (raylib.FilePathList/$LAYOUT) get-file-path-list))
+
+(defn get-automation-event-list
+  "Automation event list
+  unsigned int capacity // Events max entries (MAX_AUTOMATION_EVENTS)
+  unsigned int count // Events entries count
+  AutomationEvent * events // Events entries"
+  [^MemorySegment seg]
+  {:capacity (raylib.AutomationEventList/capacity$get seg),
+   :count (raylib.AutomationEventList/count$get seg),
+   :events (raylib.AutomationEventList/events$get seg)})
+
+(defn set-automation-event-list
+  "Automation event list
+  unsigned int capacity // Events max entries (MAX_AUTOMATION_EVENTS)
+  unsigned int count // Events entries count
+  AutomationEvent * events // Events entries"
+  [^MemorySegment seg {:keys [capacity count events]}]
+  (raylib.AutomationEventList/capacity$set seg capacity)
+  (raylib.AutomationEventList/count$set seg count)
+  (raylib.AutomationEventList/events$set seg events)
+  seg)
+
+(defn automation-event-list
+  "Automation event list
+  unsigned int capacity // Events max entries (MAX_AUTOMATION_EVENTS)
+  unsigned int count // Events entries count
+  AutomationEvent * events // Events entries"
+  ([^Arena arena v]
+   (set-automation-event-list (.allocate arena
+                                         (raylib.AutomationEventList/$LAYOUT))
+                              v))
+  ([v]
+   (if (clojure.core/instance? MemorySegment v)
+     v
+     (automation-event-list rarena/*current-arena* v))))
+
+(def automation-event-list-array
+  (array-fn (raylib.AutomationEventList/$LAYOUT) set-automation-event-list))
+
+(def get-automation-event-list-array
+  (get-array-fn (raylib.AutomationEventList/$LAYOUT) get-automation-event-list))
 
