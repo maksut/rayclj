@@ -16,7 +16,7 @@
 (def arena-symbol (symbol "^Arena"))
 
 (defn array? [name]
-  (re-find #"\[[0-9]+\]" name))
+  (re-matches #"(.+)\[([0-9]+)\]" name))
 
 (defn pointer? [name]
   (re-find #"([a-zA-Z0-9]*)\s*\*" name))
@@ -24,24 +24,44 @@
 (defn c-string? [name]
   (= name "const char *"))
 
-(defn field-getter [struct-name all-names {:keys [name type]}]
-  (if-let [resolved-type (get all-names type)]
-    (let [getter (symbol (str "raylib." struct-name "/" name "$slice"))
-          struct-getter (symbol (str "get-" (to-kebab-case resolved-type)))]
-      `(~struct-getter (~getter ~'seg)))
-    (let [getter (symbol (str "raylib." struct-name "/" name "$get"))]
-      `(~getter ~'seg))))
+(defn field-getter [struct-name all-struct-names {:keys [name type]}]
+  (let [resolved-type (get all-struct-names type)
+        [_ array array-size] (array? type)]
+    (cond
+      resolved-type
+      (let [getter (symbol (str "raylib." struct-name "/" name "$slice"))
+            struct-getter (symbol (str "get-" (to-kebab-case resolved-type)))]
+        `(~struct-getter (~getter ~'seg)))
 
-(defn field-setter [struct-name all-names {:keys [name type]}]
-  (if-let [resolved-type (get all-names type)]
-    (let [setter (symbol (str "raylib." struct-name "/" name "$slice"))
-          struct-setter (symbol (str "set-" (to-kebab-case resolved-type)))]
-      `(~struct-setter (~setter ~'seg) ~(symbol name)))
-    (let [setter (str "raylib." struct-name "/" name "$set")]
-      `(~(symbol setter) ~'seg ~(symbol name)))))
+      array
+      (let [getter (symbol (str "raylib." struct-name "/" name "$slice"))
+            struct-getter (symbol (str "get-" (string/lower-case array) "-array"))]
+        `(~struct-getter (~getter ~'seg) ~(Integer/parseInt array-size)))
 
-(defn field-getter-kv [struct-name all-names field]
-  (list (keyword (:name field)) (field-getter struct-name all-names field)))
+      :else
+      (let [getter (symbol (str "raylib." struct-name "/" name "$get"))]
+        `(~getter ~'seg)))))
+
+(defn field-setter [struct-name all-struct-names {:keys [name type]}]
+  (let [resolved-type (get all-struct-names type)
+        [_ array array-size] (array? type)]
+    (cond
+      resolved-type
+      (let [setter (symbol (str "raylib." struct-name "/" name "$slice"))
+            struct-setter (symbol (str "set-" (to-kebab-case resolved-type)))]
+        `(~struct-setter (~setter ~'seg) ~(symbol name)))
+
+      array
+      (let [setter (symbol (str "raylib." struct-name "/" name "$slice"))
+            struct-setter (symbol (str "set-" (string/lower-case array) "-array"))]
+        `(~struct-setter (~setter ~'seg) ~(symbol name) ~(Integer/parseInt array-size)))
+
+      :else
+      (let [setter (str "raylib." struct-name "/" name "$set")]
+        `(~(symbol setter) ~'seg ~(symbol name))))))
+
+(defn field-getter-kv [struct-name all-struct-names field]
+  (list (keyword (:name field)) (field-getter struct-name all-struct-names field)))
 
 (defn doc-str [{:keys [description fields params docstring]}]
   (if docstring
@@ -52,21 +72,21 @@
       (str description
            (apply str (map field-doc items))))))
 
-(defn struct-get-fn [all-names {:keys [name fields as-vector?] :as struct}]
+(defn struct-get-fn [all-struct-names {:keys [name fields as-vector?] :as struct}]
   (let [kebab-name (symbol (str "get-" (to-kebab-case name)))]
     `(~'defn ~kebab-name ~(doc-str struct)
              [~memory-segment-symbol ~'seg]
              ~(if as-vector?
-                (into [] (map (partial field-getter name all-names) fields))
-                (apply array-map (mapcat (partial field-getter-kv name all-names) fields))))))
+                (into [] (map (partial field-getter name all-struct-names) fields))
+                (apply array-map (mapcat (partial field-getter-kv name all-struct-names) fields))))))
 
-(defn struct-set-fn [all-names {:keys [name fields as-vector?] :as struct}]
+(defn struct-set-fn [all-struct-names {:keys [name fields as-vector?] :as struct}]
   (let [kebab-name (symbol (str "set-" (to-kebab-case name)))
         args (mapv (comp symbol :name) fields)
         args (if as-vector? args (array-map :keys args))]
     `(~'defn ~kebab-name ~(doc-str struct)
              [~memory-segment-symbol ~'seg ~args]
-             ~@(map (partial field-setter name all-names) fields)
+             ~@(map (partial field-setter name all-struct-names) fields)
              ~'seg)))
 
 (defn struct-fn [{:keys [name] :as struct}]
@@ -96,6 +116,13 @@
         layout-sym (symbol (str "raylib." name "/$LAYOUT"))]
     `(~'def ~fn-name (~'get-array-fn (~layout-sym) ~struct-set-fn))))
 
+(defn set-array-fn [{:keys [name]}]
+  (let [kebab-name (to-kebab-case name)
+        fn-name (symbol (str "set-" kebab-name "-array"))
+        struct-set-fn (symbol (str "set-" kebab-name))
+        layout-sym (symbol (str "raylib." name "/$LAYOUT"))]
+    `(~'def ~fn-name (~'set-array-fn (~layout-sym) ~struct-set-fn))))
+
 (defn pprint [f]
   (-> (zp/zprint-str f)
       (string/replace #":EL" "\n")
@@ -122,7 +149,8 @@
         struct-fn (struct-fn struct)
         array-fn (array-fn struct)
         get-array-fn (get-array-fn struct)
-        str-fns [get-fn set-fn struct-fn array-fn get-array-fn]
+        set-array-fn (set-array-fn struct)
+        str-fns [get-fn set-fn struct-fn array-fn get-array-fn set-array-fn]
         str-fns (mapcat get-overrided str-fns)
         str-fns (map pprint str-fns)
         str-fns (apply str (interleave str-fns (repeat "\n\n")))]
@@ -139,17 +167,10 @@
     struct))
 
 (defn process-api [{:keys [structs functions] :as raylib-api}]
-  (let [blacklisted-structs
-        #{"Material"
-          "BoneInfo"
-          "VrStereoConfig"
-          "VrDeviceInfo"
-          "ModelAnimation"
-          "AutomationEvent"}
-        structs (filter #(not (blacklisted-structs (:name %))) structs)
-        structs (map add-as-vector structs)
+  (let [structs (map add-as-vector structs)
         structs (map add-docstring structs)
-        blacklisted-functions #{"LoadMaterialDefault" "LoadVrStereoConfig"}
+        ; blacklisted-functions #{"LoadMaterialDefault" "LoadVrStereoConfig"}
+        blacklisted-functions #{} #_{"LoadMaterialDefault" "LoadVrStereoConfig"}
         functions (filter #(not (blacklisted-functions (:name %))) functions)]
     (-> raylib-api
         (assoc :structs structs)

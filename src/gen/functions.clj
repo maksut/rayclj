@@ -401,18 +401,28 @@
   "Begin stereo rendering (requires VR simulator)
   VrStereoConfig config"
   [config]
-  (raylib_h/BeginVrStereoMode config))
+  (raylib_h/BeginVrStereoMode (rstructs/vr-stereo-config config)))
 
 (defn end-vr-stereo-mode
   "End stereo rendering (requires VR simulator)"
   []
   (raylib_h/EndVrStereoMode))
 
+(defn load-vr-stereo-config
+  "Load VR stereo config for VR simulator device parameters
+  VrDeviceInfo device"
+  ([^Arena arena device]
+   (raylib_h/LoadVrStereoConfig arena (rstructs/vr-device-info arena device)))
+  ([device]
+   (rstructs/get-vr-stereo-config (raylib_h/LoadVrStereoConfig
+                                    rarena/*current-arena*
+                                    (rstructs/vr-device-info device)))))
+
 (defn unload-vr-stereo-config
   "Unload VR stereo config
   VrStereoConfig config"
   [config]
-  (raylib_h/UnloadVrStereoConfig config))
+  (raylib_h/UnloadVrStereoConfig (rstructs/vr-stereo-config config)))
 
 (defn load-shader
   "Load shader from files and bind default locations
@@ -1039,7 +1049,7 @@
   "Play a recorded automation event
   AutomationEvent event"
   [event]
-  (raylib_h/PlayAutomationEvent event))
+  (raylib_h/PlayAutomationEvent (rstructs/automation-event event)))
 
 (defn key-pressed?
   "Check if a key has been pressed once
@@ -1379,7 +1389,7 @@
                      (rstructs/color color)))
 
 (defn draw-line-v
-  "Draw a line (Vector version)
+  "Draw a line (using gl lines)
   Vector2 startPos
   Vector2 endPos
   Color color"
@@ -1389,7 +1399,7 @@
                       (rstructs/color color)))
 
 (defn draw-line-ex
-  "Draw a line defining thickness
+  "Draw a line (using triangles/quads)
   Vector2 startPos
   Vector2 endPos
   float thick
@@ -1400,8 +1410,18 @@
                        thick
                        (rstructs/color color)))
 
+(defn draw-line-strip
+  "Draw lines sequence (using gl lines)
+  Vector2 * points
+  int pointCount
+  Color color"
+  [points point-count color]
+  (raylib_h/DrawLineStrip (rstructs/vector2 points)
+                          point-count
+                          (rstructs/color color)))
+
 (defn draw-line-bezier
-  "Draw a line using cubic-bezier curves in-out
+  "Draw line segment cubic-bezier in-out interpolation
   Vector2 startPos
   Vector2 endPos
   float thick
@@ -1411,70 +1431,6 @@
                            (rstructs/vector2 end-pos)
                            thick
                            (rstructs/color color)))
-
-(defn draw-line-bezier-quad
-  "Draw line using quadratic bezier curves with a control point
-  Vector2 startPos
-  Vector2 endPos
-  Vector2 controlPos
-  float thick
-  Color color"
-  [start-pos end-pos control-pos thick color]
-  (raylib_h/DrawLineBezierQuad (rstructs/vector2 start-pos)
-                               (rstructs/vector2 end-pos)
-                               (rstructs/vector2 control-pos)
-                               thick
-                               (rstructs/color color)))
-
-(defn draw-line-bezier-cubic
-  "Draw line using cubic bezier curves with 2 control points
-  Vector2 startPos
-  Vector2 endPos
-  Vector2 startControlPos
-  Vector2 endControlPos
-  float thick
-  Color color"
-  [start-pos end-pos start-control-pos end-control-pos thick color]
-  (raylib_h/DrawLineBezierCubic (rstructs/vector2 start-pos)
-                                (rstructs/vector2 end-pos)
-                                (rstructs/vector2 start-control-pos)
-                                (rstructs/vector2 end-control-pos)
-                                thick
-                                (rstructs/color color)))
-
-(defn draw-line-bspline
-  "Draw a B-Spline line, minimum 4 points
-  Vector2 * points
-  int pointCount
-  float thick
-  Color color"
-  [points point-count thick color]
-  (raylib_h/DrawLineBSpline (rstructs/vector2 points)
-                            point-count
-                            thick
-                            (rstructs/color color)))
-
-(defn draw-line-catmull-rom
-  "Draw a Catmull Rom spline line, minimum 4 points
-  Vector2 * points
-  int pointCount
-  float thick
-  Color color"
-  [points point-count thick color]
-  (raylib_h/DrawLineCatmullRom (rstructs/vector2 points)
-                               point-count
-                               thick
-                               (rstructs/color color)))
-
-(defn draw-line-strip
-  "Draw lines sequence
-  Vector2 * points
-  int pointCount
-  Color color"
-  [points point-count color]
-  (raylib_h/DrawLineStrip (rstructs/vector2 points)
-                          point-count
-                          (rstructs/color color)))
 
 (defn draw-circle
   "Draw a color-filled circle
@@ -1842,6 +1798,245 @@
                             rotation
                             line-thick
                             (rstructs/color color)))
+
+(defn draw-spline-linear
+  "Draw spline: Linear, minimum 2 points
+  Vector2 * points
+  int pointCount
+  float thick
+  Color color"
+  [points point-count thick color]
+  (raylib_h/DrawSplineLinear (rstructs/vector2 points)
+                             point-count
+                             thick
+                             (rstructs/color color)))
+
+(defn draw-spline-basis
+  "Draw spline: B-Spline, minimum 4 points
+  Vector2 * points
+  int pointCount
+  float thick
+  Color color"
+  [points point-count thick color]
+  (raylib_h/DrawSplineBasis (rstructs/vector2 points)
+                            point-count
+                            thick
+                            (rstructs/color color)))
+
+(defn draw-spline-catmull-rom
+  "Draw spline: Catmull-Rom, minimum 4 points
+  Vector2 * points
+  int pointCount
+  float thick
+  Color color"
+  [points point-count thick color]
+  (raylib_h/DrawSplineCatmullRom (rstructs/vector2 points)
+                                 point-count
+                                 thick
+                                 (rstructs/color color)))
+
+(defn draw-spline-bezier-quadratic
+  "Draw spline: Quadratic Bezier, minimum 3 points (1 control point): [p1, c2, p3, c4...]
+  Vector2 * points
+  int pointCount
+  float thick
+  Color color"
+  [points point-count thick color]
+  (raylib_h/DrawSplineBezierQuadratic (rstructs/vector2 points)
+                                      point-count
+                                      thick
+                                      (rstructs/color color)))
+
+(defn draw-spline-bezier-cubic
+  "Draw spline: Cubic Bezier, minimum 4 points (2 control points): [p1, c2, c3, p4, c5, c6...]
+  Vector2 * points
+  int pointCount
+  float thick
+  Color color"
+  [points point-count thick color]
+  (raylib_h/DrawSplineBezierCubic (rstructs/vector2 points)
+                                  point-count
+                                  thick
+                                  (rstructs/color color)))
+
+(defn draw-spline-segment-linear
+  "Draw spline segment: Linear, 2 points
+  Vector2 p1
+  Vector2 p2
+  float thick
+  Color color"
+  [p1 p2 thick color]
+  (raylib_h/DrawSplineSegmentLinear (rstructs/vector2 p1)
+                                    (rstructs/vector2 p2)
+                                    thick
+                                    (rstructs/color color)))
+
+(defn draw-spline-segment-basis
+  "Draw spline segment: B-Spline, 4 points
+  Vector2 p1
+  Vector2 p2
+  Vector2 p3
+  Vector2 p4
+  float thick
+  Color color"
+  [p1 p2 p3 p4 thick color]
+  (raylib_h/DrawSplineSegmentBasis (rstructs/vector2 p1)
+                                   (rstructs/vector2 p2)
+                                   (rstructs/vector2 p3)
+                                   (rstructs/vector2 p4)
+                                   thick
+                                   (rstructs/color color)))
+
+(defn draw-spline-segment-catmull-rom
+  "Draw spline segment: Catmull-Rom, 4 points
+  Vector2 p1
+  Vector2 p2
+  Vector2 p3
+  Vector2 p4
+  float thick
+  Color color"
+  [p1 p2 p3 p4 thick color]
+  (raylib_h/DrawSplineSegmentCatmullRom (rstructs/vector2 p1)
+                                        (rstructs/vector2 p2)
+                                        (rstructs/vector2 p3)
+                                        (rstructs/vector2 p4)
+                                        thick
+                                        (rstructs/color color)))
+
+(defn draw-spline-segment-bezier-quadratic
+  "Draw spline segment: Quadratic Bezier, 2 points, 1 control point
+  Vector2 p1
+  Vector2 c2
+  Vector2 p3
+  float thick
+  Color color"
+  [p1 c2 p3 thick color]
+  (raylib_h/DrawSplineSegmentBezierQuadratic (rstructs/vector2 p1)
+                                             (rstructs/vector2 c2)
+                                             (rstructs/vector2 p3)
+                                             thick
+                                             (rstructs/color color)))
+
+(defn draw-spline-segment-bezier-cubic
+  "Draw spline segment: Cubic Bezier, 2 points, 2 control points
+  Vector2 p1
+  Vector2 c2
+  Vector2 c3
+  Vector2 p4
+  float thick
+  Color color"
+  [p1 c2 c3 p4 thick color]
+  (raylib_h/DrawSplineSegmentBezierCubic (rstructs/vector2 p1)
+                                         (rstructs/vector2 c2)
+                                         (rstructs/vector2 c3)
+                                         (rstructs/vector2 p4)
+                                         thick
+                                         (rstructs/color color)))
+
+(defn get-spline-point-linear
+  "Get (evaluate) spline point: Linear
+  Vector2 startPos
+  Vector2 endPos
+  float t"
+  ([^Arena arena start-pos end-pos t]
+   (raylib_h/GetSplinePointLinear arena
+                                  (rstructs/vector2 arena start-pos)
+                                  (rstructs/vector2 arena end-pos)
+                                  t))
+  ([start-pos end-pos t]
+   (rstructs/get-vector2 (raylib_h/GetSplinePointLinear
+                           rarena/*current-arena*
+                           (rstructs/vector2 start-pos)
+                           (rstructs/vector2 end-pos)
+                           t))))
+
+(defn get-spline-point-basis
+  "Get (evaluate) spline point: B-Spline
+  Vector2 p1
+  Vector2 p2
+  Vector2 p3
+  Vector2 p4
+  float t"
+  ([^Arena arena p1 p2 p3 p4 t]
+   (raylib_h/GetSplinePointBasis arena
+                                 (rstructs/vector2 arena p1)
+                                 (rstructs/vector2 arena p2)
+                                 (rstructs/vector2 arena p3)
+                                 (rstructs/vector2 arena p4)
+                                 t))
+  ([p1 p2 p3 p4 t]
+   (rstructs/get-vector2 (raylib_h/GetSplinePointBasis rarena/*current-arena*
+                                                       (rstructs/vector2 p1)
+                                                       (rstructs/vector2 p2)
+                                                       (rstructs/vector2 p3)
+                                                       (rstructs/vector2 p4)
+                                                       t))))
+
+(defn get-spline-point-catmull-rom
+  "Get (evaluate) spline point: Catmull-Rom
+  Vector2 p1
+  Vector2 p2
+  Vector2 p3
+  Vector2 p4
+  float t"
+  ([^Arena arena p1 p2 p3 p4 t]
+   (raylib_h/GetSplinePointCatmullRom arena
+                                      (rstructs/vector2 arena p1)
+                                      (rstructs/vector2 arena p2)
+                                      (rstructs/vector2 arena p3)
+                                      (rstructs/vector2 arena p4)
+                                      t))
+  ([p1 p2 p3 p4 t]
+   (rstructs/get-vector2 (raylib_h/GetSplinePointCatmullRom
+                           rarena/*current-arena*
+                           (rstructs/vector2 p1)
+                           (rstructs/vector2 p2)
+                           (rstructs/vector2 p3)
+                           (rstructs/vector2 p4)
+                           t))))
+
+(defn get-spline-point-bezier-quad
+  "Get (evaluate) spline point: Quadratic Bezier
+  Vector2 p1
+  Vector2 c2
+  Vector2 p3
+  float t"
+  ([^Arena arena p1 c2 p3 t]
+   (raylib_h/GetSplinePointBezierQuad arena
+                                      (rstructs/vector2 arena p1)
+                                      (rstructs/vector2 arena c2)
+                                      (rstructs/vector2 arena p3)
+                                      t))
+  ([p1 c2 p3 t]
+   (rstructs/get-vector2 (raylib_h/GetSplinePointBezierQuad
+                           rarena/*current-arena*
+                           (rstructs/vector2 p1)
+                           (rstructs/vector2 c2)
+                           (rstructs/vector2 p3)
+                           t))))
+
+(defn get-spline-point-bezier-cubic
+  "Get (evaluate) spline point: Cubic Bezier
+  Vector2 p1
+  Vector2 c2
+  Vector2 c3
+  Vector2 p4
+  float t"
+  ([^Arena arena p1 c2 c3 p4 t]
+   (raylib_h/GetSplinePointBezierCubic arena
+                                       (rstructs/vector2 arena p1)
+                                       (rstructs/vector2 arena c2)
+                                       (rstructs/vector2 arena c3)
+                                       (rstructs/vector2 arena p4)
+                                       t))
+  ([p1 c2 c3 p4 t]
+   (rstructs/get-vector2 (raylib_h/GetSplinePointBezierCubic
+                           rarena/*current-arena*
+                           (rstructs/vector2 p1)
+                           (rstructs/vector2 c2)
+                           (rstructs/vector2 c3)
+                           (rstructs/vector2 p4)
+                           t))))
 
 (defn check-collision-recs?
   "Check collision between two rectangles
@@ -4096,7 +4291,9 @@
   Material material
   Matrix transform"
   [mesh material transform]
-  (raylib_h/DrawMesh (rstructs/mesh mesh) material (rstructs/matrix transform)))
+  (raylib_h/DrawMesh (rstructs/mesh mesh)
+                     (rstructs/material material)
+                     (rstructs/matrix transform)))
 
 (defn draw-mesh-instanced
   "Draw multiple mesh instances with material and different transforms
@@ -4106,7 +4303,7 @@
   int instances"
   [mesh material transforms instances]
   (raylib_h/DrawMeshInstanced (rstructs/mesh mesh)
-                              material
+                              (rstructs/material material)
                               (rstructs/matrix transforms)
                               instances))
 
@@ -4270,17 +4467,24 @@
   ([file-name material-count]
    (raylib_h/LoadMaterials (string file-name) material-count)))
 
+(defn load-material-default
+  "Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)"
+  ([^Arena arena] (raylib_h/LoadMaterialDefault arena))
+  ([]
+   (rstructs/get-material (raylib_h/LoadMaterialDefault
+                            rarena/*current-arena*))))
+
 (defn material-ready?
   "Check if a material is ready
   Material material"
   [material]
-  (raylib_h/IsMaterialReady material))
+  (raylib_h/IsMaterialReady (rstructs/material material)))
 
 (defn unload-material
   "Unload material from GPU memory (VRAM)
   Material material"
   [material]
-  (raylib_h/UnloadMaterial material))
+  (raylib_h/UnloadMaterial (rstructs/material material)))
 
 (defn set-material-texture
   "Set texture for a material map type (MATERIAL_MAP_DIFFUSE, MATERIAL_MAP_SPECULAR...)
@@ -4288,7 +4492,9 @@
   int mapType
   Texture2D texture"
   [material map-type texture]
-  (raylib_h/SetMaterialTexture material map-type (rstructs/texture texture)))
+  (raylib_h/SetMaterialTexture (rstructs/material material)
+                               map-type
+                               (rstructs/texture texture)))
 
 (defn set-model-mesh-material
   "Set material for a mesh
@@ -4313,27 +4519,31 @@
   ModelAnimation anim
   int frame"
   [model anim frame]
-  (raylib_h/UpdateModelAnimation (rstructs/model model) anim frame))
+  (raylib_h/UpdateModelAnimation (rstructs/model model)
+                                 (rstructs/model-animation anim)
+                                 frame))
 
 (defn unload-model-animation
   "Unload animation data
   ModelAnimation anim"
   [anim]
-  (raylib_h/UnloadModelAnimation anim))
+  (raylib_h/UnloadModelAnimation (rstructs/model-animation anim)))
 
 (defn unload-model-animations
   "Unload animation array data
   ModelAnimation * animations
   int animCount"
   [animations anim-count]
-  (raylib_h/UnloadModelAnimations animations anim-count))
+  (raylib_h/UnloadModelAnimations (rstructs/model-animation animations)
+                                  anim-count))
 
 (defn model-animation-valid?
   "Check model animation skeleton match
   Model model
   ModelAnimation anim"
   [model anim]
-  (raylib_h/IsModelAnimationValid (rstructs/model model) anim))
+  (raylib_h/IsModelAnimationValid (rstructs/model model)
+                                  (rstructs/model-animation anim)))
 
 (defn check-collision-spheres?
   "Check collision between two spheres

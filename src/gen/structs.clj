@@ -2,13 +2,68 @@
   (:require [raylib.arena :as rarena]
             [gen.enums :as renums])
   (:import
-   [java.lang.foreign Arena MemoryLayout MemorySegment]))
+   [java.lang.foreign Arena MemoryLayout MemorySegment ValueLayout]))
 
 (set! *warn-on-reflection* true)
 
 ;;
-;; Structures Definition
+;; Utility functions
 ;;
+
+(defn get-string [^MemorySegment seg]
+  (.getUtf8String seg 0))
+
+(defn set-string [^MemorySegment seg val max-len]
+  (when (> (count val) max-len)
+    (throw (ex-info "String too long" {:val val :max-len max-len})))
+  (.setUtf8String seg 0 val))
+
+(defn string
+  ([str] (.allocateUtf8String rarena/*current-arena* str))
+  ([^Arena arena str] (.allocateUtf8String arena str)))
+
+(defn get-float-array [^MemorySegment seg size]
+  (let [layout (ValueLayout/JAVA_FLOAT)]
+    (mapv (fn [i] (.getAtIndex seg layout (long i))) (range size))))
+
+(defn set-float-array
+  [^MemorySegment seg elems max-size]
+  (when (> (count elems) max-size)
+    (throw (ex-info "Float array too long" {:elems elems :max-size max-size})))
+  (let [layout (ValueLayout/JAVA_FLOAT)]
+    (dorun
+     (map-indexed (fn [i elem] (.setAtIndex seg layout (long i) (float elem))) elems)))
+  seg)
+
+(defn get-char-array [^MemorySegment seg size]
+  (let [layout (ValueLayout/JAVA_BYTE)]
+    (apply
+     str
+     (mapv (fn [i] (char (.getAtIndex seg layout (long i)))) (range size)))))
+
+(defn set-char-array
+  [^MemorySegment seg elems max-size]
+  (when (> (count elems) max-size)
+    (throw (ex-info "Byte array too long" {:elems elems :max-size max-size})))
+  (let [layout (ValueLayout/JAVA_BYTE)]
+    (dorun
+     (map-indexed
+      (fn [i elem]
+        (.setAtIndex seg layout (long i) (-> elem int unchecked-byte))) elems)))
+  seg)
+
+(defn get-int-array [^MemorySegment seg size]
+  (let [layout (ValueLayout/JAVA_INT)]
+    (mapv (fn [i] (.getAtIndex seg layout (long i))) (range size))))
+
+(defn set-int-array
+  [^MemorySegment seg elems max-size]
+  (when (> (count elems) max-size)
+    (throw (ex-info "Int array too long" {:elems elems :max-size max-size})))
+  (let [layout (ValueLayout/JAVA_INT)]
+    (dorun
+     (map-indexed (fn [i elem] (.setAtIndex seg layout (long i) (int elem))) elems)))
+  seg)
 
 ;; TODO: move these utility fns into an impl ns
 (defn as-slice
@@ -21,21 +76,34 @@
     (fn [^MemorySegment seg size]
       (mapv (fn [i] (get-fn (as-slice seg i element-size))) (range size)))))
 
-(defn array-fn
+(defn set-array-fn
   [^MemoryLayout elem-layout set-fn]
   (let [element-size (.byteSize elem-layout)]
+    (fn set-array
+      ([^MemorySegment seg elems max-size]
+       (when (> (count elems) max-size) (throw (ex-info "Array too long" {:elems elems :max-size max-size})))
+       (set-array seg elems))
+      ([^MemorySegment seg elems]
+       (dorun
+        (map-indexed (fn [i elem] (set-fn (as-slice seg i element-size) elem)) elems))
+       seg))))
+
+(defn array-fn
+  [^MemoryLayout elem-layout set-fn]
+  (let [set-array (set-array-fn elem-layout set-fn)]
     (fn to-array
       ([^Arena arena elems]
-       (let [size (count elems)
-             array-layout (MemoryLayout/sequenceLayout size elem-layout)
+       (let [array-layout (MemoryLayout/sequenceLayout (count elems) elem-layout)
              seg (.allocate arena array-layout)]
-         (dorun
-          (map-indexed (fn [i elem] (set-fn (as-slice seg i element-size) elem)) elems))
-         seg))
+         (set-array seg elems)))
       ([elems]
        (if (instance? MemorySegment elems)
          elems
          (to-array rarena/*current-arena* elems))))))
+
+;;
+;; Structures Definition
+;;
 
 (defn get-vector2
   "Vector2, 2 components
@@ -66,6 +134,8 @@
 (def vector2-array (array-fn (raylib.Vector2/$LAYOUT) set-vector2))
 
 (def get-vector2-array (get-array-fn (raylib.Vector2/$LAYOUT) get-vector2))
+
+(def set-vector2-array (set-array-fn (raylib.Vector2/$LAYOUT) set-vector2))
 
 (defn get-vector3
   "Vector3, 3 components
@@ -101,6 +171,8 @@
 (def vector3-array (array-fn (raylib.Vector3/$LAYOUT) set-vector3))
 
 (def get-vector3-array (get-array-fn (raylib.Vector3/$LAYOUT) get-vector3))
+
+(def set-vector3-array (set-array-fn (raylib.Vector3/$LAYOUT) set-vector3))
 
 (defn get-vector4
   "Vector4, 4 components
@@ -140,6 +212,8 @@
 (def vector4-array (array-fn (raylib.Vector4/$LAYOUT) set-vector4))
 
 (def get-vector4-array (get-array-fn (raylib.Vector4/$LAYOUT) get-vector4))
+
+(def set-vector4-array (set-array-fn (raylib.Vector4/$LAYOUT) set-vector4))
 
 (defn get-matrix
   "Matrix, 4x4 components, column major, OpenGL style, right-handed
@@ -198,6 +272,8 @@
 
 (def get-matrix-array (get-array-fn (raylib.Matrix/$LAYOUT) get-matrix))
 
+(def set-matrix-array (set-array-fn (raylib.Matrix/$LAYOUT) set-matrix))
+
 (defn get-color
   "Color, 4 components, R8G8B8A8 (32bit)
   unsigned char r; // Color red value
@@ -246,6 +322,8 @@
 
 (def get-color-array (get-array-fn (raylib.Color/$LAYOUT) get-color))
 
+(def set-color-array (set-array-fn (raylib.Color/$LAYOUT) set-color))
+
 (defn get-rectangle
   "Rectangle, 4 components
   float x // Rectangle top-left corner position x
@@ -288,6 +366,9 @@
 
 (def get-rectangle-array
   (get-array-fn (raylib.Rectangle/$LAYOUT) get-rectangle))
+
+(def set-rectangle-array
+  (set-array-fn (raylib.Rectangle/$LAYOUT) set-rectangle))
 
 (defn get-image
   "Image, pixel data stored in CPU memory (RAM)
@@ -335,6 +416,8 @@
 
 (def get-image-array (get-array-fn (raylib.Image/$LAYOUT) get-image))
 
+(def set-image-array (set-array-fn (raylib.Image/$LAYOUT) set-image))
+
 (defn get-texture
   "Texture, tex data stored in GPU memory (VRAM)
   unsigned int id // OpenGL texture id
@@ -381,6 +464,8 @@
 
 (def get-texture-array (get-array-fn (raylib.Texture/$LAYOUT) get-texture))
 
+(def set-texture-array (set-array-fn (raylib.Texture/$LAYOUT) set-texture))
+
 (defn get-render-texture
   "RenderTexture, fbo for texture rendering
   unsigned int id // OpenGL framebuffer object id
@@ -419,6 +504,9 @@
 
 (def get-render-texture-array
   (get-array-fn (raylib.RenderTexture/$LAYOUT) get-render-texture))
+
+(def set-render-texture-array
+  (set-array-fn (raylib.RenderTexture/$LAYOUT) set-render-texture))
 
 (defn get-npatch-info
   "NPatchInfo, n-patch layout info
@@ -473,6 +561,9 @@
 (def get-npatch-info-array
   (get-array-fn (raylib.NPatchInfo/$LAYOUT) get-npatch-info))
 
+(def set-npatch-info-array
+  (set-array-fn (raylib.NPatchInfo/$LAYOUT) set-npatch-info))
+
 (defn get-glyph-info
   "GlyphInfo, font characters glyphs info
   int value // Character value (Unicode)
@@ -520,6 +611,9 @@
 
 (def get-glyph-info-array
   (get-array-fn (raylib.GlyphInfo/$LAYOUT) get-glyph-info))
+
+(def set-glyph-info-array
+  (set-array-fn (raylib.GlyphInfo/$LAYOUT) set-glyph-info))
 
 (defn get-font
   "Font, font texture and GlyphInfo array data
@@ -575,6 +669,8 @@
 
 (def get-font-array (get-array-fn (raylib.Font/$LAYOUT) get-font))
 
+(def set-font-array (set-array-fn (raylib.Font/$LAYOUT) set-font))
+
 (defn get-camera3d
   "Camera, defines position/orientation in 3d space
   Vector3 position // Camera position
@@ -622,6 +718,8 @@
 
 (def get-camera3d-array (get-array-fn (raylib.Camera3D/$LAYOUT) get-camera3d))
 
+(def set-camera3d-array (set-array-fn (raylib.Camera3D/$LAYOUT) set-camera3d))
+
 (defn get-camera2d
   "Camera2D, defines position/orientation in 2d space
   Vector2 offset // Camera offset (displacement from target)
@@ -663,6 +761,8 @@
 (def camera2d-array (array-fn (raylib.Camera2D/$LAYOUT) set-camera2d))
 
 (def get-camera2d-array (get-array-fn (raylib.Camera2D/$LAYOUT) get-camera2d))
+
+(def set-camera2d-array (set-array-fn (raylib.Camera2D/$LAYOUT) set-camera2d))
 
 (defn get-mesh
   "Mesh, vertex data and vao/vbo
@@ -763,6 +863,8 @@
 
 (def get-mesh-array (get-array-fn (raylib.Mesh/$LAYOUT) get-mesh))
 
+(def set-mesh-array (set-array-fn (raylib.Mesh/$LAYOUT) set-mesh))
+
 (defn get-shader
   "Shader
   unsigned int id // Shader program id
@@ -792,6 +894,8 @@
 (def shader-array (array-fn (raylib.Shader/$LAYOUT) set-shader))
 
 (def get-shader-array (get-array-fn (raylib.Shader/$LAYOUT) get-shader))
+
+(def set-shader-array (set-array-fn (raylib.Shader/$LAYOUT) set-shader))
 
 (defn get-material-map
   "MaterialMap
@@ -832,6 +936,48 @@
 (def get-material-map-array
   (get-array-fn (raylib.MaterialMap/$LAYOUT) get-material-map))
 
+(def set-material-map-array
+  (set-array-fn (raylib.MaterialMap/$LAYOUT) set-material-map))
+
+(defn get-material
+  "Material, includes shader and maps
+  Shader shader // Material shader
+  MaterialMap * maps // Material maps array (MAX_MATERIAL_MAPS)
+  float[4] params // Material generic parameters (if required)"
+  [^MemorySegment seg]
+  {:shader (get-shader (raylib.Material/shader$slice seg)),
+   :maps (raylib.Material/maps$get seg),
+   :params (get-float-array (raylib.Material/params$slice seg) 4)})
+
+(defn set-material
+  "Material, includes shader and maps
+  Shader shader // Material shader
+  MaterialMap * maps // Material maps array (MAX_MATERIAL_MAPS)
+  float[4] params // Material generic parameters (if required)"
+  [^MemorySegment seg {:keys [shader maps params]}]
+  (set-shader (raylib.Material/shader$slice seg) shader)
+  (raylib.Material/maps$set seg maps)
+  (set-float-array (raylib.Material/params$slice seg) params 4)
+  seg)
+
+(defn material
+  "Material, includes shader and maps
+  Shader shader // Material shader
+  MaterialMap * maps // Material maps array (MAX_MATERIAL_MAPS)
+  float[4] params // Material generic parameters (if required)"
+  ([^Arena arena v]
+   (set-material (.allocate arena (raylib.Material/$LAYOUT)) v))
+  ([v]
+   (if (clojure.core/instance? MemorySegment v)
+     v
+     (material rarena/*current-arena* v))))
+
+(def material-array (array-fn (raylib.Material/$LAYOUT) set-material))
+
+(def get-material-array (get-array-fn (raylib.Material/$LAYOUT) get-material))
+
+(def set-material-array (set-array-fn (raylib.Material/$LAYOUT) set-material))
+
 (defn get-transform
   "Transform, vertex transformation data
   Vector3 translation // Translation
@@ -869,6 +1015,43 @@
 
 (def get-transform-array
   (get-array-fn (raylib.Transform/$LAYOUT) get-transform))
+
+(def set-transform-array
+  (set-array-fn (raylib.Transform/$LAYOUT) set-transform))
+
+(defn get-bone-info
+  "Bone, skeletal animation bone
+  char[32] name // Bone name
+  int parent // Bone parent"
+  [^MemorySegment seg]
+  {:name (get-char-array (raylib.BoneInfo/name$slice seg) 32),
+   :parent (raylib.BoneInfo/parent$get seg)})
+
+(defn set-bone-info
+  "Bone, skeletal animation bone
+  char[32] name // Bone name
+  int parent // Bone parent"
+  [^MemorySegment seg {:keys [name parent]}]
+  (set-char-array (raylib.BoneInfo/name$slice seg) name 32)
+  (raylib.BoneInfo/parent$set seg parent)
+  seg)
+
+(defn bone-info
+  "Bone, skeletal animation bone
+  char[32] name // Bone name
+  int parent // Bone parent"
+  ([^Arena arena v]
+   (set-bone-info (.allocate arena (raylib.BoneInfo/$LAYOUT)) v))
+  ([v]
+   (if (clojure.core/instance? MemorySegment v)
+     v
+     (bone-info rarena/*current-arena* v))))
+
+(def bone-info-array (array-fn (raylib.BoneInfo/$LAYOUT) set-bone-info))
+
+(def get-bone-info-array (get-array-fn (raylib.BoneInfo/$LAYOUT) get-bone-info))
+
+(def set-bone-info-array (set-array-fn (raylib.BoneInfo/$LAYOUT) set-bone-info))
 
 (defn get-model
   "Model, meshes, materials and animation data
@@ -938,6 +1121,60 @@
 
 (def get-model-array (get-array-fn (raylib.Model/$LAYOUT) get-model))
 
+(def set-model-array (set-array-fn (raylib.Model/$LAYOUT) set-model))
+
+(defn get-model-animation
+  "ModelAnimation
+  int boneCount // Number of bones
+  int frameCount // Number of animation frames
+  BoneInfo * bones // Bones information (skeleton)
+  Transform ** framePoses // Poses array by frame
+  char[32] name // Animation name"
+  [^MemorySegment seg]
+  {:boneCount (raylib.ModelAnimation/boneCount$get seg),
+   :frameCount (raylib.ModelAnimation/frameCount$get seg),
+   :bones (raylib.ModelAnimation/bones$get seg),
+   :framePoses (raylib.ModelAnimation/framePoses$get seg),
+   :name (get-char-array (raylib.ModelAnimation/name$slice seg) 32)})
+
+(defn set-model-animation
+  "ModelAnimation
+  int boneCount // Number of bones
+  int frameCount // Number of animation frames
+  BoneInfo * bones // Bones information (skeleton)
+  Transform ** framePoses // Poses array by frame
+  char[32] name // Animation name"
+  [^MemorySegment seg {:keys [boneCount frameCount bones framePoses name]}]
+  (raylib.ModelAnimation/boneCount$set seg boneCount)
+  (raylib.ModelAnimation/frameCount$set seg frameCount)
+  (raylib.ModelAnimation/bones$set seg bones)
+  (raylib.ModelAnimation/framePoses$set seg framePoses)
+  (set-char-array (raylib.ModelAnimation/name$slice seg) name 32)
+  seg)
+
+(defn model-animation
+  "ModelAnimation
+  int boneCount // Number of bones
+  int frameCount // Number of animation frames
+  BoneInfo * bones // Bones information (skeleton)
+  Transform ** framePoses // Poses array by frame
+  char[32] name // Animation name"
+  ([^Arena arena v]
+   (set-model-animation (.allocate arena (raylib.ModelAnimation/$LAYOUT)) v))
+  ([v]
+   (if (clojure.core/instance? MemorySegment v)
+     v
+     (model-animation rarena/*current-arena* v))))
+
+(def model-animation-array
+  (array-fn (raylib.ModelAnimation/$LAYOUT) set-model-animation))
+
+(def get-model-animation-array
+  (get-array-fn (raylib.ModelAnimation/$LAYOUT) get-model-animation))
+
+(def set-model-animation-array
+  (set-array-fn (raylib.ModelAnimation/$LAYOUT) set-model-animation))
+
 (defn get-ray
   "Ray, ray for raycasting
   Vector3 position // Ray position (origin)
@@ -968,6 +1205,8 @@
 (def ray-array (array-fn (raylib.Ray/$LAYOUT) set-ray))
 
 (def get-ray-array (get-array-fn (raylib.Ray/$LAYOUT) get-ray))
+
+(def set-ray-array (set-array-fn (raylib.Ray/$LAYOUT) set-ray))
 
 (defn get-ray-collision
   "RayCollision, ray hit information
@@ -1013,6 +1252,9 @@
 (def get-ray-collision-array
   (get-array-fn (raylib.RayCollision/$LAYOUT) get-ray-collision))
 
+(def set-ray-collision-array
+  (set-array-fn (raylib.RayCollision/$LAYOUT) set-ray-collision))
+
 (defn get-bounding-box
   "BoundingBox
   Vector3 min // Minimum vertex box-corner
@@ -1046,6 +1288,9 @@
 
 (def get-bounding-box-array
   (get-array-fn (raylib.BoundingBox/$LAYOUT) get-bounding-box))
+
+(def set-bounding-box-array
+  (set-array-fn (raylib.BoundingBox/$LAYOUT) set-bounding-box))
 
 (defn get-wave
   "Wave, audio wave data
@@ -1092,6 +1337,8 @@
 (def wave-array (array-fn (raylib.Wave/$LAYOUT) set-wave))
 
 (def get-wave-array (get-array-fn (raylib.Wave/$LAYOUT) get-wave))
+
+(def set-wave-array (set-array-fn (raylib.Wave/$LAYOUT) set-wave))
 
 (defn get-audio-stream
   "AudioStream, custom audio stream
@@ -1142,6 +1389,9 @@
 (def get-audio-stream-array
   (get-array-fn (raylib.AudioStream/$LAYOUT) get-audio-stream))
 
+(def set-audio-stream-array
+  (set-array-fn (raylib.AudioStream/$LAYOUT) set-audio-stream))
+
 (defn get-sound
   "Sound
   AudioStream stream // Audio stream
@@ -1172,6 +1422,8 @@
 (def sound-array (array-fn (raylib.Sound/$LAYOUT) set-sound))
 
 (def get-sound-array (get-array-fn (raylib.Sound/$LAYOUT) get-sound))
+
+(def set-sound-array (set-array-fn (raylib.Sound/$LAYOUT) set-sound))
 
 (defn get-music
   "Music, audio stream, anything longer than ~10 seconds should be streamed
@@ -1219,6 +1471,177 @@
 
 (def get-music-array (get-array-fn (raylib.Music/$LAYOUT) get-music))
 
+(def set-music-array (set-array-fn (raylib.Music/$LAYOUT) set-music))
+
+(defn get-vr-device-info
+  "VrDeviceInfo, Head-Mounted-Display device parameters
+  int hResolution // Horizontal resolution in pixels
+  int vResolution // Vertical resolution in pixels
+  float hScreenSize // Horizontal size in meters
+  float vScreenSize // Vertical size in meters
+  float vScreenCenter // Screen center in meters
+  float eyeToScreenDistance // Distance between eye and display in meters
+  float lensSeparationDistance // Lens separation distance in meters
+  float interpupillaryDistance // IPD (distance between pupils) in meters
+  float[4] lensDistortionValues // Lens distortion constant parameters
+  float[4] chromaAbCorrection // Chromatic aberration correction parameters"
+  [^MemorySegment seg]
+  {:hResolution (raylib.VrDeviceInfo/hResolution$get seg),
+   :vResolution (raylib.VrDeviceInfo/vResolution$get seg),
+   :hScreenSize (raylib.VrDeviceInfo/hScreenSize$get seg),
+   :vScreenSize (raylib.VrDeviceInfo/vScreenSize$get seg),
+   :vScreenCenter (raylib.VrDeviceInfo/vScreenCenter$get seg),
+   :eyeToScreenDistance (raylib.VrDeviceInfo/eyeToScreenDistance$get seg),
+   :lensSeparationDistance (raylib.VrDeviceInfo/lensSeparationDistance$get seg),
+   :interpupillaryDistance (raylib.VrDeviceInfo/interpupillaryDistance$get seg),
+   :lensDistortionValues
+     (get-float-array (raylib.VrDeviceInfo/lensDistortionValues$slice seg) 4),
+   :chromaAbCorrection
+     (get-float-array (raylib.VrDeviceInfo/chromaAbCorrection$slice seg) 4)})
+
+(defn set-vr-device-info
+  "VrDeviceInfo, Head-Mounted-Display device parameters
+  int hResolution // Horizontal resolution in pixels
+  int vResolution // Vertical resolution in pixels
+  float hScreenSize // Horizontal size in meters
+  float vScreenSize // Vertical size in meters
+  float vScreenCenter // Screen center in meters
+  float eyeToScreenDistance // Distance between eye and display in meters
+  float lensSeparationDistance // Lens separation distance in meters
+  float interpupillaryDistance // IPD (distance between pupils) in meters
+  float[4] lensDistortionValues // Lens distortion constant parameters
+  float[4] chromaAbCorrection // Chromatic aberration correction parameters"
+  [^MemorySegment seg
+   {:keys [hResolution vResolution hScreenSize vScreenSize vScreenCenter
+           eyeToScreenDistance lensSeparationDistance interpupillaryDistance
+           lensDistortionValues chromaAbCorrection]}]
+  (raylib.VrDeviceInfo/hResolution$set seg hResolution)
+  (raylib.VrDeviceInfo/vResolution$set seg vResolution)
+  (raylib.VrDeviceInfo/hScreenSize$set seg hScreenSize)
+  (raylib.VrDeviceInfo/vScreenSize$set seg vScreenSize)
+  (raylib.VrDeviceInfo/vScreenCenter$set seg vScreenCenter)
+  (raylib.VrDeviceInfo/eyeToScreenDistance$set seg eyeToScreenDistance)
+  (raylib.VrDeviceInfo/lensSeparationDistance$set seg lensSeparationDistance)
+  (raylib.VrDeviceInfo/interpupillaryDistance$set seg interpupillaryDistance)
+  (set-float-array (raylib.VrDeviceInfo/lensDistortionValues$slice seg)
+                   lensDistortionValues
+                   4)
+  (set-float-array (raylib.VrDeviceInfo/chromaAbCorrection$slice seg)
+                   chromaAbCorrection
+                   4)
+  seg)
+
+(defn vr-device-info
+  "VrDeviceInfo, Head-Mounted-Display device parameters
+  int hResolution // Horizontal resolution in pixels
+  int vResolution // Vertical resolution in pixels
+  float hScreenSize // Horizontal size in meters
+  float vScreenSize // Vertical size in meters
+  float vScreenCenter // Screen center in meters
+  float eyeToScreenDistance // Distance between eye and display in meters
+  float lensSeparationDistance // Lens separation distance in meters
+  float interpupillaryDistance // IPD (distance between pupils) in meters
+  float[4] lensDistortionValues // Lens distortion constant parameters
+  float[4] chromaAbCorrection // Chromatic aberration correction parameters"
+  ([^Arena arena v]
+   (set-vr-device-info (.allocate arena (raylib.VrDeviceInfo/$LAYOUT)) v))
+  ([v]
+   (if (clojure.core/instance? MemorySegment v)
+     v
+     (vr-device-info rarena/*current-arena* v))))
+
+(def vr-device-info-array
+  (array-fn (raylib.VrDeviceInfo/$LAYOUT) set-vr-device-info))
+
+(def get-vr-device-info-array
+  (get-array-fn (raylib.VrDeviceInfo/$LAYOUT) get-vr-device-info))
+
+(def set-vr-device-info-array
+  (set-array-fn (raylib.VrDeviceInfo/$LAYOUT) set-vr-device-info))
+
+(defn get-vr-stereo-config
+  "VrStereoConfig, VR stereo rendering configuration for simulator
+  Matrix[2] projection // VR projection matrices (per eye)
+  Matrix[2] viewOffset // VR view offset matrices (per eye)
+  float[2] leftLensCenter // VR left lens center
+  float[2] rightLensCenter // VR right lens center
+  float[2] leftScreenCenter // VR left screen center
+  float[2] rightScreenCenter // VR right screen center
+  float[2] scale // VR distortion scale
+  float[2] scaleIn // VR distortion scale in"
+  [^MemorySegment seg]
+  {:projection (get-matrix-array (raylib.VrStereoConfig/projection$slice seg)
+                                 2),
+   :viewOffset (get-matrix-array (raylib.VrStereoConfig/viewOffset$slice seg)
+                                 2),
+   :leftLensCenter
+     (get-float-array (raylib.VrStereoConfig/leftLensCenter$slice seg) 2),
+   :rightLensCenter
+     (get-float-array (raylib.VrStereoConfig/rightLensCenter$slice seg) 2),
+   :leftScreenCenter
+     (get-float-array (raylib.VrStereoConfig/leftScreenCenter$slice seg) 2),
+   :rightScreenCenter
+     (get-float-array (raylib.VrStereoConfig/rightScreenCenter$slice seg) 2),
+   :scale (get-float-array (raylib.VrStereoConfig/scale$slice seg) 2),
+   :scaleIn (get-float-array (raylib.VrStereoConfig/scaleIn$slice seg) 2)})
+
+(defn set-vr-stereo-config
+  "VrStereoConfig, VR stereo rendering configuration for simulator
+  Matrix[2] projection // VR projection matrices (per eye)
+  Matrix[2] viewOffset // VR view offset matrices (per eye)
+  float[2] leftLensCenter // VR left lens center
+  float[2] rightLensCenter // VR right lens center
+  float[2] leftScreenCenter // VR left screen center
+  float[2] rightScreenCenter // VR right screen center
+  float[2] scale // VR distortion scale
+  float[2] scaleIn // VR distortion scale in"
+  [^MemorySegment seg
+   {:keys [projection viewOffset leftLensCenter rightLensCenter leftScreenCenter
+           rightScreenCenter scale scaleIn]}]
+  (set-matrix-array (raylib.VrStereoConfig/projection$slice seg) projection 2)
+  (set-matrix-array (raylib.VrStereoConfig/viewOffset$slice seg) viewOffset 2)
+  (set-float-array (raylib.VrStereoConfig/leftLensCenter$slice seg)
+                   leftLensCenter
+                   2)
+  (set-float-array (raylib.VrStereoConfig/rightLensCenter$slice seg)
+                   rightLensCenter
+                   2)
+  (set-float-array (raylib.VrStereoConfig/leftScreenCenter$slice seg)
+                   leftScreenCenter
+                   2)
+  (set-float-array (raylib.VrStereoConfig/rightScreenCenter$slice seg)
+                   rightScreenCenter
+                   2)
+  (set-float-array (raylib.VrStereoConfig/scale$slice seg) scale 2)
+  (set-float-array (raylib.VrStereoConfig/scaleIn$slice seg) scaleIn 2)
+  seg)
+
+(defn vr-stereo-config
+  "VrStereoConfig, VR stereo rendering configuration for simulator
+  Matrix[2] projection // VR projection matrices (per eye)
+  Matrix[2] viewOffset // VR view offset matrices (per eye)
+  float[2] leftLensCenter // VR left lens center
+  float[2] rightLensCenter // VR right lens center
+  float[2] leftScreenCenter // VR left screen center
+  float[2] rightScreenCenter // VR right screen center
+  float[2] scale // VR distortion scale
+  float[2] scaleIn // VR distortion scale in"
+  ([^Arena arena v]
+   (set-vr-stereo-config (.allocate arena (raylib.VrStereoConfig/$LAYOUT)) v))
+  ([v]
+   (if (clojure.core/instance? MemorySegment v)
+     v
+     (vr-stereo-config rarena/*current-arena* v))))
+
+(def vr-stereo-config-array
+  (array-fn (raylib.VrStereoConfig/$LAYOUT) set-vr-stereo-config))
+
+(def get-vr-stereo-config-array
+  (get-array-fn (raylib.VrStereoConfig/$LAYOUT) get-vr-stereo-config))
+
+(def set-vr-stereo-config-array
+  (set-array-fn (raylib.VrStereoConfig/$LAYOUT) set-vr-stereo-config))
+
 (defn get-file-path-list
   "File path list
   unsigned int capacity // Filepaths max entries
@@ -1257,6 +1680,51 @@
 
 (def get-file-path-list-array
   (get-array-fn (raylib.FilePathList/$LAYOUT) get-file-path-list))
+
+(def set-file-path-list-array
+  (set-array-fn (raylib.FilePathList/$LAYOUT) set-file-path-list))
+
+(defn get-automation-event
+  "Automation event
+  unsigned int frame // Event frame
+  unsigned int type // Event type (AutomationEventType)
+  int[4] params // Event parameters (if required)"
+  [^MemorySegment seg]
+  {:frame (raylib.AutomationEvent/frame$get seg),
+   :type (raylib.AutomationEvent/type$get seg),
+   :params (get-int-array (raylib.AutomationEvent/params$slice seg) 4)})
+
+(defn set-automation-event
+  "Automation event
+  unsigned int frame // Event frame
+  unsigned int type // Event type (AutomationEventType)
+  int[4] params // Event parameters (if required)"
+  [^MemorySegment seg {:keys [frame type params]}]
+  (raylib.AutomationEvent/frame$set seg frame)
+  (raylib.AutomationEvent/type$set seg type)
+  (set-int-array (raylib.AutomationEvent/params$slice seg) params 4)
+  seg)
+
+(defn automation-event
+  "Automation event
+  unsigned int frame // Event frame
+  unsigned int type // Event type (AutomationEventType)
+  int[4] params // Event parameters (if required)"
+  ([^Arena arena v]
+   (set-automation-event (.allocate arena (raylib.AutomationEvent/$LAYOUT)) v))
+  ([v]
+   (if (clojure.core/instance? MemorySegment v)
+     v
+     (automation-event rarena/*current-arena* v))))
+
+(def automation-event-array
+  (array-fn (raylib.AutomationEvent/$LAYOUT) set-automation-event))
+
+(def get-automation-event-array
+  (get-array-fn (raylib.AutomationEvent/$LAYOUT) get-automation-event))
+
+(def set-automation-event-array
+  (set-array-fn (raylib.AutomationEvent/$LAYOUT) set-automation-event))
 
 (defn get-automation-event-list
   "Automation event list
@@ -1298,4 +1766,7 @@
 
 (def get-automation-event-list-array
   (get-array-fn (raylib.AutomationEventList/$LAYOUT) get-automation-event-list))
+
+(def set-automation-event-list-array
+  (set-array-fn (raylib.AutomationEventList/$LAYOUT) set-automation-event-list))
 

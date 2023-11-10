@@ -1,7 +1,8 @@
 (ns build
   (:require [clojure.tools.build.api :as b]
             [clojure.java.shell :refer [sh]]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [gen.core :as gen]))
 
 (def class-dir "target/classes")
 (def basis (b/create-basis {:project "deps.edn"}))
@@ -86,4 +87,5 @@
   (jgenerate {:raylib-inc-dir "./native/raylib_linux_amd64/include/"
               :jextract-dir
               (io/file (System/getProperty "user.home") ".local/share/applications/jextract-21/bin")})
-  (jcompile nil))
+  (jcompile nil)
+  (gen/generate-all))

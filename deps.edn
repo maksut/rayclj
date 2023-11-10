@@ -16,13 +16,20 @@
                      cider/cider-nrepl {:mvn/version "0.28.7"}
                      djblue/portal     {:mvn/version "0.37.1"}
                      com.github.jpmonettas/clojure {:mvn/version "1.11.1-9"}
-                     com.github.jpmonettas/flow-storm-dbg {:mvn/version "3.7.3"}}
-        :jvm-opts ["--enable-preview"
+                     com.github.jpmonettas/flow-storm-dbg {:mvn/version "3.7.3"}
+                     com.clojure-goes-fast/clj-async-profiler {:mvn/version "1.1.1"}}
+        :jvm-opts [; for foreign function api
+                   "--enable-preview"
                    "--enable-native-access=ALL-UNNAMED"
+
+                   ; for debugger
                    "-Djava.library.path=/usr/lib:native/raylib_linux_amd64/lib:native/color"
                    ;"-Dclojure.storm.instrumentEnable=true"
                    ;"-Dclojure.storm.instrumentOnlyPrefixes=ffi"
-                   ]
+
+                   ;; for profiler
+                   "-Djdk.attach.allowAttachSelf"
+                   "-XX:+UnlockDiagnosticVMOptions"]
         :main-opts  ["-m" "nrepl.cmdline"
                      "--middleware" "[cider.nrepl/cider-middleware]"
                      "--interactive"]}}}

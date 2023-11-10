@@ -41,33 +41,31 @@
 
       (rl/set-target-fps 60)
 
-      (loop []
-        (when-not (rl/window-should-close?) ;; Detect window close button or ESC key
-          ;; Update
-          ;;----------------------------------------------------------------------------------
-          ;; TODO: Update your variables here
-          ;;----------------------------------------------------------------------------------
+      (while (not (rl/window-should-close?)) ;; Detect window close button or ESC key
+        ;; Update
+        ;;----------------------------------------------------------------------------------
+        ;; TODO: Update your variables here
+        ;;----------------------------------------------------------------------------------
 
-          ;; Draw
-          (rl/with-drawing
-            (rl/clear-background :raywhite)
+        ;; Draw
+        (rl/with-drawing
+          (rl/clear-background :raywhite)
 
-            (rl/draw-texture
-             texture
-             (- (/ screen-width 2) (/ texture-width 2))
-             (- (/ screen-height 2) (/ texture-height 2) 40)
-             :white)
+          (rl/draw-texture
+           texture
+           (- (/ screen-width 2) (/ texture-width 2))
+           (- (/ screen-height 2) (/ texture-height 2) 40)
+           :white)
 
-            (rl/draw-rectangle-lines
-             (- (/ screen-width 2) (/ texture-width 2))
-             (- (/ screen-height 2) (/ texture-height 2) 40)
-             texture-width
-             texture-height
-             :darkgray)
+          (rl/draw-rectangle-lines
+           (- (/ screen-width 2) (/ texture-width 2))
+           (- (/ screen-height 2) (/ texture-height 2) 40)
+           texture-width
+           texture-height
+           :darkgray)
 
-            (rl/draw-text "We are drawing only one texture from various images composed" 240 350 10 :darkgray)
-            (rl/draw-text "Source images have been cropped, scaled, flipped and copied one over the other." 190 370 10 :darkgray))
-          (recur)))
+          (rl/draw-text "We are drawing only one texture from various images composed" 240 350 10 :darkgray)
+          (rl/draw-text "Source images have been cropped, scaled, flipped and copied one over the other." 190 370 10 :darkgray)))
 
       ;; De-Initialization
       (rl/unload-texture texture) ;; Texture unloading
