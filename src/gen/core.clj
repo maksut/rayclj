@@ -11,8 +11,8 @@
         (string/replace #"([a-z])([A-Z])" "$1-$2")
         (string/replace #"_" "-")
         (string/replace #" " "-")
-        (string/replace #"^rl-" "") ;; drop `rl-` prefix from rlgl definitions
-        (string/lower-case))))
+        (string/lower-case)
+        (string/replace #"^rl-" "")))) ;; drop `rl-` prefix from rlgl definitions
 
 (def memory-segment-symbol (symbol "^MemorySegment"))
 (def arena-symbol (symbol "^Arena"))
@@ -374,11 +374,31 @@
     (spit out-file str-enums :append true)
     api))
 
+(defn get-define [{:keys [name description value]}]
+  (let [name (symbol (c-name->clj-name name))]
+    (if (empty? description)
+      `(~'def ~name ~value)
+      `(~'def ~name ~description ~value))))
+
+(defn generate-defines [header-name api]
+  (let [out-file (str "src/" header-name "/defines.clj")
+        template-file (str "src/gen/" header-name "/defines.clj.template")
+        defines (:defines api)
+        export-types #{"INT" "DOUBLE" "STRING"}
+        defines (filter #(export-types (:type %)) defines)
+        pprint-define #(pprint (get-define %))
+        clj-defines (map pprint-define defines)
+        str-defines (apply str (interleave clj-defines (repeat "\n\n")))]
+    (spit out-file (slurp template-file))
+    (spit out-file str-defines :append true)
+    api))
+
 (defn generate-for-header [header-name]
   (let [api (slurp (str "native/raylib_linux_amd64/api/" header-name "_api.json"))
         api (json/read-value api json/keyword-keys-object-mapper)]
     (->> api
          (process-api)
+         (generate-defines header-name)
          (generate-enums header-name)
          (generate-structs header-name)
          (generate-functions header-name))
@@ -388,7 +408,7 @@
   (generate-for-header "raylib")
   (generate-for-header "rlgl")
 
-  (defonce raylib-api
+  (def raylib-api
     (-> "native/raylib_linux_amd64/api/raylib_api.json"
         (slurp)
         (json/read-value json/keyword-keys-object-mapper)))
@@ -402,14 +422,21 @@
   (print (zp/zprint-str (get-enum-str (enums-by-name :FontType)) {:parse-string? true}))
   (generate-enums raylib-api)
 
-  (def functions (:functions raylib-api))
-
-  (defonce rlgl-api
+  (def rlgl-api
     (-> "native/raylib_linux_amd64/api/rlgl_api.json"
         (slurp)
         (json/read-value json/keyword-keys-object-mapper)))
 
-  (filter #(= (:name %) "rlGetMatrixProjectionStereo") (:functions rlgl-api))
+  (def defines (:defines rlgl-api))
+
+  (def define (first (filter #(= "INT" (:type %)) defines)))
+  (c-name->clj-name (:name define))
+  (get-define define)
+  (get-define {:name "FOO" :vale 1234 :description "foo bar baz"})
+
+  (generate-defines "rlgl" rlgl-api)
+
+  (def functions (:functions rlgl-api))
 
   (def functions-by-name
     (into {} (map (juxt (comp keyword :name) identity)) functions))

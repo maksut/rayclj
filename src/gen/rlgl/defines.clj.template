@@ -1,0 +1,3 @@
+(ns rlgl.defines
+  (:refer-clojure :exclude [float min max]))
+

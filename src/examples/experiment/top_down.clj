@@ -1,9 +1,8 @@
 (ns examples.experiment.top-down
   (:require [clojure.math :as math]
             [raylib.functions :as rl]
-            [rlgl.functions :as rlgl]))
-
-(def RL_MODELVIEW 0x1700);; GL_MODELVIEW
+            [rlgl.functions :as rlgl]
+            [rlgl.defines :as rlgl-defines]))
 
 (defn vector2-add [v1 v2] (mapv + v1 v2))
 (defn vector2-substract [v1 v2] (mapv - v1 v2))
@@ -96,7 +95,7 @@
 
 (defn draw-player [{:keys [position rotation]}]
   (let [[x y] position]
-    (rlgl/matrix-mode RL_MODELVIEW)
+    (rlgl/matrix-mode rlgl-defines/modelview)
     (rlgl/push-matrix)
     (rlgl/translatef x y 0)
     (rlgl/rotatef rotation 0 0 1)
