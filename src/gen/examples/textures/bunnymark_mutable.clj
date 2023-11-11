@@ -1,6 +1,6 @@
 (ns gen.examples.textures.bunnymark-mutable
-  (:require [gen.functions :as rl]
-            [gen.structs :as rstructs]))
+  (:require [gen.raylib.functions :as rl]
+            [gen.raylib.structs :as rstructs]))
 
 (def MAX_BATCH_ELEMENTS 8192)
 

@@ -1,6 +1,6 @@
 (ns examples.experiment.top-down
   (:require [clojure.math :as math]
-            [gen.functions :as rl]
+            [gen.raylib.functions :as rl]
             [rlgl.core :as rlgl]))
 
 (defn vector2-add [v1 v2] (mapv + v1 v2))

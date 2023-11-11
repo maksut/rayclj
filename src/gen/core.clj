@@ -24,44 +24,44 @@
 (defn c-string? [name]
   (= name "const char *"))
 
-(defn field-getter [struct-name all-struct-names {:keys [name type]}]
+(defn field-getter [header-name struct-name all-struct-names {:keys [name type]}]
   (let [resolved-type (get all-struct-names type)
         [_ array array-size] (array? type)]
     (cond
       resolved-type
-      (let [getter (symbol (str "raylib." struct-name "/" name "$slice"))
+      (let [getter (symbol (str header-name "." struct-name "/" name "$slice"))
             struct-getter (symbol (str "get-" (to-kebab-case resolved-type)))]
         `(~struct-getter (~getter ~'seg)))
 
       array
-      (let [getter (symbol (str "raylib." struct-name "/" name "$slice"))
+      (let [getter (symbol (str header-name "." struct-name "/" name "$slice"))
             struct-getter (symbol (str "get-" (string/lower-case array) "-array"))]
         `(~struct-getter (~getter ~'seg) ~(Integer/parseInt array-size)))
 
       :else
-      (let [getter (symbol (str "raylib." struct-name "/" name "$get"))]
+      (let [getter (symbol (str header-name "." struct-name "/" name "$get"))]
         `(~getter ~'seg)))))
 
-(defn field-setter [struct-name all-struct-names {:keys [name type]}]
+(defn field-setter [header-name struct-name all-struct-names {:keys [name type]}]
   (let [resolved-type (get all-struct-names type)
         [_ array array-size] (array? type)]
     (cond
       resolved-type
-      (let [setter (symbol (str "raylib." struct-name "/" name "$slice"))
+      (let [setter (symbol (str header-name "." struct-name "/" name "$slice"))
             struct-setter (symbol (str "set-" (to-kebab-case resolved-type)))]
         `(~struct-setter (~setter ~'seg) ~(symbol name)))
 
       array
-      (let [setter (symbol (str "raylib." struct-name "/" name "$slice"))
+      (let [setter (symbol (str header-name "." struct-name "/" name "$slice"))
             struct-setter (symbol (str "set-" (string/lower-case array) "-array"))]
         `(~struct-setter (~setter ~'seg) ~(symbol name) ~(Integer/parseInt array-size)))
 
       :else
-      (let [setter (str "raylib." struct-name "/" name "$set")]
+      (let [setter (str header-name "." struct-name "/" name "$set")]
         `(~(symbol setter) ~'seg ~(symbol name))))))
 
-(defn field-getter-kv [struct-name all-struct-names field]
-  (list (keyword (:name field)) (field-getter struct-name all-struct-names field)))
+(defn field-getter-kv [header-name struct-name all-struct-names field]
+  (list (keyword (:name field)) (field-getter header-name struct-name all-struct-names field)))
 
 (defn doc-str [{:keys [description fields params docstring]}]
   (if docstring
@@ -72,28 +72,28 @@
       (str description
            (apply str (map field-doc items))))))
 
-(defn struct-get-fn [all-struct-names {:keys [name fields as-vector?] :as struct}]
+(defn struct-get-fn [header-name all-struct-names {:keys [name fields as-vector?] :as struct}]
   (let [kebab-name (symbol (str "get-" (to-kebab-case name)))]
     `(~'defn ~kebab-name ~(doc-str struct)
              [~memory-segment-symbol ~'seg]
              ~(if as-vector?
-                (into [] (map (partial field-getter name all-struct-names) fields))
-                (apply array-map (mapcat (partial field-getter-kv name all-struct-names) fields))))))
+                (into [] (map (partial field-getter header-name name all-struct-names) fields))
+                (apply array-map (mapcat (partial field-getter-kv header-name name all-struct-names) fields))))))
 
-(defn struct-set-fn [all-struct-names {:keys [name fields as-vector?] :as struct}]
+(defn struct-set-fn [header-name all-struct-names {:keys [name fields as-vector?] :as struct}]
   (let [kebab-name (symbol (str "set-" (to-kebab-case name)))
         args (mapv (comp symbol :name) fields)
         args (if as-vector? args (array-map :keys args))]
     `(~'defn ~kebab-name ~(doc-str struct)
              [~memory-segment-symbol ~'seg ~args]
-             ~@(map (partial field-setter name all-struct-names) fields)
+             ~@(map (partial field-setter header-name name all-struct-names) fields)
              ~'seg)))
 
-(defn struct-fn [{:keys [name] :as struct}]
+(defn struct-fn [header-name {:keys [name] :as struct}]
   (let [kebab-name (to-kebab-case name)
         fn-name (symbol kebab-name)
         struct-set-fn (symbol (str "set-" kebab-name))
-        layout-sym (symbol (str "raylib." name "/$LAYOUT"))]
+        layout-sym (symbol (str header-name "." name "/$LAYOUT"))]
     `(~'defn ~fn-name ~(doc-str struct)
              ([~arena-symbol ~'arena ~'v]
               (~struct-set-fn (.allocate ~'arena (~layout-sym)) ~'v))
@@ -102,25 +102,25 @@
                 ~'v
                 (~fn-name rarena/*current-arena* ~'v))))))
 
-(defn array-fn [{:keys [name]}]
+(defn array-fn [header-name {:keys [name]}]
   (let [kebab-name (to-kebab-case name)
         fn-name (symbol (str kebab-name "-array"))
         struct-set-fn (symbol (str "set-" kebab-name))
-        layout-sym (symbol (str "raylib." name "/$LAYOUT"))]
+        layout-sym (symbol (str header-name "." name "/$LAYOUT"))]
     `(~'def ~fn-name (~'array-fn (~layout-sym) ~struct-set-fn))))
 
-(defn get-array-fn [{:keys [name]}]
+(defn get-array-fn [header-name {:keys [name]}]
   (let [kebab-name (to-kebab-case name)
         fn-name (symbol (str "get-" kebab-name "-array"))
         struct-set-fn (symbol (str "get-" kebab-name))
-        layout-sym (symbol (str "raylib." name "/$LAYOUT"))]
+        layout-sym (symbol (str header-name "." name "/$LAYOUT"))]
     `(~'def ~fn-name (~'get-array-fn (~layout-sym) ~struct-set-fn))))
 
-(defn set-array-fn [{:keys [name]}]
+(defn set-array-fn [header-name {:keys [name]}]
   (let [kebab-name (to-kebab-case name)
         fn-name (symbol (str "set-" kebab-name "-array"))
         struct-set-fn (symbol (str "set-" kebab-name))
-        layout-sym (symbol (str "raylib." name "/$LAYOUT"))]
+        layout-sym (symbol (str header-name "." name "/$LAYOUT"))]
     `(~'def ~fn-name (~'set-array-fn (~layout-sym) ~struct-set-fn))))
 
 (defn pprint [f]
@@ -129,10 +129,10 @@
       (string/replace #"\\n" "\n")
       (string/replace #":CARET" "^")))
 
-(defn get-all-struct-names [raylib-api]
-  (let [struct-names (map #(:name %) (:structs raylib-api))
+(defn get-all-struct-names [api]
+  (let [struct-names (map #(:name %) (:structs api))
         struct-names (apply hash-map (interleave struct-names struct-names))
-        aliases (mapcat #(list (:name %) (:type %)) (:aliases raylib-api))
+        aliases (mapcat #(list (:name %) (:type %)) (:aliases api))
         aliases (apply hash-map aliases)]
     (merge aliases struct-names)))
 
@@ -143,13 +143,13 @@
       override
       [definition])))
 
-(defn pprint-struct-fns [out-file all-struct-names struct]
-  (let [get-fn (struct-get-fn all-struct-names struct)
-        set-fn (struct-set-fn all-struct-names struct)
-        struct-fn (struct-fn struct)
-        array-fn (array-fn struct)
-        get-array-fn (get-array-fn struct)
-        set-array-fn (set-array-fn struct)
+(defn pprint-struct-fns [header-name out-file all-struct-names struct]
+  (let [get-fn (struct-get-fn header-name all-struct-names struct)
+        set-fn (struct-set-fn header-name all-struct-names struct)
+        struct-fn (struct-fn header-name struct)
+        array-fn (array-fn header-name struct)
+        get-array-fn (get-array-fn header-name struct)
+        set-array-fn (set-array-fn header-name struct)
         str-fns [get-fn set-fn struct-fn array-fn get-array-fn set-array-fn]
         str-fns (mapcat get-overrided str-fns)
         str-fns (map pprint str-fns)
@@ -166,26 +166,26 @@
     (assoc struct :docstring docstring)
     struct))
 
-(defn process-api [{:keys [structs functions] :as raylib-api}]
+(defn process-api [{:keys [structs functions] :as api}]
   (let [structs (map add-as-vector structs)
         structs (map add-docstring structs)
-        ; blacklisted-functions #{"LoadMaterialDefault" "LoadVrStereoConfig"}
-        blacklisted-functions #{} #_{"LoadMaterialDefault" "LoadVrStereoConfig"}
+        blacklisted-functions #{} ; no blacklisted functions for now
         functions (filter #(not (blacklisted-functions (:name %))) functions)]
-    (-> raylib-api
+    (-> api
         (assoc :structs structs)
         (assoc :functions functions))))
 
-(defn generate-structs [raylib-api]
-  (let [out-file "src/gen/structs.clj"
-        structs (:structs raylib-api)
-        all-struct-names (get-all-struct-names raylib-api)]
-    (spit out-file (slurp "src/gen/structs.clj.template"))
+(defn generate-structs [header-name api]
+  (let [out-file (str "src/gen/" header-name "/structs.clj")
+        template-file (str "src/gen/" header-name "/structs.clj.template")
+        structs (:structs api)
+        all-struct-names (get-all-struct-names api)]
+    (spit out-file (slurp template-file))
     (dorun
      (map
-      (partial pprint-struct-fns out-file all-struct-names)
+      (partial pprint-struct-fns header-name out-file all-struct-names)
       structs))
-    raylib-api))
+    api))
 
 (defn find-enum-map [function-name arg-name]
   (cond
@@ -256,9 +256,9 @@
     "ImageDrawText"
     "ImageDrawTextEx"})
 
-(defn get-fn [all-struct-names {:keys [name params returnType] :as function}]
+(defn get-fn [header-name all-struct-names {:keys [name params returnType] :as function}]
   (let [return-first-arg (first-arg-is-return name)
-        java-fn (symbol (str "raylib_h/" name))
+        java-fn (symbol (str header-name "_h/" name))
         clj-fn (symbol (kebabize-fn-name name returnType))
         args (mapv (comp symbol to-kebab-case :name) params)
         struct-return (to-kebab-case (get all-struct-names returnType))
@@ -297,22 +297,23 @@
                ~args
                (~java-fn ~@coerced-args)))))
 
-(defn pprint-fn [out-file all-struct-names function]
-  (let [function (get-fn all-struct-names function)
+(defn pprint-fn [header-name out-file all-struct-names function]
+  (let [function (get-fn header-name all-struct-names function)
         functions (map pprint (get-overrided function))
         str-fns (apply str (interleave functions (repeat "\n\n")))]
     (spit out-file str-fns :append true)))
 
-(defn generate-functions [raylib-api]
-  (let [out-file "src/gen/functions.clj"
-        functions (:functions raylib-api)
-        all-struct-names (get-all-struct-names raylib-api)]
-    (spit out-file (slurp "src/gen/functions.clj.template"))
+(defn generate-functions [header-name api]
+  (let [out-file (str "src/gen/" header-name "/functions.clj")
+        template-file (str "src/gen/" header-name "/functions.clj.template")
+        functions (:functions api)
+        all-struct-names (get-all-struct-names api)]
+    (spit out-file (slurp template-file))
     (dorun
      (map
-      (partial pprint-fn out-file all-struct-names)
+      (partial pprint-fn header-name out-file all-struct-names)
       functions))
-    raylib-api))
+    api))
 
 (defn enum-value-prefix [enum]
   (loop [value-names (map :name (:values enum))
@@ -342,23 +343,25 @@
                        :map {:comma? false :justify? true}}]
     (zp/zprint-str (get-enum-str enum) print-options)))
 
-(defn generate-enums [raylib-api]
-  (let [out-file "src/gen/enums.clj"
-        enums (:enums raylib-api)
+(defn generate-enums [header-name api]
+  (let [out-file (str "src/gen/" header-name "/enums.clj")
+        template-file (str "src/gen/" header-name "/enums.clj.template")
+        enums (:enums api)
         clj-enums (map pprint-enum enums)
         str-enums (apply str (interleave clj-enums (repeat "\n\n")))]
-    (spit out-file (slurp "src/gen/enums.clj.template"))
+    (spit out-file (slurp template-file))
     (spit out-file str-enums :append true)
-    raylib-api))
+    api))
 
 (defn generate-all []
-  (let [raylib-api (slurp "native/raylib_linux_amd64/api/raylib_api.json")
-        raylib-api (json/read-value raylib-api json/keyword-keys-object-mapper)]
-    (-> raylib-api
-        (process-api)
-        (generate-enums)
-        (generate-structs)
-        (generate-functions))
+  (let [header-name "raylib"
+        api (slurp "native/raylib_linux_amd64/api/raylib_api.json")
+        api (json/read-value api json/keyword-keys-object-mapper)]
+    (->> api
+         (process-api)
+         (generate-enums header-name)
+         (generate-structs header-name)
+         (generate-functions header-name))
     nil))
 
 (comment

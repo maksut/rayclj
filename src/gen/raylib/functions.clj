@@ -1,7 +1,7 @@
-(ns gen.functions
+(ns gen.raylib.functions
   (:require [raylib.arena :as rarena]
-            [gen.enums :as renums]
-            [gen.structs :as rstructs])
+            [gen.raylib.enums :as renums]
+            [gen.raylib.structs :as rstructs])
   (:import [raylib raylib_h]
            [java.lang.foreign Arena MemorySegment]))
 

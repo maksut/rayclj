@@ -1,4 +1,4 @@
-(ns gen.structs
+(ns gen.raylib.structs
   (:require [raylib.arena :as rarena]
             [gen.enums :as renums])
   (:import

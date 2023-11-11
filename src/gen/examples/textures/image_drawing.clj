@@ -1,5 +1,5 @@
 (ns gen.examples.textures.image-drawing
-  (:require [gen.functions :as rl]))
+  (:require [gen.raylib.functions :as rl]))
 
 ;; Initialization
 (let [screen-width 800 screen-height 450]
