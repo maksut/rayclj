@@ -1,7 +1,7 @@
-(ns gen.raylib.functions
+(ns raylib.functions
   (:require [raylib.arena :as rarena]
-            [gen.raylib.enums :as renums]
-            [gen.raylib.structs :as rstructs])
+            [raylib.enums :as renums]
+            [raylib.structs :as rstructs])
   (:import [raylib raylib_h]
            [java.lang.foreign Arena MemorySegment]))
 
@@ -19,7 +19,7 @@
   ([^Arena arena str] (.allocateUtf8String arena str)))
 
 (defmacro with-drawing [& body]
-  `(binding [rarena/*current-arena* (rarena/confined-arena!)]
+  `(binding [rarena/*current-arena* (rarena/confined-arena)]
      (try
        (begin-drawing)
        ~@body

@@ -1,6 +1,6 @@
-(ns gen.examples.textures.bunnymark-parallel
-  (:require [gen.raylib.functions :as rl]
-            [gen.raylib.structs :as rstructs]
+(ns examples.textures.bunnymark-parallel
+  (:require [raylib.functions :as rl]
+            [raylib.structs :as rstructs]
             [clj-async-profiler.core :as prof]))
 
 (def BUNNY_PARTITION_SIZE 8192)
@@ -42,7 +42,7 @@
 
    (rl/set-target-fps 60) ;; Set our game to run at 60 frames-per-second
 
-   (let [tex-bunny (rl/load-texture "src/gen/examples/textures/resources/wabbit_alpha.png")
+   (let [tex-bunny (rl/load-texture "src/examples/textures/resources/wabbit_alpha.png")
          tex-bunny-seg (rstructs/texture tex-bunny)
          min-x (* -1 (/ (:width tex-bunny) 2))
          max-x (+ (rl/get-screen-width) min-x)

@@ -1,6 +1,6 @@
-(ns gen.examples.textures.bunnymark
-  (:require [gen.raylib.functions :as rl]
-            [gen.raylib.structs :as rstructs]))
+(ns examples.textures.bunnymark
+  (:require [raylib.functions :as rl]
+            [raylib.structs :as rstructs]))
 
 (def MAX_BATCH_ELEMENTS 8192)
 
@@ -35,7 +35,7 @@
 
   (rl/set-target-fps 60) ;; Set our game to run at 60 frames-per-second
 
-  (let [tex-bunny (rl/load-texture "src/gen/examples/textures/resources/wabbit_alpha.png")
+  (let [tex-bunny (rl/load-texture "src/examples/textures/resources/wabbit_alpha.png")
         tex-bunny-seg (rstructs/texture tex-bunny)
         min-x (* -1 (/ (:width tex-bunny) 2))
         max-x (+ (rl/get-screen-width) min-x)

@@ -1,8 +1,6 @@
 (ns examples.experiment.top-down
   (:require [clojure.math :as math]
-            [raylib.core :as rcore]
-            [raylib.text :as rtext]
-            [raylib.shapes :as rshapes]
+            [raylib.functions :as rl]
             [rlgl.core :as rlgl]))
 
 (defn vector2-add [v1 v2] (mapv + v1 v2))
@@ -21,16 +19,16 @@
 (def cursor-speed 100)
 (defn update-cursor [state frame-time]
   (let [{:keys [rotation color]} (:cursor state)
-        new-position (rcore/get-mouse-position!)
+        new-position (rl/get-mouse-position)
         new-color
         (cond
-          (rcore/mouse-button-pressed? :left) :maroon
-          (rcore/mouse-button-pressed? :middle) :lime
-          (rcore/mouse-button-pressed? :right) :darkblue
-          (rcore/mouse-button-pressed? :side) :purple
-          (rcore/mouse-button-pressed? :extra) :yellow
-          (rcore/mouse-button-pressed? :forward) :orange
-          (rcore/mouse-button-pressed? :back) :beige
+          (rl/mouse-button-pressed? :left) :maroon
+          (rl/mouse-button-pressed? :middle) :lime
+          (rl/mouse-button-pressed? :right) :darkblue
+          (rl/mouse-button-pressed? :side) :purple
+          (rl/mouse-button-pressed? :extra) :yellow
+          (rl/mouse-button-pressed? :forward) :orange
+          (rl/mouse-button-pressed? :back) :beige
           :else color)]
     (assoc
      state
@@ -48,15 +46,15 @@
      [:player :position]
      (fn [position]
        (cond-> position
-         (rcore/is-key-down? :w) (vector2-add [0 (* -1 move)]) ;; up: y -= 2
-         (rcore/is-key-down? :a) (vector2-add [(* -1 move) 0]) ;; left: x -= 2
-         (rcore/is-key-down? :s) (vector2-add [0 move])        ;; down: y += 2
-         (rcore/is-key-down? :d) (vector2-add [move 0]))))))   ;; right: x += 2
+         (rl/key-down? :w) (vector2-add [0 (* -1 move)]) ;; up: y -= 2
+         (rl/key-down? :a) (vector2-add [(* -1 move) 0]) ;; left: x -= 2
+         (rl/key-down? :s) (vector2-add [0 move])        ;; down: y += 2
+         (rl/key-down? :d) (vector2-add [move 0]))))))   ;; right: x += 2
 
 (def bullet-speed 1000)
 
 (defn update-player-shoot [state]
-  (if (rcore/mouse-button-pressed? :left)
+  (if (rl/mouse-button-pressed? :left)
     (let [player-pos (-> state :player :position)
           cursor-pos (-> state :cursor :position)
           direction (vector2-normalize (vector2-substract cursor-pos player-pos))
@@ -100,7 +98,7 @@
     (rlgl/push-matrix!)
     (rlgl/translatef! x y 0)
     (rlgl/rotatef! rotation 0 0 1)
-    (rshapes/draw-circle! 0 0 20 :maroon)
+    (rl/draw-circle 0 0 20 :maroon)
 
     (rlgl/rotatef! 180 0 0 1) ; raylib git master
     (rlgl/translatef! 20 0 0) ; raylib git master
@@ -108,30 +106,30 @@
     ; (rlgl/rotatef! 90 0 0 1) ; 4.5.1 raylib
     ; (rlgl/translatef! 0 20 0) ; 4.5.1 raylib
 
-    (rshapes/draw-poly! [0 0] 3 20 0 :purple)
+    (rl/draw-poly [0 0] 3 20 0 :purple)
     (rlgl/pop-matrix!)))
 
 (defn draw-cursor [{:keys [position color rotation]}]
-  (rshapes/draw-poly! position 6 20 rotation color))
+  (rl/draw-poly position 6 20 rotation color))
 
 (defn draw-projectile [{:keys [position]}]
   (let [[x y] position]
-    (rshapes/draw-circle! x y 10 :yellow)))
+    (rl/draw-circle x y 10 :yellow)))
 
 (defn draw-state [{:keys [player cursor projectiles]}]
-  (rcore/with-drawing!
-    (rcore/clear-background! :white)
-    (rtext/draw-fps! 10 40)
-    (rtext/draw-fps'! 10 60)
+  (rl/with-drawing
+    (rl/clear-background :white)
+    (rl/draw-fps 10 40)
+    ; (rl/draw-fps' 10 60)
     (draw-player player)
     (draw-cursor cursor)
     (doseq [p projectiles] (draw-projectile p))
-    (rtext/draw-text! "move ball with mouse and click mouse button to change color" 10 10 20 :darkgray)))
+    (rl/draw-text "move ball with mouse and click mouse button to change color" 10 10 20 :darkgray)))
 
 (defn draw-error-state [{:keys [error]}]
-  (rcore/with-drawing!
-    (rcore/clear-background! :white)
-    (rtext/draw-text! (str error) 10 10 20 :red)))
+  (rl/with-drawing
+    (rl/clear-background :white)
+    (rl/draw-text (str error) 10 10 20 :red)))
 
 (def initial-state {:screen {:height 450 :width 800}
                     :player {:position [400 225] :rotation 0}
@@ -145,7 +143,7 @@
     (if (:error state)
       (draw-error-state state)
       ; update and draw state
-      (let [frame-time (rcore/get-frame-time!)
+      (let [frame-time (rl/get-frame-time)
             new-state (#'update-state state frame-time)]
         (#'draw-state (reset! game-state new-state))))
 
@@ -158,16 +156,16 @@
       (swap! game-state assoc :error (.getMessage e))))
 
   ; if the window closed, Esc pressed or the thread is interrupted then stop the loop
-  (when-not (or (rcore/window-should-close?) (.isInterrupted (Thread/currentThread)))
+  (when-not (or (rl/window-should-close?) (.isInterrupted (Thread/currentThread)))
     (recur @game-state)))
 
 (defn game-init []
   (let [{:keys [width height]} (:screen initial-state)]
-    (rcore/init-window! width height "topdown shooter")
+    (rl/init-window width height "topdown shooter")
     (try
       (game-loop initial-state)
       (catch InterruptedException _ nil)) ; quit the loop silently on interrupt
-    (rcore/close-window!)))
+    (rl/close-window)))
 
 (comment
   ; start the game in another thread

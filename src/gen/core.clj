@@ -176,7 +176,7 @@
         (assoc :functions functions))))
 
 (defn generate-structs [header-name api]
-  (let [out-file (str "src/gen/" header-name "/structs.clj")
+  (let [out-file (str "src/" header-name "/structs.clj")
         template-file (str "src/gen/" header-name "/structs.clj.template")
         structs (:structs api)
         all-struct-names (get-all-struct-names api)]
@@ -304,7 +304,7 @@
     (spit out-file str-fns :append true)))
 
 (defn generate-functions [header-name api]
-  (let [out-file (str "src/gen/" header-name "/functions.clj")
+  (let [out-file (str "src/" header-name "/functions.clj")
         template-file (str "src/gen/" header-name "/functions.clj.template")
         functions (:functions api)
         all-struct-names (get-all-struct-names api)]
@@ -344,7 +344,7 @@
     (zp/zprint-str (get-enum-str enum) print-options)))
 
 (defn generate-enums [header-name api]
-  (let [out-file (str "src/gen/" header-name "/enums.clj")
+  (let [out-file (str "src/" header-name "/enums.clj")
         template-file (str "src/gen/" header-name "/enums.clj.template")
         enums (:enums api)
         clj-enums (map pprint-enum enums)

@@ -1,6 +1,6 @@
-(ns gen.raylib.structs
+(ns raylib.structs
   (:require [raylib.arena :as rarena]
-            [gen.enums :as renums])
+            [raylib.enums :as renums])
   (:import
    [java.lang.foreign Arena MemoryLayout MemorySegment ValueLayout]))
 
