@@ -5,11 +5,13 @@
    [zprint.core :as zp]
    [gen.overrides :as overrides]))
 
-(defn to-kebab-case [s]
+(defn c-name->clj-name [s]
   (when s
     (-> s
         (string/replace #"([a-z])([A-Z])" "$1-$2")
         (string/replace #"_" "-")
+        (string/replace #" " "-")
+        (string/replace #"^rl-" "") ;; drop `rl-` prefix from rlgl definitions
         (string/lower-case))))
 
 (def memory-segment-symbol (symbol "^MemorySegment"))
@@ -30,12 +32,12 @@
     (cond
       resolved-type
       (let [getter (symbol (str header-name "." struct-name "/" name "$slice"))
-            struct-getter (symbol (str "get-" (to-kebab-case resolved-type)))]
+            struct-getter (symbol (str "get-" (c-name->clj-name resolved-type)))]
         `(~struct-getter (~getter ~'seg)))
 
       array
       (let [getter (symbol (str header-name "." struct-name "/" name "$slice"))
-            struct-getter (symbol (str "get-" (string/lower-case array) "-array"))]
+            struct-getter (symbol (str "get-" (c-name->clj-name array) "-array"))]
         `(~struct-getter (~getter ~'seg) ~(Integer/parseInt array-size)))
 
       :else
@@ -48,12 +50,12 @@
     (cond
       resolved-type
       (let [setter (symbol (str header-name "." struct-name "/" name "$slice"))
-            struct-setter (symbol (str "set-" (to-kebab-case resolved-type)))]
+            struct-setter (symbol (str "set-" (c-name->clj-name resolved-type)))]
         `(~struct-setter (~setter ~'seg) ~(symbol name)))
 
       array
       (let [setter (symbol (str header-name "." struct-name "/" name "$slice"))
-            struct-setter (symbol (str "set-" (string/lower-case array) "-array"))]
+            struct-setter (symbol (str "set-" (c-name->clj-name array) "-array"))]
         `(~struct-setter (~setter ~'seg) ~(symbol name) ~(Integer/parseInt array-size)))
 
       :else
@@ -73,7 +75,7 @@
            (apply str (map field-doc items))))))
 
 (defn struct-get-fn [header-name all-struct-names {:keys [name fields as-vector?] :as struct}]
-  (let [kebab-name (symbol (str "get-" (to-kebab-case name)))]
+  (let [kebab-name (symbol (str "get-" (c-name->clj-name name)))]
     `(~'defn ~kebab-name ~(doc-str struct)
              [~memory-segment-symbol ~'seg]
              ~(if as-vector?
@@ -81,7 +83,7 @@
                 (apply array-map (mapcat (partial field-getter-kv header-name name all-struct-names) fields))))))
 
 (defn struct-set-fn [header-name all-struct-names {:keys [name fields as-vector?] :as struct}]
-  (let [kebab-name (symbol (str "set-" (to-kebab-case name)))
+  (let [kebab-name (symbol (str "set-" (c-name->clj-name name)))
         args (mapv (comp symbol :name) fields)
         args (if as-vector? args (array-map :keys args))]
     `(~'defn ~kebab-name ~(doc-str struct)
@@ -90,7 +92,7 @@
              ~'seg)))
 
 (defn struct-fn [header-name {:keys [name] :as struct}]
-  (let [kebab-name (to-kebab-case name)
+  (let [kebab-name (c-name->clj-name name)
         fn-name (symbol kebab-name)
         struct-set-fn (symbol (str "set-" kebab-name))
         layout-sym (symbol (str header-name "." name "/$LAYOUT"))]
@@ -103,21 +105,21 @@
                 (~fn-name rarena/*current-arena* ~'v))))))
 
 (defn array-fn [header-name {:keys [name]}]
-  (let [kebab-name (to-kebab-case name)
+  (let [kebab-name (c-name->clj-name name)
         fn-name (symbol (str kebab-name "-array"))
         struct-set-fn (symbol (str "set-" kebab-name))
         layout-sym (symbol (str header-name "." name "/$LAYOUT"))]
     `(~'def ~fn-name (~'array-fn (~layout-sym) ~struct-set-fn))))
 
 (defn get-array-fn [header-name {:keys [name]}]
-  (let [kebab-name (to-kebab-case name)
+  (let [kebab-name (c-name->clj-name name)
         fn-name (symbol (str "get-" kebab-name "-array"))
         struct-set-fn (symbol (str "get-" kebab-name))
         layout-sym (symbol (str header-name "." name "/$LAYOUT"))]
     `(~'def ~fn-name (~'get-array-fn (~layout-sym) ~struct-set-fn))))
 
 (defn set-array-fn [header-name {:keys [name]}]
-  (let [kebab-name (to-kebab-case name)
+  (let [kebab-name (c-name->clj-name name)
         fn-name (symbol (str "set-" kebab-name "-array"))
         struct-set-fn (symbol (str "set-" kebab-name))
         layout-sym (symbol (str header-name "." name "/$LAYOUT"))]
@@ -166,11 +168,30 @@
     (assoc struct :docstring docstring)
     struct))
 
+(defn filter-duplicates
+  ([functions] (filter-duplicates functions #{}))
+  ([[f & fs] seen-names]
+   (if f
+     (let [name (:name f)
+           new-names (conj seen-names name)]
+       (if (contains? seen-names name)
+         (do
+           (println "Skipping " name "because of duplicates")
+           (filter-duplicates fs new-names))
+         (lazy-seq (cons f (filter-duplicates fs new-names)))))
+     nil)))
+
 (defn process-api [{:keys [structs functions] :as api}]
   (let [structs (map add-as-vector structs)
         structs (map add-docstring structs)
-        blacklisted-functions #{} ; no blacklisted functions for now
-        functions (filter #(not (blacklisted-functions (:name %))) functions)]
+
+        ; not in the generated java files because of missing C defines
+        blacklisted-structs #{"rlglData"}
+        blacklisted-functions #{"rlEnableStatePointer" "rlDisableStatePointer"}
+
+        structs (filter #(not (blacklisted-structs (:name %))) structs)
+        functions (filter #(not (blacklisted-functions (:name %))) functions)
+        functions (filter-duplicates functions)]
     (-> api
         (assoc :structs structs)
         (assoc :functions functions))))
@@ -199,20 +220,20 @@
   (let [pointer-type (second (pointer? type))
         struct-name (get all-struct-names (or pointer-type type))
         enum-map (find-enum-map function-name name)
-        name (symbol (to-kebab-case name))]
+        name (symbol (c-name->clj-name name))]
     (cond
       (c-string? type) (if needs-arena? `(~'string ~'arena ~name) `(~'string ~name))
-      struct-name (let [struct-fn (symbol (str "rstructs/" (to-kebab-case struct-name)))]
+      struct-name (let [struct-fn (symbol (str "rstructs/" (c-name->clj-name struct-name)))]
                     (if needs-arena?
                       `(~struct-fn ~'arena ~name)
                       `(~struct-fn ~name)))
       enum-map `(if (keyword? ~name) (~enum-map ~name) ~name)
       :else name)))
 
-(defn kebabize-fn-name [name return-type]
+(defn clj-fn-name [name return-type]
   (let [name (if (string/starts-with? name "Is") (subs name 2) name)
         name (if (= "bool" return-type) (str name "?") name)
-        name (to-kebab-case name)]
+        name (c-name->clj-name name)]
     name))
 
 (def first-arg-is-return
@@ -259,9 +280,9 @@
 (defn get-fn [header-name all-struct-names {:keys [name params returnType] :as function}]
   (let [return-first-arg (first-arg-is-return name)
         java-fn (symbol (str header-name "_h/" name))
-        clj-fn (symbol (kebabize-fn-name name returnType))
-        args (mapv (comp symbol to-kebab-case :name) params)
-        struct-return (to-kebab-case (get all-struct-names returnType))
+        clj-fn (symbol (clj-fn-name name returnType))
+        args (mapv (comp symbol c-name->clj-name :name) params)
+        struct-return (c-name->clj-name (get all-struct-names returnType))
         needs-arena (some (comp c-string? :type) params)
         coerced-args (mapv (partial coerced-arg all-struct-names name false) params)
         coerced-args-arena (mapv (partial coerced-arg all-struct-names name true) params)]
@@ -269,7 +290,7 @@
       return-first-arg
       (let [type (:type (first params))
             first-type (second (pointer? type))
-            struct-name (to-kebab-case (get all-struct-names first-type))
+            struct-name (c-name->clj-name (get all-struct-names first-type))
             struct (symbol (str "rstructs/get-" struct-name))]
         `(~'defn ~clj-fn
                  ~(doc-str function)
@@ -325,14 +346,14 @@
 
 (defn enum-key-value [prefix {:keys [name value description]}]
   (let [name (if (string/starts-with? name prefix) (subs name (count prefix)) name)
-        name (to-kebab-case name)]
+        name (c-name->clj-name name)]
     (str
      ":" name " " ;; keyword
      value
      (when description (str " ;; " description "\n"))))) ;; comment
 
 (defn get-enum-str [{:keys [name description values] :as enum}]
-  (let [name (symbol (to-kebab-case name))
+  (let [name (symbol (c-name->clj-name name))
         prefix (enum-value-prefix enum)
         all-kvs (apply str (map (partial enum-key-value prefix) values))]
     (format "(def %s \"%s\"{%s})\n\n" name description all-kvs)))
@@ -353,9 +374,8 @@
     (spit out-file str-enums :append true)
     api))
 
-(defn generate-all []
-  (let [header-name "raylib"
-        api (slurp "native/raylib_linux_amd64/api/raylib_api.json")
+(defn generate-for-header [header-name]
+  (let [api (slurp (str "native/raylib_linux_amd64/api/" header-name "_api.json"))
         api (json/read-value api json/keyword-keys-object-mapper)]
     (->> api
          (process-api)
@@ -365,12 +385,13 @@
     nil))
 
 (comment
-  (generate-all)
+  (generate-for-header "raylib")
+  (generate-for-header "rlgl")
 
-  (defonce raylib-api-json
-    (slurp "https://raw.githubusercontent.com/raysan5/raylib/4.5.0/parser/output/raylib_api.json"))
-
-  (def raylib-api (json/read-value raylib-api-json json/keyword-keys-object-mapper))
+  (defonce raylib-api
+    (-> "native/raylib_linux_amd64/api/raylib_api.json"
+        (slurp)
+        (json/read-value json/keyword-keys-object-mapper)))
 
   (def enums (:enums raylib-api))
   (def enums-by-name
@@ -382,6 +403,14 @@
   (generate-enums raylib-api)
 
   (def functions (:functions raylib-api))
+
+  (defonce rlgl-api
+    (-> "native/raylib_linux_amd64/api/rlgl_api.json"
+        (slurp)
+        (json/read-value json/keyword-keys-object-mapper)))
+
+  (filter #(= (:name %) "rlGetMatrixProjectionStereo") (:functions rlgl-api))
+
   (def functions-by-name
     (into {} (map (juxt (comp keyword :name) identity)) functions))
 
@@ -423,7 +452,7 @@
   (print (pprint (struct-fn render-texture)))
   (print (pprint (array-fn render-texture)))
   (print (pprint (get-array-fn render-texture)))
-  (to-kebab-case "LoadImage")
-  (to-kebab-case "Camera3D")
-  (to-kebab-case "Vector2")
-  (to-kebab-case "rlSetMatrixViewOffsetStereo"))
+  (c-name->clj-name "LoadImage")
+  (c-name->clj-name "Camera3D")
+  (c-name->clj-name "Vector2")
+  (c-name->clj-name "rlSetMatrixViewOffsetStereo"))

@@ -21,9 +21,8 @@
         :jvm-opts [; for foreign function api
                    "--enable-preview"
                    "--enable-native-access=ALL-UNNAMED"
-
+                   "-Djava.library.path=/usr/lib:native/raylib_linux_amd64/lib"
                    ; for debugger
-                   "-Djava.library.path=/usr/lib:native/raylib_linux_amd64/lib:native/color"
                    ;"-Dclojure.storm.instrumentEnable=true"
                    ;"-Dclojure.storm.instrumentOnlyPrefixes=ffi"
 

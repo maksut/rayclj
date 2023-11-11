@@ -102,7 +102,7 @@
          (to-array rarena/*current-arena* elems))))))
 
 ;;
-;; Structures Definition
+;; Structures Definitions
 ;;
 
 (defn get-vector2

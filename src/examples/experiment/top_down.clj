@@ -1,7 +1,9 @@
 (ns examples.experiment.top-down
   (:require [clojure.math :as math]
             [raylib.functions :as rl]
-            [rlgl.core :as rlgl]))
+            [rlgl.functions :as rlgl]))
+
+(def RL_MODELVIEW 0x1700);; GL_MODELVIEW
 
 (defn vector2-add [v1 v2] (mapv + v1 v2))
 (defn vector2-substract [v1 v2] (mapv - v1 v2))
@@ -94,20 +96,20 @@
 
 (defn draw-player [{:keys [position rotation]}]
   (let [[x y] position]
-    (rlgl/matrix-mode! rlgl/modelview)
-    (rlgl/push-matrix!)
-    (rlgl/translatef! x y 0)
-    (rlgl/rotatef! rotation 0 0 1)
+    (rlgl/matrix-mode RL_MODELVIEW)
+    (rlgl/push-matrix)
+    (rlgl/translatef x y 0)
+    (rlgl/rotatef rotation 0 0 1)
     (rl/draw-circle 0 0 20 :maroon)
 
-    (rlgl/rotatef! 180 0 0 1) ; raylib git master
-    (rlgl/translatef! 20 0 0) ; raylib git master
+    (rlgl/rotatef 180 0 0 1) ; raylib git master
+    (rlgl/translatef 20 0 0) ; raylib git master
 
     ; (rlgl/rotatef! 90 0 0 1) ; 4.5.1 raylib
     ; (rlgl/translatef! 0 20 0) ; 4.5.1 raylib
 
     (rl/draw-poly [0 0] 3 20 0 :purple)
-    (rlgl/pop-matrix!)))
+    (rlgl/pop-matrix)))
 
 (defn draw-cursor [{:keys [position color rotation]}]
   (rl/draw-poly position 6 20 rotation color))
