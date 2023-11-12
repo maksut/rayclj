@@ -35,7 +35,7 @@
     (println "ERR: " err)))
 
 (defn jgenerate [{:keys [jextract-dir raylib-inc-dir]}]
-  (let [headers ["raylib", "rlgl", "raymath"]]
+  (let [headers ["raylib", "rlgl"]]
     (map #(jgenerate-one jextract-dir raylib-inc-dir  %) headers)))
 
 (defn jcompile [_]
@@ -55,7 +55,6 @@
     (copy-artifact config "src/libraylib.so" "lib/libraylib.so")
     (copy-artifact config "src/raylib.h" "include/raylib.h")
     (copy-artifact config "src/rlgl.h" "include/rlgl.h")
-    (copy-artifact config "src/raymath.h" "include/raymath.h")
     (println "raylib build is successful")))
 
 (defn run-raylib-parser [{:keys [raylib-dir] :as config}]
@@ -70,10 +69,8 @@
     (execute "make" :dir parser-dir) ; build the parser first
     (run-parser "raylib")
     (run-parser "rlgl")
-    (run-parser "raymath")
     (copy-artifact config "parser/output/raylib_api.json" "api/raylib_api.json")
     (copy-artifact config "parser/output/rlgl_api.json" "api/rlgl_api.json")
-    (copy-artifact config "parser/output/raymath_api.json" "api/raymath_api.json")
     (println "parser run is successful")))
 
 (comment
