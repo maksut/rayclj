@@ -1,8 +1,8 @@
-(ns rlgl.functions
-  (:require [arena :as rarena]
-            [arrays :refer [string]]
-            [rlgl.structs :as rstructs])
-  (:import [rlgl rlgl_h]
+(ns rayclj.rlgl.functions
+  (:require [rayclj.arena :as rarena]
+            [rayclj.arrays :refer [string]]
+            [rayclj.rlgl.structs :as rstructs])
+  (:import [rayclj.rlgl rlgl_h]
            [java.lang.foreign Arena]))
 
 (set! *warn-on-reflection* true)

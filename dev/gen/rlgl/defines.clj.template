@@ -1,4 +1,4 @@
-(ns rlgl.defines
+(ns rayclj.rlgl.defines
   (:refer-clojure :exclude [float min max]))
 
 ;;

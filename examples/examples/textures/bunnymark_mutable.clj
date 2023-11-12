@@ -1,9 +1,7 @@
 (ns examples.textures.bunnymark-mutable
-  (:require [raylib.functions :as rl]
-            [raylib.structs :as rstructs]
-            [rlgl.defines]))
-
-(def batch-size rlgl.defines/default-batch-buffer-elements)
+  (:require [rayclj.raylib.functions :as rl]
+            [rayclj.raylib.structs :as rstructs]
+            [rayclj.rlgl.defines :refer [default-batch-buffer-elements]]))
 
 (definterface IBunny
   (update_and_draw [texture min-x max-x min-y max-y]))
@@ -72,7 +70,7 @@
 
             (rl/draw-rectangle 0 0 screen-width 40 :black)
             (rl/draw-text (format "bunnies: %d" bunnies-count) 120 10 20 :green)
-            (rl/draw-text (format "batched draw calls: %d" (int (inc (/ bunnies-count batch-size)))) 320 10 20 :maroon)
+            (rl/draw-text (format "batched draw calls: %d" (int (inc (/ bunnies-count default-batch-buffer-elements)))) 320 10 20 :maroon)
             (rl/draw-fps 10 10))
 
           (recur bunnies))))

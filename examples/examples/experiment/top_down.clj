@@ -1,8 +1,8 @@
 (ns examples.experiment.top-down
   (:require [clojure.math :as math]
-            [raylib.functions :as rl]
-            [rlgl.functions :as rlgl]
-            [rlgl.defines :as rlgl-defines]))
+            [rayclj.raylib.functions :as rl]
+            [rayclj.rlgl.functions :as rlgl]
+            [rayclj.rlgl.defines :as rlgl-defines]))
 
 (defn vector2-add [v1 v2] (mapv + v1 v2))
 (defn vector2-substract [v1 v2] (mapv - v1 v2))

@@ -1,5 +1,5 @@
 (ns examples.experiment.game-loop
-  (:require [raylib.functions :as rl]))
+  (:require [rayclj.raylib.functions :as rl]))
 
 (defn update-state [{:keys [hex-color]}]
   (let [hex-position (rl/get-mouse-position)

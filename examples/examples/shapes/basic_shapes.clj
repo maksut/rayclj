@@ -1,5 +1,5 @@
 (ns examples.shapes.basic-shapes
-  (:require [raylib.functions :as rl]))
+  (:require [rayclj.raylib.functions :as rl]))
 
 (let [screen-width 800
       screen-height 450]

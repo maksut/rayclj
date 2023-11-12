@@ -1,10 +1,10 @@
-(ns rlgl.structs
-  (:require [arena :as rarena]
-            [arrays :refer [get-unsigned-int-array
-                            set-unsigned-int-array
-                            array-fn
-                            get-array-fn
-                            set-array-fn]])
+(ns rayclj.rlgl.structs
+  (:require [rayclj.arena :as rarena]
+            [rayclj.arrays :refer [get-unsigned-int-array
+                                   set-unsigned-int-array
+                                   array-fn
+                                   get-array-fn
+                                   set-array-fn]])
   (:import
    [java.lang.foreign Arena MemorySegment]))
 

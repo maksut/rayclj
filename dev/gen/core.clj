@@ -32,17 +32,17 @@
         [_ array array-size] (array? type)]
     (cond
       resolved-type
-      (let [getter (symbol (str header-name "." struct-name "/" name "$slice"))
+      (let [getter (symbol (str "rayclj." header-name "." struct-name "/" name "$slice"))
             struct-getter (symbol (str "get-" (c-name->clj-name resolved-type)))]
         `(~struct-getter (~getter ~'seg)))
 
       array
-      (let [getter (symbol (str header-name "." struct-name "/" name "$slice"))
+      (let [getter (symbol (str "rayclj." header-name "." struct-name "/" name "$slice"))
             struct-getter (symbol (str "get-" (c-name->clj-name array) "-array"))]
         `(~struct-getter (~getter ~'seg) ~(Integer/parseInt array-size)))
 
       :else
-      (let [getter (symbol (str header-name "." struct-name "/" name "$get"))]
+      (let [getter (symbol (str "rayclj." header-name "." struct-name "/" name "$get"))]
         `(~getter ~'seg)))))
 
 (defn field-setter [header-name struct-name all-struct-names {:keys [name type]}]
@@ -50,17 +50,17 @@
         [_ array array-size] (array? type)]
     (cond
       resolved-type
-      (let [setter (symbol (str header-name "." struct-name "/" name "$slice"))
+      (let [setter (symbol (str "rayclj." header-name "." struct-name "/" name "$slice"))
             struct-setter (symbol (str "set-" (c-name->clj-name resolved-type)))]
         `(~struct-setter (~setter ~'seg) ~(symbol name)))
 
       array
-      (let [setter (symbol (str header-name "." struct-name "/" name "$slice"))
+      (let [setter (symbol (str "rayclj." header-name "." struct-name "/" name "$slice"))
             struct-setter (symbol (str "set-" (c-name->clj-name array) "-array"))]
         `(~struct-setter (~setter ~'seg) ~(symbol name) ~(Integer/parseInt array-size)))
 
       :else
-      (let [setter (str header-name "." struct-name "/" name "$set")]
+      (let [setter (str "rayclj." header-name "." struct-name "/" name "$set")]
         `(~(symbol setter) ~'seg ~(symbol name))))))
 
 (defn field-getter-kv [header-name struct-name all-struct-names field]
@@ -95,7 +95,7 @@
   (let [kebab-name (c-name->clj-name name)
         fn-name (symbol kebab-name)
         struct-set-fn (symbol (str "set-" kebab-name))
-        layout-sym (symbol (str header-name "." name "/$LAYOUT"))]
+        layout-sym (symbol (str "rayclj." header-name "." name "/$LAYOUT"))]
     `(~'defn ~fn-name ~(doc-str struct)
              ([~arena-symbol ~'arena ~'v]
               (~struct-set-fn (.allocate ~'arena (~layout-sym)) ~'v))
@@ -108,21 +108,21 @@
   (let [kebab-name (c-name->clj-name name)
         fn-name (symbol (str kebab-name "-array"))
         struct-set-fn (symbol (str "set-" kebab-name))
-        layout-sym (symbol (str header-name "." name "/$LAYOUT"))]
+        layout-sym (symbol (str "rayclj." header-name "." name "/$LAYOUT"))]
     `(~'def ~fn-name (~'array-fn (~layout-sym) ~struct-set-fn))))
 
 (defn get-array-fn [header-name {:keys [name]}]
   (let [kebab-name (c-name->clj-name name)
         fn-name (symbol (str "get-" kebab-name "-array"))
         struct-set-fn (symbol (str "get-" kebab-name))
-        layout-sym (symbol (str header-name "." name "/$LAYOUT"))]
+        layout-sym (symbol (str "rayclj." header-name "." name "/$LAYOUT"))]
     `(~'def ~fn-name (~'get-array-fn (~layout-sym) ~struct-set-fn))))
 
 (defn set-array-fn [header-name {:keys [name]}]
   (let [kebab-name (c-name->clj-name name)
         fn-name (symbol (str "set-" kebab-name "-array"))
         struct-set-fn (symbol (str "set-" kebab-name))
-        layout-sym (symbol (str header-name "." name "/$LAYOUT"))]
+        layout-sym (symbol (str "rayclj." header-name "." name "/$LAYOUT"))]
     `(~'def ~fn-name (~'set-array-fn (~layout-sym) ~struct-set-fn))))
 
 (defn pprint [f]
@@ -197,7 +197,7 @@
         (assoc :functions functions))))
 
 (defn generate-structs [header-name api]
-  (let [out-file (str "src/" header-name "/structs.clj")
+  (let [out-file (str "src/clj/rayclj/" header-name "/structs.clj")
         template-file (str "dev/gen/" header-name "/structs.clj.template")
         structs (:structs api)
         all-struct-names (get-all-struct-names api)]
@@ -333,7 +333,7 @@
     (spit out-file str-fns :append true)))
 
 (defn generate-functions [header-name api]
-  (let [out-file (str "src/" header-name "/functions.clj")
+  (let [out-file (str "src/clj/rayclj/" header-name "/functions.clj")
         template-file (str "dev/gen/" header-name "/functions.clj.template")
         functions (:functions api)
         all-struct-names (get-all-struct-names api)]
@@ -374,7 +374,7 @@
     (zp/zprint-str (get-enum-str enum) print-options)))
 
 (defn generate-enums [header-name api]
-  (let [out-file (str "src/" header-name "/enums.clj")
+  (let [out-file (str "src/clj/rayclj/" header-name "/enums.clj")
         template-file (str "dev/gen/" header-name "/enums.clj.template")
         enums (:enums api)
         clj-enums (map pprint-enum enums)
@@ -391,7 +391,7 @@
       `(~'def ~name ~description ~value))))
 
 (defn generate-defines [header-name api]
-  (let [out-file (str "src/" header-name "/defines.clj")
+  (let [out-file (str "src/clj/rayclj/" header-name "/defines.clj")
         template-file (str "dev/gen/" header-name "/defines.clj.template")
         defines (:defines api)
         export-types #{"INT" "DOUBLE" "STRING"}

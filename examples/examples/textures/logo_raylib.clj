@@ -1,5 +1,5 @@
 (ns examples.textures.logo-raylib
-  (:require [raylib.functions :as rl]))
+  (:require [rayclj.raylib.functions :as rl]))
 
 (let [screen-width 800 screen-height 450]
   (rl/init-window screen-width screen-height "raylib [textures] example - texture loading and drawing")

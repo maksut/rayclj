@@ -1,5 +1,5 @@
 (ns examples.core.basic-window
-  (:require [raylib.functions :as rl]))
+  (:require [rayclj.raylib.functions :as rl]))
 
 (let [screen-width 800 screen-height 450]
   (rl/init-window screen-width screen-height "raylib [core] example - basic window")

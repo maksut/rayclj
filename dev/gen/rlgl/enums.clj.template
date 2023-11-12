@@ -1,4 +1,4 @@
-(ns rlgl.enums)
+(ns rayclj.rlgl.enums)
 
 ;;
 ;; RLGL Enums

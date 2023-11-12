@@ -1,9 +1,9 @@
-(ns raylib.functions
-  (:require [arena :as rarena]
-            [raylib.enums :as renums]
-            [raylib.structs :as rstructs]
-            [arrays :refer [string]])
-  (:import [raylib raylib_h]
+(ns rayclj.raylib.functions
+  (:require [rayclj.arena :as rarena]
+            [rayclj.raylib.enums :as renums]
+            [rayclj.raylib.structs :as rstructs]
+            [rayclj.arrays :refer [string]])
+  (:import [rayclj.raylib raylib_h]
            [java.lang.foreign Arena]))
 
 (set! *warn-on-reflection* true)

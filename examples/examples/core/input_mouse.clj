@@ -1,5 +1,5 @@
 (ns examples.core.input-mouse
-  (:require [raylib.functions :as rl]))
+  (:require [rayclj.raylib.functions :as rl]))
 
 (let [screen-width 800
       screen-height 450]

@@ -1,5 +1,5 @@
 (ns examples.textures.srcrec_dstrec
-  (:require [raylib.functions :as rl]))
+  (:require [rayclj.raylib.functions :as rl]))
 
 (let [screen-width 800 screen-height 450]
   (rl/init-window screen-width screen-height "raylib [textures] examples - texture source and destination rectangles")

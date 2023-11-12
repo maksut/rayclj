@@ -18,14 +18,19 @@
     result))
 
 (defn clean [_]
-  (b/delete {:path "target"}))
+  ; compiled files
+  (b/delete {:path "target"})
+  ; generated files
+  (b/delete {:path "src/java/rayclj"})
+  (b/delete {:path "src/clj/rayclj/raylib"})
+  (b/delete {:path "src/clj/rayclj/rlgl"}))
 
 (defn jgenerate-one [jextract-dir raylib-inc-dir header-name]
-  (let [output-dir (absolute-path "src/java/")
+  (let [output-dir (absolute-path "src/java")
         {:keys [out err]} (execute
                            "./jextract"
                            "--source"
-                           "--target-package" header-name
+                           "--target-package" (str "rayclj." header-name)
                            "-lraylib"
                            "--output" output-dir
                            (absolute-path (io/file raylib-inc-dir (str header-name ".h")))

@@ -1,4 +1,4 @@
-(ns raylib.enums)
+(ns rayclj.raylib.enums)
 
 (def predefined-colors
   "Some Basic Colors
