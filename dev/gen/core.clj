@@ -66,14 +66,13 @@
 (defn field-getter-kv [header-name struct-name all-struct-names field]
   (list (keyword (:name field)) (field-getter header-name struct-name all-struct-names field)))
 
-(defn doc-str [{:keys [description fields params docstring]}]
+(defn doc-str [{:keys [description fields docstring]}]
   (if docstring
     docstring
-    (let [items (or fields params)
-          field-doc (fn [{:keys [name type description]}]
+    (let [field-doc (fn [{:keys [name type description]}]
                       (str ":EL  " type " " name (when description (str " // " description))))]
       (str description
-           (apply str (map field-doc items))))))
+           (apply str (map field-doc fields))))))
 
 (defn struct-get-fn [header-name all-struct-names {:keys [name fields as-vector?] :as struct}]
   (let [kebab-name (symbol (str "get-" (c-name->clj-name name)))]
@@ -238,6 +237,13 @@
         name (c-name->clj-name name)]
     name))
 
+(defn fn-doc-str [{:keys [description params returnType docstring]}]
+  (if docstring
+    docstring
+    (let [field-doc (fn [{:keys [name type]}] (str type " " name))
+          field-docs (string/join ", " (map field-doc params))]
+      (str description :EL "  [" field-docs "] -> " returnType))))
+
 (def first-arg-is-return
   #{"ImageFormat"
     "ImageToPOT"
@@ -295,28 +301,28 @@
             struct-name (c-name->clj-name (get all-struct-names first-type))
             struct (symbol (str "rstructs/get-" struct-name))]
         `(~'defn ~clj-fn
-                 ~(doc-str function)
+                 ~(fn-doc-str function)
                  ~args
                  (~'let [~'first-arg ~(first coerced-args)]
                         (~java-fn ~'first-arg ~@(rest coerced-args))
                         (~struct ~'first-arg))))
       struct-return
       `(~'defn ~clj-fn
-               ~(doc-str function)
+               ~(fn-doc-str function)
                ([:CARETArena ~'arena ~@args]
                 (~java-fn ~'arena ~@coerced-args-arena))
                (~args
                 (~(symbol (str "rstructs/get-" struct-return)) (~java-fn ~'rarena/*current-arena* ~@coerced-args))))
       needs-arena
       `(~'defn ~clj-fn
-               ~(doc-str function)
+               ~(fn-doc-str function)
                ([:CARETArena ~'arena ~@args]
                 (~java-fn ~@coerced-args-arena))
                (~args
                 (~java-fn ~@coerced-args)))
       :else
       `(~'defn ~clj-fn
-               ~(doc-str function)
+               ~(fn-doc-str function)
                ~args
                (~java-fn ~@coerced-args)))))
 
@@ -414,6 +420,7 @@
   (generate-for-header "rlgl"))
 
 (comment
+  (generate-all)
   (generate-for-header "raylib")
   (generate-for-header "rlgl")
 
