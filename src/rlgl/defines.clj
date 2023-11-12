@@ -1,6 +1,10 @@
 (ns rlgl.defines
   (:refer-clojure :exclude [float min max]))
 
+;;
+;; RLGL Defines
+;;
+
 (def rlgl-version "4.5")
 
 (def default-batch-buffer-elements 8192)

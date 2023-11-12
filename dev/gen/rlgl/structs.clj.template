@@ -1,0 +1,16 @@
+(ns rlgl.structs
+  (:require [arena :as rarena]
+            [arrays :refer [get-unsigned-int-array
+                            set-unsigned-int-array
+                            array-fn
+                            get-array-fn
+                            set-array-fn]])
+  (:import
+   [java.lang.foreign Arena MemorySegment]))
+
+(set! *warn-on-reflection* true)
+
+;;
+;; RLGL Structures Definitions
+;;
+

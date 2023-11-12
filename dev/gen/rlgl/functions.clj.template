@@ -1,0 +1,13 @@
+(ns rlgl.functions
+  (:require [arena :as rarena]
+            [arrays :refer [string]]
+            [rlgl.structs :as rstructs])
+  (:import [rlgl rlgl_h]
+           [java.lang.foreign Arena]))
+
+(set! *warn-on-reflection* true)
+
+;;
+;; RLGL Function definitions
+;;
+

@@ -77,15 +77,24 @@
     (println "parser run is successful")))
 
 (comment
+  ; builds raylib from source code and puts output in the :install-dir
   (build-raylib {:raylib-dir (io/file (System/getProperty "user.home") "oss/raylib/")
                  :install-dir (io/file (str "./native/raylib_linux_amd64"))})
 
+  ; builds raylib parser, runs it and puts the output in the :install-dir
   (run-raylib-parser {:raylib-dir (io/file (System/getProperty "user.home") "oss/raylib/")
                       :install-dir (io/file (str "./native/raylib_linux_amd64"))})
 
   (clean nil)
+
+  ; generates java code from raylib headers
   (jgenerate {:raylib-inc-dir "./native/raylib_linux_amd64/include/"
               :jextract-dir
               (io/file (System/getProperty "user.home") ".local/share/applications/jextract-21/bin")})
+
+  ; compiles the generated java code
   (jcompile nil)
+
+  ; generates all clojure code for the bindings by using the parser output
+  ; generated clojure code uses the generated java code
   (gen/generate-all))

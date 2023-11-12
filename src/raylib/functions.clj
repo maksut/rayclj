@@ -1,22 +1,16 @@
 (ns raylib.functions
-  (:require [raylib.arena :as rarena]
+  (:require [arena :as rarena]
             [raylib.enums :as renums]
-            [raylib.structs :as rstructs])
+            [raylib.structs :as rstructs]
+            [arrays :refer [string]])
   (:import [raylib raylib_h]
-           [java.lang.foreign Arena MemorySegment]))
+           [java.lang.foreign Arena]))
 
 (set! *warn-on-reflection* true)
 
 ;;
 ;; Utility Functions
 ;;
-
-(defn get-string [^MemorySegment seg]
-  (.getUtf8String seg 0))
-
-(defn string
-  ([str] (.allocateUtf8String rarena/*current-arena* str))
-  ([^Arena arena str] (.allocateUtf8String arena str)))
 
 (defmacro with-drawing [& body]
   `(binding [rarena/*current-arena* (rarena/confined-arena)]
@@ -26,6 +20,10 @@
        (end-drawing)
        (finally
          (.close rarena/*current-arena*)))))
+
+;;
+;; Raylib Functions
+;;
 
 (defn init-window
   "Initialize window and OpenGL context

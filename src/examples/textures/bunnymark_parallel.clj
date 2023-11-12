@@ -1,9 +1,10 @@
 (ns examples.textures.bunnymark-parallel
   (:require [raylib.functions :as rl]
             [raylib.structs :as rstructs]
+            [rlgl.defines]
             [clj-async-profiler.core :as prof]))
 
-(def BUNNY_PARTITION_SIZE 8192)
+(def batch-buffer-size rlgl.defines/default-batch-buffer-elements)
 
 (defn new-bunny []
   {:position (rl/get-mouse-position)
@@ -74,7 +75,7 @@
 
              (rl/draw-rectangle 0 0 screen-width 40 :black)
              (rl/draw-text (format "bunnies: %d" bunnies-count) 120 10 20 :green)
-             (rl/draw-text (format "batched draw calls: %d" (int (inc (/ bunnies-count BUNNY_PARTITION_SIZE)))) 320 10 20 :maroon)
+             (rl/draw-text (format "batched draw calls: %d" (int (inc (/ bunnies-count batch-buffer-size)))) 320 10 20 :maroon)
              (rl/draw-fps 10 10))
 
            (recur batches bunnies-count))))

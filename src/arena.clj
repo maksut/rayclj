@@ -1,4 +1,4 @@
-(ns raylib.arena
+(ns arena
   (:import [java.lang.foreign Arena]))
 
 (def ^Arena auto-arena (Arena/ofAuto))

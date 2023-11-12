@@ -7,28 +7,38 @@
  {:build {:deps {io.github.clojure/tools.build {:git/tag "v0.9.6" :git/sha "8e78bcc"}}
           :ns-default build}
 
+  :example {:jvm-opts [; for foreign function api
+                       "--enable-preview"
+                       "--enable-native-access=ALL-UNNAMED"
+                       ; this folder must contain raylib dynamic library (e.g. libraylib.so)
+                       "-Djava.library.path=native/raylib_linux_amd64/lib"]}
+
   :dev {:extra-paths ["dev"]
         :classpath-overrides {org.clojure/clojure nil} ;; for disabling the official compiler
         :extra-deps {metosin/jsonista {:mvn/version "0.3.8"}
                      dev.weavejester/cljfmt {:mvn/version "0.11.2"}
                      zprint/zprint {:mvn/version "1.2.8"}
-                     nrepl/nrepl       {:mvn/version "1.0.0"}
+                     nrepl/nrepl {:mvn/version "1.0.0"}
                      cider/cider-nrepl {:mvn/version "0.28.7"}
-                     djblue/portal     {:mvn/version "0.37.1"}
+                     djblue/portal {:mvn/version "0.37.1"}
                      com.github.jpmonettas/clojure {:mvn/version "1.11.1-9"}
                      com.github.jpmonettas/flow-storm-dbg {:mvn/version "3.7.3"}
                      com.clojure-goes-fast/clj-async-profiler {:mvn/version "1.1.1"}}
         :jvm-opts [; for foreign function api
                    "--enable-preview"
                    "--enable-native-access=ALL-UNNAMED"
-                   "-Djava.library.path=/usr/lib:native/raylib_linux_amd64/lib"
+
+                   ; this folder must contain raylib dynamic library (e.g. libraylib.so)
+                   "-Djava.library.path=native/raylib_linux_amd64/lib"
+
                    ; for debugger
                    ;"-Dclojure.storm.instrumentEnable=true"
                    ;"-Dclojure.storm.instrumentOnlyPrefixes=ffi"
 
                    ;; for profiler
-                   "-Djdk.attach.allowAttachSelf"
-                   "-XX:+UnlockDiagnosticVMOptions"]
+                   ; "-Djdk.attach.allowAttachSelf"
+                   ; "-XX:+UnlockDiagnosticVMOptions"
+                   ]
         :main-opts  ["-m" "nrepl.cmdline"
                      "--middleware" "[cider.nrepl/cider-middleware]"
                      "--interactive"]}}}

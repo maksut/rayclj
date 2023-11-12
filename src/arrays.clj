@@ -1,14 +1,7 @@
-(ns raylib.structs
-  (:require [raylib.arena :as rarena]
-            [raylib.enums :as renums])
-  (:import
-   [java.lang.foreign Arena MemoryLayout MemorySegment ValueLayout]))
-
-(set! *warn-on-reflection* true)
-
-;;
-;; Utility functions
-;;
+(ns arrays "Utilities for arrays and array like structures"
+    (:require [arena :as rarena])
+    (:import
+     [java.lang.foreign Arena MemorySegment ValueLayout MemoryLayout]))
 
 (defn get-string [^MemorySegment seg]
   (.getUtf8String seg 0))
@@ -65,7 +58,14 @@
      (map-indexed (fn [i elem] (.setAtIndex seg layout (long i) (int elem))) elems)))
   seg)
 
-;; TODO: move these utility fns into an impl ns
+(def get-unsigned-int-array get-int-array)
+
+(def set-unsigned-int-array set-int-array)
+
+;;
+;; Utilities for struct function definitions
+;;
+
 (defn as-slice
   [^MemorySegment seg index element-size]
   (.asSlice seg (* index element-size)))
@@ -100,8 +100,4 @@
        (if (instance? MemorySegment elems)
          elems
          (to-array rarena/*current-arena* elems))))))
-
-;;
-;; Structures Definitions
-;;
 

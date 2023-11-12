@@ -30,6 +30,10 @@
    :magenta {:r 255 :g 0 :b 255 :a 255}      ;; Magenta
    :raywhite {:r 245 :g 245 :b 245 :a 255}}) ;; Raylib White (raylib logo)
 
+;;
+;; Raylib Enums
+;;
+
 (def config-flags
   "System/Window config flags"
   {:vsync-hint               64 ;; Set to try enabling V-Sync on GPU

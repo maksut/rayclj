@@ -1,6 +1,7 @@
 (ns gen.core
   (:require
    [clojure.string :as string]
+   [clojure.java.io :as io]
    [jsonista.core :as json]
    [zprint.core :as zp]
    [gen.overrides :as overrides]))
@@ -198,9 +199,10 @@
 
 (defn generate-structs [header-name api]
   (let [out-file (str "src/" header-name "/structs.clj")
-        template-file (str "src/gen/" header-name "/structs.clj.template")
+        template-file (str "dev/gen/" header-name "/structs.clj.template")
         structs (:structs api)
         all-struct-names (get-all-struct-names api)]
+    (io/make-parents out-file)
     (spit out-file (slurp template-file))
     (dorun
      (map
@@ -326,9 +328,10 @@
 
 (defn generate-functions [header-name api]
   (let [out-file (str "src/" header-name "/functions.clj")
-        template-file (str "src/gen/" header-name "/functions.clj.template")
+        template-file (str "dev/gen/" header-name "/functions.clj.template")
         functions (:functions api)
         all-struct-names (get-all-struct-names api)]
+    (io/make-parents out-file)
     (spit out-file (slurp template-file))
     (dorun
      (map
@@ -366,10 +369,11 @@
 
 (defn generate-enums [header-name api]
   (let [out-file (str "src/" header-name "/enums.clj")
-        template-file (str "src/gen/" header-name "/enums.clj.template")
+        template-file (str "dev/gen/" header-name "/enums.clj.template")
         enums (:enums api)
         clj-enums (map pprint-enum enums)
         str-enums (apply str (interleave clj-enums (repeat "\n\n")))]
+    (io/make-parents out-file)
     (spit out-file (slurp template-file))
     (spit out-file str-enums :append true)
     api))
@@ -382,13 +386,14 @@
 
 (defn generate-defines [header-name api]
   (let [out-file (str "src/" header-name "/defines.clj")
-        template-file (str "src/gen/" header-name "/defines.clj.template")
+        template-file (str "dev/gen/" header-name "/defines.clj.template")
         defines (:defines api)
         export-types #{"INT" "DOUBLE" "STRING"}
         defines (filter #(export-types (:type %)) defines)
         pprint-define #(pprint (get-define %))
         clj-defines (map pprint-define defines)
         str-defines (apply str (interleave clj-defines (repeat "\n\n")))]
+    (io/make-parents out-file)
     (spit out-file (slurp template-file))
     (spit out-file str-defines :append true)
     api))
@@ -403,6 +408,10 @@
          (generate-structs header-name)
          (generate-functions header-name))
     nil))
+
+(defn generate-all []
+  (generate-for-header "raylib")
+  (generate-for-header "rlgl"))
 
 (comment
   (generate-for-header "raylib")

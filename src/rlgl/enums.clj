@@ -1,5 +1,9 @@
 (ns rlgl.enums)
 
+;;
+;; RLGL Enums
+;;
+
 (def gl-version
   "OpenGL version"
   {:11    1 ;; OpenGL 1.1

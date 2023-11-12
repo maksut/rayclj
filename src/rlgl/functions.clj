@@ -1,6 +1,6 @@
 (ns rlgl.functions
-  (:require [raylib.arena :as rarena]
-            [rlgl.enums :as renums]
+  (:require [arena :as rarena]
+            [arrays :refer [string]]
             [rlgl.structs :as rstructs])
   (:import [rlgl rlgl_h]
            [java.lang.foreign Arena]))
@@ -8,16 +8,9 @@
 (set! *warn-on-reflection* true)
 
 ;;
-;; Utility Functions
+;; RLGL Function definitions
 ;;
 
-(defn string
-  ([str] (.allocateUtf8String rarena/*current-arena* str))
-  ([^Arena arena str] (.allocateUtf8String arena str)))
-
-;;
-;; Function definitions
-;;
 (defn matrix-mode
   "Choose the current matrix to be transformed
   int mode"
