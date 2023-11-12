@@ -2,5 +2,4 @@
 .cpcache
 .lsp
 .nrepl-*
-java/generated
 target

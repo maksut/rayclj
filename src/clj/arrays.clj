@@ -1,7 +1,8 @@
-(ns arrays "Utilities for arrays and array like structures"
-    (:require [arena :as rarena])
-    (:import
-     [java.lang.foreign Arena MemorySegment ValueLayout MemoryLayout]))
+(ns arrays
+  "Utilities for arrays and array like structures"
+  (:require [arena :as rarena])
+  (:import
+   [java.lang.foreign Arena MemorySegment ValueLayout MemoryLayout]))
 
 (defn get-string [^MemorySegment seg]
   (.getUtf8String seg 0))

@@ -18,11 +18,10 @@
     result))
 
 (defn clean [_]
-  (b/delete {:path "java/generated"})
   (b/delete {:path "target"}))
 
 (defn jgenerate-one [jextract-dir raylib-inc-dir header-name]
-  (let [output-dir (absolute-path "./java/generated/")
+  (let [output-dir (absolute-path "src/java/")
         {:keys [out err]} (execute
                            "./jextract"
                            "--source"
@@ -39,7 +38,7 @@
     (map #(jgenerate-one jextract-dir raylib-inc-dir  %) headers)))
 
 (defn jcompile [_]
-  (b/javac {:src-dirs ["java/generated"]
+  (b/javac {:src-dirs ["src/java"]
             :class-dir class-dir
             :basis basis
             :javac-opts ["--release" "21" "--enable-preview"]}))
