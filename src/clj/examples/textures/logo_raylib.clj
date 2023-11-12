@@ -4,7 +4,7 @@
 (let [screen-width 800 screen-height 450]
   (rl/init-window screen-width screen-height "raylib [textures] example - texture loading and drawing")
 
-  (let [texture (rl/load-texture "src/examples/textures/resources/raylib_logo.png") ;; Texture loading
+  (let [texture (rl/load-texture "resources/examples/textures/raylib_logo.png") ;; Texture loading
         texture-x (- (/ screen-width 2) (/ (:width texture) 2))
         texture-y (- (/ screen-height 2) (/ (:height texture) 2))]
 

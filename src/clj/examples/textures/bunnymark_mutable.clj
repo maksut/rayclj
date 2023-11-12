@@ -42,7 +42,7 @@
   (rl/init-window screen-width screen-height "raylib [textures] example - bunnymark")
   (rl/set-target-fps 60)
 
-  (let [{:keys [width height] :as tex-bunny} (rl/load-texture "src/examples/textures/resources/wabbit_alpha.png")
+  (let [{:keys [width height] :as tex-bunny} (rl/load-texture "resources/examples/textures/wabbit_alpha.png")
         tex-bunny-seg (rstructs/texture tex-bunny)
         min-x (* -1 (/ width 2))
         max-x (+ (rl/get-screen-width) min-x)

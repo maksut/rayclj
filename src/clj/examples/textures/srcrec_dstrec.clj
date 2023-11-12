@@ -7,7 +7,7 @@
   (rl/set-target-fps 60)
 
   ; NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
-  (let [scarfy (rl/load-texture "src/examples/textures/resources/scarfy.png") ;; Texture loading
+  (let [scarfy (rl/load-texture "resources/examples/textures/scarfy.png") ;; Texture loading
         frame-width (/ (:width scarfy) 6)
         frame-height (:height scarfy)
 
