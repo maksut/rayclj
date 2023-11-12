@@ -1,4 +1,4 @@
-{:paths ["src/clj" "target/classes"]
+{:paths ["src/clj" "target/classes" "examples"]
 
  :deps
  {org.clojure/clojure {:mvn/version "1.11.1"}}
@@ -7,16 +7,16 @@
  {:build {:deps {io.github.clojure/tools.build {:git/tag "v0.9.6" :git/sha "8e78bcc"}}
           :ns-default build}
 
-  :example {:jvm-opts [; for foreign function api
-                       "--enable-preview"
-                       "--enable-native-access=ALL-UNNAMED"
-                       ; this folder must contain raylib dynamic library (e.g. libraylib.so)
-                       "-Djava.library.path=native/raylib_linux_amd64/lib"]}
+  :examples {:jvm-opts [; for foreign function api
+                        "--enable-preview"
+                        "--enable-native-access=ALL-UNNAMED"
+                        ; this folder must contain raylib dynamic library (e.g. libraylib.so)
+                        "-Djava.library.path=native/raylib_linux_amd64/lib"]}
 
   :dev {:extra-paths ["dev"]
         :classpath-overrides {org.clojure/clojure nil} ;; for disabling the official compiler
         :extra-deps {metosin/jsonista {:mvn/version "0.3.8"}
-                     dev.weavejester/cljfmt {:mvn/version "0.11.2"}
+                     zprint/zprint {:mvn/version "1.2.8"}
                      nrepl/nrepl {:mvn/version "1.0.0"}
                      cider/cider-nrepl {:mvn/version "0.28.7"}
                      djblue/portal {:mvn/version "0.37.1"}

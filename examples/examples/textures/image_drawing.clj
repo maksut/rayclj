@@ -6,12 +6,12 @@
   (rl/init-window screen-width screen-height "raylib [textures] examples - image drawing")
 
   ;; NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
-  (let [cat (-> (rl/load-image "resources/examples/textures/cat.png") ;; Load image in CPU memory (RAM)
+  (let [cat (-> (rl/load-image "examples/examples/textures/resources/cat.png") ;; Load image in CPU memory (RAM)
                 (rl/image-crop {:x 100 :y 10 :width 280 :height 380})         ;; Crop an image piece
                 (rl/image-flip-horizontal)                                    ;; Flip cropped image horizontally
                 (rl/image-resize 150 200))                                    ;; Resize flipped-cropped image
 
-        parrots (rl/load-image "resources/examples/textures/parrots.png") ;; Load image in CPU memory (RAM)
+        parrots (rl/load-image "examples/examples/textures/resources/parrots.png") ;; Load image in CPU memory (RAM)
         {parrots-width :width parrots-height :height} parrots
         src-rec {:x 0 :y 0 :width (:width cat) :height (:height cat)}
         dst-rec {:x 30 :y 40 :width (* (:width cat) 1.5) :height (* (:height cat) 1.5)}
@@ -26,7 +26,7 @@
                     (rl/image-draw-rectangle 5 20 10 10 :white))
 
         ;; Load custom font for frawing on image
-        font (rl/load-font "resources/examples/textures/custom_jupiter_crash.png")
+        font (rl/load-font "examples/examples/textures/resources/custom_jupiter_crash.png")
 
         ;; Draw over image using custom font
         parrots (rl/image-draw-text-ex parrots font "PARROTS & CAT" [300 230] (:base-size font) -2 :white)]
