@@ -1,6 +1,10 @@
 (ns rayclj.rlgl.structs
   (:require [rayclj.arena :as rarena]
-            [rayclj.arrays :refer [get-unsigned-int-array
+            [rayclj.arrays :refer [get-byte-array
+                                   set-byte-array
+                                   get-float-array
+                                   set-float-array
+                                   get-unsigned-int-array
                                    set-unsigned-int-array
                                    array-fn
                                    get-array-fn

@@ -1,6 +1,10 @@
 (ns rayclj.rlgl.structs
   (:require [rayclj.arena :as rarena]
-            [rayclj.arrays :refer [get-unsigned-int-array
+            [rayclj.arrays :refer [get-byte-array
+                                   set-byte-array
+                                   get-float-array
+                                   set-float-array
+                                   get-unsigned-int-array
                                    set-unsigned-int-array
                                    array-fn
                                    get-array-fn
@@ -80,23 +84,24 @@
   float * vertices // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
   float * texcoords // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
   unsigned char * colors // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
-  #if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENunsigned int * indices // Vertex indices (in case vertex data comes indexed) (6 indices per quad)
   unsigned int * indices // Vertex indices (in case vertex data comes indexed) (6 indices per quad)
-  #endif indices // Vertex indices (in case vertex data comes indexed) (6 indices per quad)
-  #if defined(GRAPHICS_API_OPENGL_ES2) indices // Vertex indices (in case vertex data comes indexed) (6 indices per quad)
-  unsigned short * indices // Vertex indices (in case vertex data comes indexed) (6 indices per quad)
-  #endif vaoId // OpenGL Vertex Array Object id
   unsigned int vaoId // OpenGL Vertex Array Object id
   unsigned int[4] vboId // OpenGL Vertex Buffer Objects id (4 types of vertex data)"
-  [^MemorySegment seg]
-  {:elementCount (rayclj.rlgl.rlVertexBuffer/elementCount$get seg),
-   :vertices (rayclj.rlgl.rlVertexBuffer/vertices$get seg),
-   :texcoords (rayclj.rlgl.rlVertexBuffer/texcoords$get seg),
-   :colors (rayclj.rlgl.rlVertexBuffer/colors$get seg),
-   :indices (rayclj.rlgl.rlVertexBuffer/indices$get seg),
-   :vaoId (rayclj.rlgl.rlVertexBuffer/vaoId$get seg),
-   :vboId (get-unsigned-int-array (rayclj.rlgl.rlVertexBuffer/vboId$slice seg)
-                                  4)})
+  [seg]
+  (let [element-count (rayclj.rlgl.rlVertexBuffer/elementCount$get seg)]
+    {:elementCount element-count,
+     :vertices (get-float-array (rayclj.rlgl.rlVertexBuffer/vertices$get seg)
+                                (* element-count 3)),
+     :texcoords (get-float-array (rayclj.rlgl.rlVertexBuffer/texcoords$get seg)
+                                 (* element-count 2)),
+     :colors (get-byte-array (rayclj.rlgl.rlVertexBuffer/colors$get seg)
+                             (* element-count 4)),
+     :indices (get-unsigned-int-array (rayclj.rlgl.rlVertexBuffer/indices$get
+                                        seg)
+                                      (* element-count 6)),
+     :vaoId (rayclj.rlgl.rlVertexBuffer/vaoId$get seg),
+     :vboId (get-unsigned-int-array (rayclj.rlgl.rlVertexBuffer/vboId$slice seg)
+                                    4)}))
 
 (defn set-vertex-buffer
   "Dynamic vertex buffers (position + texcoords + colors + indices arrays)
@@ -104,27 +109,25 @@
   float * vertices // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
   float * texcoords // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
   unsigned char * colors // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
-  #if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENunsigned int * indices // Vertex indices (in case vertex data comes indexed) (6 indices per quad)
   unsigned int * indices // Vertex indices (in case vertex data comes indexed) (6 indices per quad)
-  #endif indices // Vertex indices (in case vertex data comes indexed) (6 indices per quad)
-  #if defined(GRAPHICS_API_OPENGL_ES2) indices // Vertex indices (in case vertex data comes indexed) (6 indices per quad)
-  unsigned short * indices // Vertex indices (in case vertex data comes indexed) (6 indices per quad)
-  #endif vaoId // OpenGL Vertex Array Object id
   unsigned int vaoId // OpenGL Vertex Array Object id
   unsigned int[4] vboId // OpenGL Vertex Buffer Objects id (4 types of vertex data)"
-  [^MemorySegment seg
+  [seg
    {:keys [elementCount vertices texcoords colors indices indices indices
            indices indices vaoId vaoId vboId]}]
   (rayclj.rlgl.rlVertexBuffer/elementCount$set seg elementCount)
-  (rayclj.rlgl.rlVertexBuffer/vertices$set seg vertices)
-  (rayclj.rlgl.rlVertexBuffer/texcoords$set seg texcoords)
-  (rayclj.rlgl.rlVertexBuffer/colors$set seg colors)
-  (rayclj.rlgl.rlVertexBuffer/indices$set seg indices)
-  (rayclj.rlgl.rlVertexBuffer/indices$set seg indices)
-  (rayclj.rlgl.rlVertexBuffer/indices$set seg indices)
-  (rayclj.rlgl.rlVertexBuffer/indices$set seg indices)
-  (rayclj.rlgl.rlVertexBuffer/indices$set seg indices)
-  (rayclj.rlgl.rlVertexBuffer/vaoId$set seg vaoId)
+  (set-float-array (rayclj.rlgl.rlVertexBuffer/vertices$get seg)
+                   vertices
+                   (* elementCount 3))
+  (set-float-array (rayclj.rlgl.rlVertexBuffer/texcoords$get seg)
+                   texcoords
+                   (* elementCount 2))
+  (set-byte-array (rayclj.rlgl.rlVertexBuffer/colors$get seg)
+                  colors
+                  (* elementCount 4))
+  (set-byte-array (rayclj.rlgl.rlVertexBuffer/indices$get seg)
+                  indices
+                  (* elementCount 6))
   (rayclj.rlgl.rlVertexBuffer/vaoId$set seg vaoId)
   (set-unsigned-int-array (rayclj.rlgl.rlVertexBuffer/vboId$slice seg) vboId 4)
   seg)
@@ -135,12 +138,7 @@
   float * vertices // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
   float * texcoords // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
   unsigned char * colors // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
-  #if defined(GRAPHICS_API_OPENGL_11) || defined(GRAPHICS_API_OPENunsigned int * indices // Vertex indices (in case vertex data comes indexed) (6 indices per quad)
   unsigned int * indices // Vertex indices (in case vertex data comes indexed) (6 indices per quad)
-  #endif indices // Vertex indices (in case vertex data comes indexed) (6 indices per quad)
-  #if defined(GRAPHICS_API_OPENGL_ES2) indices // Vertex indices (in case vertex data comes indexed) (6 indices per quad)
-  unsigned short * indices // Vertex indices (in case vertex data comes indexed) (6 indices per quad)
-  #endif vaoId // OpenGL Vertex Array Object id
   unsigned int vaoId // OpenGL Vertex Array Object id
   unsigned int[4] vboId // OpenGL Vertex Buffer Objects id (4 types of vertex data)"
   ([^Arena arena v]

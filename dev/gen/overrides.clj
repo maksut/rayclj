@@ -15,7 +15,17 @@
     "  unsigned char r; // Color red value:EL"
     "  unsigned char g; // Color green value:EL"
     "  unsigned char b; // Color blue value:EL"
-    "  unsigned char a; // Color alpha value")})
+    "  unsigned char a; // Color alpha value")
+
+   "rlVertexBuffer"
+   "Dynamic vertex buffers (position + texcoords + colors + indices arrays)
+  int elementCount // Number of elements in the buffer (QUADS)
+  float * vertices // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
+  float * texcoords // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
+  unsigned char * colors // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
+  unsigned int * indices // Vertex indices (in case vertex data comes indexed) (6 indices per quad)
+  unsigned int vaoId // OpenGL Vertex Array Object id
+  unsigned int[4] vboId // OpenGL Vertex Buffer Objects id (4 types of vertex data)"})
 
 (def definitions
   {:set-color
@@ -91,4 +101,46 @@
         (rayclj.raylib.Font/glyphs$set seg (glyph-info-array arena glyphs))
         seg)
        ([^MemorySegment seg font]
-        (set-font rarena/*current-arena* seg font)))]})
+        (set-font rarena/*current-arena* seg font)))]
+
+   :get-vertex-buffer
+   ['(defn get-vertex-buffer
+       "Dynamic vertex buffers (position + texcoords + colors + indices arrays)
+  int elementCount // Number of elements in the buffer (QUADS)
+  float * vertices // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
+  float * texcoords // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
+  unsigned char * colors // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
+  unsigned int * indices // Vertex indices (in case vertex data comes indexed) (6 indices per quad)
+  unsigned int vaoId // OpenGL Vertex Array Object id
+  unsigned int[4] vboId // OpenGL Vertex Buffer Objects id (4 types of vertex data)"
+       [^MemorySegment seg]
+       (let [element-count (rayclj.rlgl.rlVertexBuffer/elementCount$get seg)]
+         {:elementCount element-count,
+          :vertices (get-float-array (rayclj.rlgl.rlVertexBuffer/vertices$get seg) (* element-count 3)),
+          :texcoords (get-float-array (rayclj.rlgl.rlVertexBuffer/texcoords$get seg) (* element-count 2)),
+          :colors (get-byte-array (rayclj.rlgl.rlVertexBuffer/colors$get seg) (* element-count 4)),
+          :indices (get-unsigned-int-array (rayclj.rlgl.rlVertexBuffer/indices$get seg) (* element-count 6)),
+          :vaoId (rayclj.rlgl.rlVertexBuffer/vaoId$get seg),
+          :vboId (get-unsigned-int-array (rayclj.rlgl.rlVertexBuffer/vboId$slice seg) 4)}))]
+
+   :set-vertex-buffer
+   ['(defn set-vertex-buffer
+       "Dynamic vertex buffers (position + texcoords + colors + indices arrays)
+  int elementCount // Number of elements in the buffer (QUADS)
+  float * vertices // Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
+  float * texcoords // Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
+  unsigned char * colors // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
+  unsigned int * indices // Vertex indices (in case vertex data comes indexed) (6 indices per quad)
+  unsigned int vaoId // OpenGL Vertex Array Object id
+  unsigned int[4] vboId // OpenGL Vertex Buffer Objects id (4 types of vertex data)"
+       [^MemorySegment seg
+        {:keys [elementCount vertices texcoords colors indices indices indices
+                indices indices vaoId vaoId vboId]}]
+       (rayclj.rlgl.rlVertexBuffer/elementCount$set seg elementCount)
+       (set-float-array (rayclj.rlgl.rlVertexBuffer/vertices$get seg) vertices (* elementCount 3))
+       (set-float-array (rayclj.rlgl.rlVertexBuffer/texcoords$get seg) texcoords (* elementCount 2))
+       (set-byte-array (rayclj.rlgl.rlVertexBuffer/colors$get seg) colors (* elementCount 4))
+       (set-byte-array (rayclj.rlgl.rlVertexBuffer/indices$get seg) indices (* elementCount 6))
+       (rayclj.rlgl.rlVertexBuffer/vaoId$set seg vaoId)
+       (set-unsigned-int-array (rayclj.rlgl.rlVertexBuffer/vboId$slice seg) vboId 4)
+       seg)]})

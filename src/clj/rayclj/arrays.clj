@@ -29,13 +29,11 @@
      (map-indexed (fn [i elem] (.setAtIndex seg layout (long i) (float elem))) elems)))
   seg)
 
-(defn get-char-array [^MemorySegment seg size]
+(defn get-byte-array [^MemorySegment seg size]
   (let [layout (ValueLayout/JAVA_BYTE)]
-    (apply
-     str
-     (mapv (fn [i] (char (.getAtIndex seg layout (long i)))) (range size)))))
+    (mapv (fn [i] (.getAtIndex seg layout (long i))) (range size))))
 
-(defn set-char-array
+(defn set-byte-array
   [^MemorySegment seg elems max-size]
   (when (> (count elems) max-size)
     (throw (ex-info "Byte array too long" {:elems elems :max-size max-size})))
@@ -45,6 +43,17 @@
       (fn [i elem]
         (.setAtIndex seg layout (long i) (-> elem int unchecked-byte))) elems)))
   seg)
+
+(defn get-char-array [^MemorySegment seg size]
+  (->> (get-byte-array seg size)
+       (take-while #(not= 0 %)) ;; zero terminated string
+       (map char)
+       (apply str)))
+
+(defn set-char-array [^MemorySegment seg elems max-size]
+  (let [pad-size (- max-size (count elems))
+        padded-elems (concat elems (take pad-size (repeat 0)))]
+    (set-byte-array seg padded-elems max-size)))
 
 (defn get-int-array [^MemorySegment seg size]
   (let [layout (ValueLayout/JAVA_INT)]
