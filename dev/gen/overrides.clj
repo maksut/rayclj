@@ -143,4 +143,40 @@
        (set-byte-array (rayclj.rlgl.rlVertexBuffer/indices$get seg) indices (* elementCount 6))
        (rayclj.rlgl.rlVertexBuffer/vaoId$set seg vaoId)
        (set-unsigned-int-array (rayclj.rlgl.rlVertexBuffer/vboId$slice seg) vboId 4)
-       seg)]})
+       seg)]
+
+   :get-render-batch '[(defn get-render-batch
+                         "rlRenderBatch type
+  int bufferCount // Number of vertex buffers (multi-buffering support)
+  int currentBuffer // Current buffer tracking in case of multi-buffering
+  rlVertexBuffer * vertexBuffer // Dynamic buffer(s) for vertex data
+  rlDrawCall * draws // Draw calls array, depends on textureId
+  int drawCounter // Draw calls counter
+  float currentDepth // Current depth value for next draw"
+                         [^MemorySegment seg]
+                         (let [buffer-count (rayclj.rlgl.rlRenderBatch/bufferCount$get seg)]
+                           {:bufferCount buffer-count,
+                            :currentBuffer (rayclj.rlgl.rlRenderBatch/currentBuffer$get seg)
+                            :vertexBuffer (get-vertex-buffer-array (rayclj.rlgl.rlRenderBatch/vertexBuffer$get seg) buffer-count)
+                            :draws (get-draw-call-array (rayclj.rlgl.rlRenderBatch/draws$get seg) defines/default-batch-drawcalls)
+                            :drawCounter (rayclj.rlgl.rlRenderBatch/drawCounter$get seg)
+                            :currentDepth (rayclj.rlgl.rlRenderBatch/currentDepth$get seg)}))]
+
+   :set-render-batch '[(defn set-render-batch
+                         "rlRenderBatch type
+  int bufferCount // Number of vertex buffers (multi-buffering support)
+  int currentBuffer // Current buffer tracking in case of multi-buffering
+  rlVertexBuffer * vertexBuffer // Dynamic buffer(s) for vertex data
+  rlDrawCall * draws // Draw calls array, depends on textureId
+  int drawCounter // Draw calls counter
+  float currentDepth // Current depth value for next draw"
+                         [^MemorySegment seg
+                          {:keys [bufferCount currentBuffer vertexBuffer draws drawCounter
+                                  currentDepth]}]
+                         (rayclj.rlgl.rlRenderBatch/bufferCount$set seg bufferCount)
+                         (rayclj.rlgl.rlRenderBatch/currentBuffer$set seg currentBuffer)
+                         (set-vertex-buffer-array (rayclj.rlgl.rlRenderBatch/vertexBuffer$get seg) vertexBuffer bufferCount)
+                         (set-draw-call-array (rayclj.rlgl.rlRenderBatch/draws$get seg) draws defines/default-batch-drawcalls)
+                         (rayclj.rlgl.rlRenderBatch/drawCounter$set seg drawCounter)
+                         (rayclj.rlgl.rlRenderBatch/currentDepth$set seg currentDepth)
+                         seg)]})

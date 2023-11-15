@@ -211,13 +211,17 @@
   rlDrawCall * draws // Draw calls array, depends on textureId
   int drawCounter // Draw calls counter
   float currentDepth // Current depth value for next draw"
-  [^MemorySegment seg]
-  {:bufferCount (rayclj.rlgl.rlRenderBatch/bufferCount$get seg),
-   :currentBuffer (rayclj.rlgl.rlRenderBatch/currentBuffer$get seg),
-   :vertexBuffer (rayclj.rlgl.rlRenderBatch/vertexBuffer$get seg),
-   :draws (rayclj.rlgl.rlRenderBatch/draws$get seg),
-   :drawCounter (rayclj.rlgl.rlRenderBatch/drawCounter$get seg),
-   :currentDepth (rayclj.rlgl.rlRenderBatch/currentDepth$get seg)})
+  [seg]
+  (let [buffer-count (rayclj.rlgl.rlRenderBatch/bufferCount$get seg)]
+    {:bufferCount buffer-count,
+     :currentBuffer (rayclj.rlgl.rlRenderBatch/currentBuffer$get seg),
+     :vertexBuffer (get-vertex-buffer-array
+                     (rayclj.rlgl.rlRenderBatch/vertexBuffer$get seg)
+                     buffer-count),
+     :draws (get-draw-call-array (rayclj.rlgl.rlRenderBatch/draws$get seg)
+                                 defines/default-batch-drawcalls),
+     :drawCounter (rayclj.rlgl.rlRenderBatch/drawCounter$get seg),
+     :currentDepth (rayclj.rlgl.rlRenderBatch/currentDepth$get seg)}))
 
 (defn set-render-batch
   "rlRenderBatch type
@@ -227,13 +231,17 @@
   rlDrawCall * draws // Draw calls array, depends on textureId
   int drawCounter // Draw calls counter
   float currentDepth // Current depth value for next draw"
-  [^MemorySegment seg
+  [seg
    {:keys [bufferCount currentBuffer vertexBuffer draws drawCounter
            currentDepth]}]
   (rayclj.rlgl.rlRenderBatch/bufferCount$set seg bufferCount)
   (rayclj.rlgl.rlRenderBatch/currentBuffer$set seg currentBuffer)
-  (rayclj.rlgl.rlRenderBatch/vertexBuffer$set seg vertexBuffer)
-  (rayclj.rlgl.rlRenderBatch/draws$set seg draws)
+  (set-vertex-buffer-array (rayclj.rlgl.rlRenderBatch/vertexBuffer$get seg)
+                           vertexBuffer
+                           bufferCount)
+  (set-draw-call-array (rayclj.rlgl.rlRenderBatch/draws$get seg)
+                       draws
+                       defines/default-batch-drawcalls)
   (rayclj.rlgl.rlRenderBatch/drawCounter$set seg drawCounter)
   (rayclj.rlgl.rlRenderBatch/currentDepth$set seg currentDepth)
   seg)
