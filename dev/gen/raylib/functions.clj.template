@@ -1,10 +1,8 @@
 (ns rayclj.raylib.functions
-  (:require [rayclj.arena :as rarena]
-            [rayclj.raylib.enums :as renums]
+  (:require [rayclj.raylib.enums :as renums]
             [rayclj.raylib.structs :as rstructs]
-            [rayclj.arrays :refer [string]])
-  (:import [rayclj.raylib raylib_h]
-           [java.lang.foreign Arena]))
+            [rayclj.memory :as memory])
+  (:import [rayclj.raylib raylib_h]))
 
 (set! *warn-on-reflection* true)
 
@@ -13,13 +11,13 @@
 ;;
 
 (defmacro with-drawing [& body]
-  `(binding [rarena/*current-arena* (rarena/confined-arena)]
+  `(binding [memory/*current-arena* (memory/confined-arena)]
      (try
        (begin-drawing)
        ~@body
        (end-drawing)
        (finally
-         (.close rarena/*current-arena*)))))
+         (.close memory/*current-arena*)))))
 
 ;;
 ;; Raylib Functions

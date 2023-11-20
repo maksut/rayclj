@@ -99,7 +99,7 @@
              [~'v]
              (if (instance? ~'MemorySegment ~'v)
                ~'v
-               (~struct-set-fn (arrays/allocate (~layout-sym)) ~'v)))))
+               (~struct-set-fn (memory/allocate (~layout-sym)) ~'v)))))
 
 (defn array-fn [header-name {:keys [name]}]
   (let [kebab-name (c-name->clj-name name)
@@ -229,7 +229,7 @@
         enum-map (find-enum-map function-name name)
         name (symbol (c-name->clj-name name))]
     (cond
-      (c-string? type) `(~'string ~name)
+      (c-string? type) `(~'memory/string ~name)
       struct-name (let [struct-fn (symbol (str "rstructs/" (c-name->clj-name struct-name)))]
                     `(~struct-fn ~name))
       enum-map `(if (keyword? ~name) (~enum-map ~name) ~name)
@@ -312,7 +312,7 @@
       `(~'defn ~clj-fn
                ~(fn-doc-str function)
                ~args
-               (~(symbol (str "rstructs/get-" struct-return)) (~java-fn ~'rarena/*current-arena* ~@coerced-args)))
+               (~(symbol (str "rstructs/get-" struct-return)) (~java-fn ~'memory/*current-arena* ~@coerced-args)))
       :else
       `(~'defn ~clj-fn
                ~(fn-doc-str function)

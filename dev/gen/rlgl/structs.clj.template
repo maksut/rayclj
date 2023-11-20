@@ -1,5 +1,5 @@
 (ns rayclj.rlgl.structs
-  (:require [rayclj.arrays
+  (:require [rayclj.memory
              :refer [get-byte-array
                      get-float-array
                      get-unsigned-int-array
@@ -7,7 +7,7 @@
                      array-fn
                      get-array-fn
                      set-array-fn]
-             :as arrays]
+             :as memory]
             [rayclj.rlgl.defines :as defines])
   (:import
    [java.lang.foreign MemorySegment]))

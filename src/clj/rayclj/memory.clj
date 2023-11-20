@@ -1,21 +1,28 @@
-(ns rayclj.arrays
-  "Utilities for arrays and array like structures"
-  (:require [rayclj.arena :as rarena])
+(ns rayclj.memory
+  "Utilities for memory management and arrays"
   (:refer-clojure :exclude [float-array byte-array int-array char-array])
   (:import
    [java.lang.foreign Arena MemorySegment ValueLayout MemoryLayout]))
+
+(defn auto-arena ^Arena [] (Arena/ofAuto))
+
+(defn global-arena ^Arena [] (Arena/global))
+
+(defn confined-arena ^Arena [] (Arena/ofConfined))
+
+(def ^Arena ^:dynamic *current-arena* (auto-arena))
 
 (def null MemorySegment/NULL)
 
 (defn allocate
   ([^MemoryLayout layout]
-   (.allocate rarena/*current-arena* layout))
+   (.allocate *current-arena* layout))
   ([^Arena arena ^MemoryLayout layout]
    (.allocate arena layout)))
 
 (defn allocate-array
   ([^MemoryLayout layout ^long size]
-   (.allocateArray rarena/*current-arena* layout size))
+   (.allocateArray *current-arena* layout size))
   ([^Arena arena ^MemoryLayout layout ^long size]
    (.allocateArray arena layout size)))
 
@@ -29,9 +36,9 @@
 
 (defn string
   [str]
-  (if (nil? str)
-    null
-    (.allocateUtf8String rarena/*current-arena* str)))
+  (if (instance? MemorySegment str)
+    str
+    (.allocateUtf8String *current-arena* str)))
 
 ;;
 ;; Array functions for arrays of primitives

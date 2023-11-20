@@ -1,7 +1,6 @@
 (ns rayclj.raylib.structs
-  (:require [rayclj.arena :as rarena]
-            [rayclj.raylib.enums :as renums]
-            [rayclj.arrays
+  (:require [rayclj.raylib.enums :as renums]
+            [rayclj.memory
              :refer [get-float-array
                      set-float-array
                      get-char-array
@@ -11,10 +10,10 @@
                      array-fn
                      get-array-fn
                      set-array-fn]
-             :as arrays]
+             :as memory]
             [rayclj.rlgl.defines :as gldefines])
   (:import
-   [java.lang.foreign Arena MemorySegment]))
+   [java.lang.foreign MemorySegment]))
 
 (set! *warn-on-reflection* true)
 

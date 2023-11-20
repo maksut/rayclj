@@ -1,10 +1,8 @@
 (ns rayclj.raylib.functions
-  (:require [rayclj.arena :as rarena]
-            [rayclj.raylib.enums :as renums]
+  (:require [rayclj.raylib.enums :as renums]
             [rayclj.raylib.structs :as rstructs]
-            [rayclj.arrays :refer [string]])
-  (:import [rayclj.raylib raylib_h]
-           [java.lang.foreign Arena]))
+            [rayclj.memory :as memory])
+  (:import [rayclj.raylib raylib_h]))
 
 (set! *warn-on-reflection* true)
 
@@ -13,13 +11,13 @@
 ;;
 
 (defmacro with-drawing [& body]
-  `(binding [rarena/*current-arena* (rarena/confined-arena)]
+  `(binding [memory/*current-arena* (memory/confined-arena)]
      (try
        (begin-drawing)
        ~@body
        (end-drawing)
        (finally
-         (.close rarena/*current-arena*)))))
+         (.close memory/*current-arena*)))))
 
 ;;
 ;; Raylib Functions
@@ -29,7 +27,7 @@
   "Initialize window and OpenGL context
   [int width, int height, const char * title] -> void"
   [width height title]
-  (raylib_h/InitWindow width height (string title)))
+  (raylib_h/InitWindow width height (memory/string title)))
 
 (defn close-window
   "Close window and unload OpenGL context
@@ -149,7 +147,7 @@
   "Set title for window (only PLATFORM_DESKTOP and PLATFORM_WEB)
   [const char * title] -> void"
   [title]
-  (raylib_h/SetWindowTitle (string title)))
+  (raylib_h/SetWindowTitle (memory/string title)))
 
 (defn set-window-position
   "Set window position on screen (only PLATFORM_DESKTOP)
@@ -239,7 +237,7 @@
   "Get specified monitor position
   [int monitor] -> Vector2"
   [monitor]
-  (rstructs/get-vector2 (raylib_h/GetMonitorPosition rarena/*current-arena*
+  (rstructs/get-vector2 (raylib_h/GetMonitorPosition memory/*current-arena*
                                                      monitor)))
 
 (defn get-monitor-width
@@ -276,13 +274,13 @@
   "Get window position XY on monitor
   [] -> Vector2"
   []
-  (rstructs/get-vector2 (raylib_h/GetWindowPosition rarena/*current-arena*)))
+  (rstructs/get-vector2 (raylib_h/GetWindowPosition memory/*current-arena*)))
 
 (defn get-window-scale-dpi
   "Get window scale DPI factor
   [] -> Vector2"
   []
-  (rstructs/get-vector2 (raylib_h/GetWindowScaleDPI rarena/*current-arena*)))
+  (rstructs/get-vector2 (raylib_h/GetWindowScaleDPI memory/*current-arena*)))
 
 (defn get-monitor-name
   "Get the human-readable, UTF-8 encoded name of the specified monitor
@@ -294,7 +292,7 @@
   "Set clipboard text content
   [const char * text] -> void"
   [text]
-  (raylib_h/SetClipboardText (string text)))
+  (raylib_h/SetClipboardText (memory/string text)))
 
 (defn get-clipboard-text
   "Get clipboard text content
@@ -451,7 +449,7 @@
   [VrDeviceInfo device] -> VrStereoConfig"
   [device]
   (rstructs/get-vr-stereo-config (raylib_h/LoadVrStereoConfig
-                                   rarena/*current-arena*
+                                   memory/*current-arena*
                                    (rstructs/vr-device-info device))))
 
 (defn unload-vr-stereo-config
@@ -464,17 +462,17 @@
   "Load shader from files and bind default locations
   [const char * vsFileName, const char * fsFileName] -> Shader"
   [vs-file-name fs-file-name]
-  (rstructs/get-shader (raylib_h/LoadShader rarena/*current-arena*
-                                            (string vs-file-name)
-                                            (string fs-file-name))))
+  (rstructs/get-shader (raylib_h/LoadShader memory/*current-arena*
+                                            (memory/string vs-file-name)
+                                            (memory/string fs-file-name))))
 
 (defn load-shader-from-memory
   "Load shader from code strings and bind default locations
   [const char * vsCode, const char * fsCode] -> Shader"
   [vs-code fs-code]
-  (rstructs/get-shader (raylib_h/LoadShaderFromMemory rarena/*current-arena*
-                                                      (string vs-code)
-                                                      (string fs-code))))
+  (rstructs/get-shader (raylib_h/LoadShaderFromMemory memory/*current-arena*
+                                                      (memory/string vs-code)
+                                                      (memory/string fs-code))))
 
 (defn shader-ready?
   "Check if a shader is ready
@@ -486,14 +484,15 @@
   "Get shader uniform location
   [Shader shader, const char * uniformName] -> int"
   [shader uniform-name]
-  (raylib_h/GetShaderLocation (rstructs/shader shader) (string uniform-name)))
+  (raylib_h/GetShaderLocation (rstructs/shader shader)
+                              (memory/string uniform-name)))
 
 (defn get-shader-location-attrib
   "Get shader attribute location
   [Shader shader, const char * attribName] -> int"
   [shader attrib-name]
   (raylib_h/GetShaderLocationAttrib (rstructs/shader shader)
-                                    (string attrib-name)))
+                                    (memory/string attrib-name)))
 
 (defn set-shader-value
   "Set shader uniform value
@@ -540,7 +539,7 @@
   "Get a ray trace from mouse position
   [Vector2 mousePosition, Camera camera] -> Ray"
   [mouse-position camera]
-  (rstructs/get-ray (raylib_h/GetMouseRay rarena/*current-arena*
+  (rstructs/get-ray (raylib_h/GetMouseRay memory/*current-arena*
                                           (rstructs/vector2 mouse-position)
                                           (rstructs/camera3d camera))))
 
@@ -548,21 +547,21 @@
   "Get camera transform matrix (view matrix)
   [Camera camera] -> Matrix"
   [camera]
-  (rstructs/get-matrix (raylib_h/GetCameraMatrix rarena/*current-arena*
+  (rstructs/get-matrix (raylib_h/GetCameraMatrix memory/*current-arena*
                                                  (rstructs/camera3d camera))))
 
 (defn get-camera-matrix2d
   "Get camera 2d transform matrix
   [Camera2D camera] -> Matrix"
   [camera]
-  (rstructs/get-matrix (raylib_h/GetCameraMatrix2D rarena/*current-arena*
+  (rstructs/get-matrix (raylib_h/GetCameraMatrix2D memory/*current-arena*
                                                    (rstructs/camera2d camera))))
 
 (defn get-world-to-screen
   "Get the screen space position for a 3d world space position
   [Vector3 position, Camera camera] -> Vector2"
   [position camera]
-  (rstructs/get-vector2 (raylib_h/GetWorldToScreen rarena/*current-arena*
+  (rstructs/get-vector2 (raylib_h/GetWorldToScreen memory/*current-arena*
                                                    (rstructs/vector3 position)
                                                    (rstructs/camera3d camera))))
 
@@ -570,7 +569,7 @@
   "Get the world space position for a 2d camera screen space position
   [Vector2 position, Camera2D camera] -> Vector2"
   [position camera]
-  (rstructs/get-vector2 (raylib_h/GetScreenToWorld2D rarena/*current-arena*
+  (rstructs/get-vector2 (raylib_h/GetScreenToWorld2D memory/*current-arena*
                                                      (rstructs/vector2 position)
                                                      (rstructs/camera2d
                                                        camera))))
@@ -579,7 +578,7 @@
   "Get size position for a 3d world space position
   [Vector3 position, Camera camera, int width, int height] -> Vector2"
   [position camera width height]
-  (rstructs/get-vector2 (raylib_h/GetWorldToScreenEx rarena/*current-arena*
+  (rstructs/get-vector2 (raylib_h/GetWorldToScreenEx memory/*current-arena*
                                                      (rstructs/vector3 position)
                                                      (rstructs/camera3d camera)
                                                      width
@@ -589,7 +588,7 @@
   "Get the screen space position for a 2d camera world space position
   [Vector2 position, Camera2D camera] -> Vector2"
   [position camera]
-  (rstructs/get-vector2 (raylib_h/GetWorldToScreen2D rarena/*current-arena*
+  (rstructs/get-vector2 (raylib_h/GetWorldToScreen2D memory/*current-arena*
                                                      (rstructs/vector2 position)
                                                      (rstructs/camera2d
                                                        camera))))
@@ -661,7 +660,7 @@
   "Takes a screenshot of current screen (filename extension defines format)
   [const char * fileName] -> void"
   [file-name]
-  (raylib_h/TakeScreenshot (string file-name)))
+  (raylib_h/TakeScreenshot (memory/string file-name)))
 
 (defn set-config-flags
   "Setup init configuration flags (view FLAGS)
@@ -673,13 +672,13 @@
   "Open URL with default system browser (if available)
   [const char * url] -> void"
   [url]
-  (raylib_h/OpenURL (string url)))
+  (raylib_h/OpenURL (memory/string url)))
 
 (defn trace-log
   "Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR...)
   [int logLevel, const char * text, ... args] -> void"
   [log-level text args]
-  (raylib_h/TraceLog log-level (string text) args))
+  (raylib_h/TraceLog log-level (memory/string text) args))
 
 (defn set-trace-log-level
   "Set the current threshold (minimum) log level
@@ -739,7 +738,7 @@
   "Load file data as byte array (read)
   [const char * fileName, int * dataSize] -> unsigned char *"
   [file-name data-size]
-  (raylib_h/LoadFileData (string file-name) data-size))
+  (raylib_h/LoadFileData (memory/string file-name) data-size))
 
 (defn unload-file-data
   "Unload file data allocated by LoadFileData()
@@ -751,19 +750,19 @@
   "Save data to file from byte array (write), returns true on success
   [const char * fileName, void * data, int dataSize] -> bool"
   [file-name data data-size]
-  (raylib_h/SaveFileData (string file-name) data data-size))
+  (raylib_h/SaveFileData (memory/string file-name) data data-size))
 
 (defn export-data-as-code?
   "Export data to code (.h), returns true on success
   [const unsigned char * data, int dataSize, const char * fileName] -> bool"
   [data data-size file-name]
-  (raylib_h/ExportDataAsCode data data-size (string file-name)))
+  (raylib_h/ExportDataAsCode data data-size (memory/string file-name)))
 
 (defn load-file-text
   "Load text data from file (read), returns a '\\0' terminated string
   [const char * fileName] -> char *"
   [file-name]
-  (raylib_h/LoadFileText (string file-name)))
+  (raylib_h/LoadFileText (memory/string file-name)))
 
 (defn unload-file-text
   "Unload file text data allocated by LoadFileText()
@@ -775,61 +774,61 @@
   "Save text data to file (write), string must be '\\0' terminated, returns true on success
   [const char * fileName, char * text] -> bool"
   [file-name text]
-  (raylib_h/SaveFileText (string file-name) text))
+  (raylib_h/SaveFileText (memory/string file-name) text))
 
 (defn file-exists?
   "Check if file exists
   [const char * fileName] -> bool"
   [file-name]
-  (raylib_h/FileExists (string file-name)))
+  (raylib_h/FileExists (memory/string file-name)))
 
 (defn directory-exists?
   "Check if a directory path exists
   [const char * dirPath] -> bool"
   [dir-path]
-  (raylib_h/DirectoryExists (string dir-path)))
+  (raylib_h/DirectoryExists (memory/string dir-path)))
 
 (defn file-extension?
   "Check file extension (including point: .png, .wav)
   [const char * fileName, const char * ext] -> bool"
   [file-name ext]
-  (raylib_h/IsFileExtension (string file-name) (string ext)))
+  (raylib_h/IsFileExtension (memory/string file-name) (memory/string ext)))
 
 (defn get-file-length
   "Get file length in bytes (NOTE: GetFileSize() conflicts with windows.h)
   [const char * fileName] -> int"
   [file-name]
-  (raylib_h/GetFileLength (string file-name)))
+  (raylib_h/GetFileLength (memory/string file-name)))
 
 (defn get-file-extension
   "Get pointer to extension for a filename string (includes dot: '.png')
   [const char * fileName] -> const char *"
   [file-name]
-  (raylib_h/GetFileExtension (string file-name)))
+  (raylib_h/GetFileExtension (memory/string file-name)))
 
 (defn get-file-name
   "Get pointer to filename for a path string
   [const char * filePath] -> const char *"
   [file-path]
-  (raylib_h/GetFileName (string file-path)))
+  (raylib_h/GetFileName (memory/string file-path)))
 
 (defn get-file-name-without-ext
   "Get filename string without extension (uses static string)
   [const char * filePath] -> const char *"
   [file-path]
-  (raylib_h/GetFileNameWithoutExt (string file-path)))
+  (raylib_h/GetFileNameWithoutExt (memory/string file-path)))
 
 (defn get-directory-path
   "Get full path for a given fileName with path (uses static string)
   [const char * filePath] -> const char *"
   [file-path]
-  (raylib_h/GetDirectoryPath (string file-path)))
+  (raylib_h/GetDirectoryPath (memory/string file-path)))
 
 (defn get-prev-directory-path
   "Get previous directory path for a given path (uses static string)
   [const char * dirPath] -> const char *"
   [dir-path]
-  (raylib_h/GetPrevDirectoryPath (string dir-path)))
+  (raylib_h/GetPrevDirectoryPath (memory/string dir-path)))
 
 (defn get-working-directory
   "Get current working directory (uses static string)
@@ -847,29 +846,30 @@
   "Change working directory, return true on success
   [const char * dir] -> bool"
   [dir]
-  (raylib_h/ChangeDirectory (string dir)))
+  (raylib_h/ChangeDirectory (memory/string dir)))
 
 (defn path-file?
   "Check if a given path is a file or a directory
   [const char * path] -> bool"
   [path]
-  (raylib_h/IsPathFile (string path)))
+  (raylib_h/IsPathFile (memory/string path)))
 
 (defn load-directory-files
   "Load directory filepaths
   [const char * dirPath] -> FilePathList"
   [dir-path]
-  (rstructs/get-file-path-list
-    (raylib_h/LoadDirectoryFiles rarena/*current-arena* (string dir-path))))
+  (rstructs/get-file-path-list (raylib_h/LoadDirectoryFiles
+                                 memory/*current-arena*
+                                 (memory/string dir-path))))
 
 (defn load-directory-files-ex
   "Load directory filepaths with extension filtering and recursive directory scan
   [const char * basePath, const char * filter, bool scanSubdirs] -> FilePathList"
   [base-path filter scan-subdirs]
   (rstructs/get-file-path-list (raylib_h/LoadDirectoryFilesEx
-                                 rarena/*current-arena*
-                                 (string base-path)
-                                 (string filter)
+                                 memory/*current-arena*
+                                 (memory/string base-path)
+                                 (memory/string filter)
                                  scan-subdirs)))
 
 (defn unload-directory-files
@@ -889,7 +889,7 @@
   [] -> FilePathList"
   []
   (rstructs/get-file-path-list (raylib_h/LoadDroppedFiles
-                                 rarena/*current-arena*)))
+                                 memory/*current-arena*)))
 
 (defn unload-dropped-files
   "Unload dropped filepaths
@@ -901,7 +901,7 @@
   "Get file modification time (last write time)
   [const char * fileName] -> long"
   [file-name]
-  (raylib_h/GetFileModTime (string file-name)))
+  (raylib_h/GetFileModTime (memory/string file-name)))
 
 (defn compress-data
   "Compress data (DEFLATE algorithm), memory must be MemFree()
@@ -932,8 +932,8 @@
   [const char * fileName] -> AutomationEventList"
   [file-name]
   (rstructs/get-automation-event-list (raylib_h/LoadAutomationEventList
-                                        rarena/*current-arena*
-                                        (string file-name))))
+                                        memory/*current-arena*
+                                        (memory/string file-name))))
 
 (defn unload-automation-event-list
   "Unload automation events list from file
@@ -946,7 +946,7 @@
   [AutomationEventList list, const char * fileName] -> bool"
   [list file-name]
   (raylib_h/ExportAutomationEventList (rstructs/automation-event-list list)
-                                      (string file-name)))
+                                      (memory/string file-name)))
 
 (defn set-automation-event-list
   "Set automation event list to record to
@@ -1098,7 +1098,7 @@
   "Set internal gamepad mappings (SDL_GameControllerDB)
   [const char * mappings] -> int"
   [mappings]
-  (raylib_h/SetGamepadMappings (string mappings)))
+  (raylib_h/SetGamepadMappings (memory/string mappings)))
 
 (defn mouse-button-pressed?
   "Check if a mouse button has been pressed once
@@ -1138,13 +1138,13 @@
   "Get mouse position XY
   [] -> Vector2"
   []
-  (rstructs/get-vector2 (raylib_h/GetMousePosition rarena/*current-arena*)))
+  (rstructs/get-vector2 (raylib_h/GetMousePosition memory/*current-arena*)))
 
 (defn get-mouse-delta
   "Get mouse delta between frames
   [] -> Vector2"
   []
-  (rstructs/get-vector2 (raylib_h/GetMouseDelta rarena/*current-arena*)))
+  (rstructs/get-vector2 (raylib_h/GetMouseDelta memory/*current-arena*)))
 
 (defn set-mouse-position
   "Set mouse position XY
@@ -1174,7 +1174,7 @@
   "Get mouse wheel movement for both X and Y
   [] -> Vector2"
   []
-  (rstructs/get-vector2 (raylib_h/GetMouseWheelMoveV rarena/*current-arena*)))
+  (rstructs/get-vector2 (raylib_h/GetMouseWheelMoveV memory/*current-arena*)))
 
 (defn set-mouse-cursor
   "Set mouse cursor
@@ -1198,7 +1198,7 @@
   "Get touch position XY for a touch point index (relative to screen size)
   [int index] -> Vector2"
   [index]
-  (rstructs/get-vector2 (raylib_h/GetTouchPosition rarena/*current-arena*
+  (rstructs/get-vector2 (raylib_h/GetTouchPosition memory/*current-arena*
                                                    index)))
 
 (defn get-touch-point-id
@@ -1241,7 +1241,7 @@
   "Get gesture drag vector
   [] -> Vector2"
   []
-  (rstructs/get-vector2 (raylib_h/GetGestureDragVector rarena/*current-arena*)))
+  (rstructs/get-vector2 (raylib_h/GetGestureDragVector memory/*current-arena*)))
 
 (defn get-gesture-drag-angle
   "Get gesture drag angle
@@ -1254,7 +1254,7 @@
   [] -> Vector2"
   []
   (rstructs/get-vector2 (raylib_h/GetGesturePinchVector
-                          rarena/*current-arena*)))
+                          memory/*current-arena*)))
 
 (defn get-gesture-pinch-angle
   "Get gesture pinch angle
@@ -1705,7 +1705,7 @@
   [Vector2 startPos, Vector2 endPos, float t] -> Vector2"
   [start-pos end-pos t]
   (rstructs/get-vector2 (raylib_h/GetSplinePointLinear
-                          rarena/*current-arena*
+                          memory/*current-arena*
                           (rstructs/vector2 start-pos)
                           (rstructs/vector2 end-pos)
                           t)))
@@ -1714,7 +1714,7 @@
   "Get (evaluate) spline point: B-Spline
   [Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, float t] -> Vector2"
   [p1 p2 p3 p4 t]
-  (rstructs/get-vector2 (raylib_h/GetSplinePointBasis rarena/*current-arena*
+  (rstructs/get-vector2 (raylib_h/GetSplinePointBasis memory/*current-arena*
                                                       (rstructs/vector2 p1)
                                                       (rstructs/vector2 p2)
                                                       (rstructs/vector2 p3)
@@ -1726,7 +1726,7 @@
   [Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4, float t] -> Vector2"
   [p1 p2 p3 p4 t]
   (rstructs/get-vector2 (raylib_h/GetSplinePointCatmullRom
-                          rarena/*current-arena*
+                          memory/*current-arena*
                           (rstructs/vector2 p1)
                           (rstructs/vector2 p2)
                           (rstructs/vector2 p3)
@@ -1738,7 +1738,7 @@
   [Vector2 p1, Vector2 c2, Vector2 p3, float t] -> Vector2"
   [p1 c2 p3 t]
   (rstructs/get-vector2 (raylib_h/GetSplinePointBezierQuad
-                          rarena/*current-arena*
+                          memory/*current-arena*
                           (rstructs/vector2 p1)
                           (rstructs/vector2 c2)
                           (rstructs/vector2 p3)
@@ -1749,7 +1749,7 @@
   [Vector2 p1, Vector2 c2, Vector2 c3, Vector2 p4, float t] -> Vector2"
   [p1 c2 c3 p4 t]
   (rstructs/get-vector2 (raylib_h/GetSplinePointBezierCubic
-                          rarena/*current-arena*
+                          memory/*current-arena*
                           (rstructs/vector2 p1)
                           (rstructs/vector2 c2)
                           (rstructs/vector2 c3)
@@ -1835,7 +1835,7 @@
   "Get collision rectangle for two rectangles collision
   [Rectangle rec1, Rectangle rec2] -> Rectangle"
   [rec1 rec2]
-  (rstructs/get-rectangle (raylib_h/GetCollisionRec rarena/*current-arena*
+  (rstructs/get-rectangle (raylib_h/GetCollisionRec memory/*current-arena*
                                                     (rstructs/rectangle rec1)
                                                     (rstructs/rectangle rec2))))
 
@@ -1843,15 +1843,15 @@
   "Load image from file into CPU memory (RAM)
   [const char * fileName] -> Image"
   [file-name]
-  (rstructs/get-image (raylib_h/LoadImage rarena/*current-arena*
-                                          (string file-name))))
+  (rstructs/get-image (raylib_h/LoadImage memory/*current-arena*
+                                          (memory/string file-name))))
 
 (defn load-image-raw
   "Load image from RAW file data
   [const char * fileName, int width, int height, int format, int headerSize] -> Image"
   [file-name width height format header-size]
-  (rstructs/get-image (raylib_h/LoadImageRaw rarena/*current-arena*
-                                             (string file-name)
+  (rstructs/get-image (raylib_h/LoadImageRaw memory/*current-arena*
+                                             (memory/string file-name)
                                              width
                                              height
                                              format
@@ -1861,8 +1861,8 @@
   "Load image from SVG file data or string with specified size
   [const char * fileNameOrString, int width, int height] -> Image"
   [file-name-or-string width height]
-  (rstructs/get-image (raylib_h/LoadImageSvg rarena/*current-arena*
-                                             (string file-name-or-string)
+  (rstructs/get-image (raylib_h/LoadImageSvg memory/*current-arena*
+                                             (memory/string file-name-or-string)
                                              width
                                              height)))
 
@@ -1870,15 +1870,16 @@
   "Load image sequence from file (frames appended to image.data)
   [const char * fileName, int * frames] -> Image"
   [file-name frames]
-  (rstructs/get-image
-    (raylib_h/LoadImageAnim rarena/*current-arena* (string file-name) frames)))
+  (rstructs/get-image (raylib_h/LoadImageAnim memory/*current-arena*
+                                              (memory/string file-name)
+                                              frames)))
 
 (defn load-image-from-memory
   "Load image from memory buffer, fileType refers to extension: i.e. '.png'
   [const char * fileType, const unsigned char * fileData, int dataSize] -> Image"
   [file-type file-data data-size]
-  (rstructs/get-image (raylib_h/LoadImageFromMemory rarena/*current-arena*
-                                                    (string file-type)
+  (rstructs/get-image (raylib_h/LoadImageFromMemory memory/*current-arena*
+                                                    (memory/string file-type)
                                                     file-data
                                                     data-size)))
 
@@ -1886,7 +1887,7 @@
   "Load image from GPU texture data
   [Texture2D texture] -> Image"
   [texture]
-  (rstructs/get-image (raylib_h/LoadImageFromTexture rarena/*current-arena*
+  (rstructs/get-image (raylib_h/LoadImageFromTexture memory/*current-arena*
                                                      (rstructs/texture
                                                        texture))))
 
@@ -1894,7 +1895,7 @@
   "Load image from screen buffer and (screenshot)
   [] -> Image"
   []
-  (rstructs/get-image (raylib_h/LoadImageFromScreen rarena/*current-arena*)))
+  (rstructs/get-image (raylib_h/LoadImageFromScreen memory/*current-arena*)))
 
 (defn image-ready?
   "Check if an image is ready
@@ -1912,27 +1913,27 @@
   "Export image data to file, returns true on success
   [Image image, const char * fileName] -> bool"
   [image file-name]
-  (raylib_h/ExportImage (rstructs/image image) (string file-name)))
+  (raylib_h/ExportImage (rstructs/image image) (memory/string file-name)))
 
 (defn export-image-to-memory
   "Export image to memory buffer
   [Image image, const char * fileType, int * fileSize] -> unsigned char *"
   [image file-type file-size]
   (raylib_h/ExportImageToMemory (rstructs/image image)
-                                (string file-type)
+                                (memory/string file-type)
                                 file-size))
 
 (defn export-image-as-code?
   "Export image as code file defining an array of bytes, returns true on success
   [Image image, const char * fileName] -> bool"
   [image file-name]
-  (raylib_h/ExportImageAsCode (rstructs/image image) (string file-name)))
+  (raylib_h/ExportImageAsCode (rstructs/image image) (memory/string file-name)))
 
 (defn gen-image-color
   "Generate image: plain color
   [int width, int height, Color color] -> Image"
   [width height color]
-  (rstructs/get-image (raylib_h/GenImageColor rarena/*current-arena*
+  (rstructs/get-image (raylib_h/GenImageColor memory/*current-arena*
                                               width
                                               height
                                               (rstructs/color color))))
@@ -1941,7 +1942,7 @@
   "Generate image: linear gradient, direction in degrees [0..360], 0=Vertical gradient
   [int width, int height, int direction, Color start, Color end] -> Image"
   [width height direction start end]
-  (rstructs/get-image (raylib_h/GenImageGradientLinear rarena/*current-arena*
+  (rstructs/get-image (raylib_h/GenImageGradientLinear memory/*current-arena*
                                                        width
                                                        height
                                                        direction
@@ -1952,7 +1953,7 @@
   "Generate image: radial gradient
   [int width, int height, float density, Color inner, Color outer] -> Image"
   [width height density inner outer]
-  (rstructs/get-image (raylib_h/GenImageGradientRadial rarena/*current-arena*
+  (rstructs/get-image (raylib_h/GenImageGradientRadial memory/*current-arena*
                                                        width
                                                        height
                                                        density
@@ -1963,7 +1964,7 @@
   "Generate image: square gradient
   [int width, int height, float density, Color inner, Color outer] -> Image"
   [width height density inner outer]
-  (rstructs/get-image (raylib_h/GenImageGradientSquare rarena/*current-arena*
+  (rstructs/get-image (raylib_h/GenImageGradientSquare memory/*current-arena*
                                                        width
                                                        height
                                                        density
@@ -1974,7 +1975,7 @@
   "Generate image: checked
   [int width, int height, int checksX, int checksY, Color col1, Color col2] -> Image"
   [width height checks-x checks-y col1 col2]
-  (rstructs/get-image (raylib_h/GenImageChecked rarena/*current-arena*
+  (rstructs/get-image (raylib_h/GenImageChecked memory/*current-arena*
                                                 width
                                                 height
                                                 checks-x
@@ -1987,13 +1988,13 @@
   [int width, int height, float factor] -> Image"
   [width height factor]
   (rstructs/get-image
-    (raylib_h/GenImageWhiteNoise rarena/*current-arena* width height factor)))
+    (raylib_h/GenImageWhiteNoise memory/*current-arena* width height factor)))
 
 (defn gen-image-perlin-noise
   "Generate image: perlin noise
   [int width, int height, int offsetX, int offsetY, float scale] -> Image"
   [width height offset-x offset-y scale]
-  (rstructs/get-image (raylib_h/GenImagePerlinNoise rarena/*current-arena*
+  (rstructs/get-image (raylib_h/GenImagePerlinNoise memory/*current-arena*
                                                     width
                                                     height
                                                     offset-x
@@ -2005,27 +2006,29 @@
   [int width, int height, int tileSize] -> Image"
   [width height tile-size]
   (rstructs/get-image
-    (raylib_h/GenImageCellular rarena/*current-arena* width height tile-size)))
+    (raylib_h/GenImageCellular memory/*current-arena* width height tile-size)))
 
 (defn gen-image-text
   "Generate image: grayscale image from text data
   [int width, int height, const char * text] -> Image"
   [width height text]
-  (rstructs/get-image
-    (raylib_h/GenImageText rarena/*current-arena* width height (string text))))
+  (rstructs/get-image (raylib_h/GenImageText memory/*current-arena*
+                                             width
+                                             height
+                                             (memory/string text))))
 
 (defn image-copy
   "Create an image duplicate (useful for transformations)
   [Image image] -> Image"
   [image]
-  (rstructs/get-image (raylib_h/ImageCopy rarena/*current-arena*
+  (rstructs/get-image (raylib_h/ImageCopy memory/*current-arena*
                                           (rstructs/image image))))
 
 (defn image-from-image
   "Create an image from another image piece
   [Image image, Rectangle rec] -> Image"
   [image rec]
-  (rstructs/get-image (raylib_h/ImageFromImage rarena/*current-arena*
+  (rstructs/get-image (raylib_h/ImageFromImage memory/*current-arena*
                                                (rstructs/image image)
                                                (rstructs/rectangle rec))))
 
@@ -2033,8 +2036,8 @@
   "Create an image from text (default font)
   [const char * text, int fontSize, Color color] -> Image"
   [text font-size color]
-  (rstructs/get-image (raylib_h/ImageText rarena/*current-arena*
-                                          (string text)
+  (rstructs/get-image (raylib_h/ImageText memory/*current-arena*
+                                          (memory/string text)
                                           font-size
                                           (rstructs/color color))))
 
@@ -2042,9 +2045,9 @@
   "Create an image from text (custom sprite font)
   [Font font, const char * text, float fontSize, float spacing, Color tint] -> Image"
   [font text font-size spacing tint]
-  (rstructs/get-image (raylib_h/ImageTextEx rarena/*current-arena*
+  (rstructs/get-image (raylib_h/ImageTextEx memory/*current-arena*
                                             (rstructs/font font)
-                                            (string text)
+                                            (memory/string text)
                                             font-size
                                             spacing
                                             (rstructs/color tint))))
@@ -2276,7 +2279,7 @@
   "Get image alpha border rectangle
   [Image image, float threshold] -> Rectangle"
   [image threshold]
-  (rstructs/get-rectangle (raylib_h/GetImageAlphaBorder rarena/*current-arena*
+  (rstructs/get-rectangle (raylib_h/GetImageAlphaBorder memory/*current-arena*
                                                         (rstructs/image image)
                                                         threshold)))
 
@@ -2285,7 +2288,7 @@
   [Image image, int x, int y] -> Color"
   [image x y]
   (rstructs/get-color
-    (raylib_h/GetImageColor rarena/*current-arena* (rstructs/image image) x y)))
+    (raylib_h/GetImageColor memory/*current-arena* (rstructs/image image) x y)))
 
 (defn image-clear-background
   "Clear image background with given color
@@ -2446,7 +2449,7 @@
   [dst text pos-x pos-y font-size color]
   (let [first-arg (rstructs/image dst)]
     (raylib_h/ImageDrawText first-arg
-                            (string text)
+                            (memory/string text)
                             pos-x
                             pos-y
                             font-size
@@ -2460,7 +2463,7 @@
   (let [first-arg (rstructs/image dst)]
     (raylib_h/ImageDrawTextEx first-arg
                               (rstructs/font font)
-                              (string text)
+                              (memory/string text)
                               (rstructs/vector2 position)
                               font-size
                               spacing
@@ -2471,21 +2474,21 @@
   "Load texture from file into GPU memory (VRAM)
   [const char * fileName] -> Texture2D"
   [file-name]
-  (rstructs/get-texture (raylib_h/LoadTexture rarena/*current-arena*
-                                              (string file-name))))
+  (rstructs/get-texture (raylib_h/LoadTexture memory/*current-arena*
+                                              (memory/string file-name))))
 
 (defn load-texture-from-image
   "Load texture from image data
   [Image image] -> Texture2D"
   [image]
-  (rstructs/get-texture (raylib_h/LoadTextureFromImage rarena/*current-arena*
+  (rstructs/get-texture (raylib_h/LoadTextureFromImage memory/*current-arena*
                                                        (rstructs/image image))))
 
 (defn load-texture-cubemap
   "Load cubemap from image, multiple image cubemap layouts supported
   [Image image, int layout] -> TextureCubemap"
   [image layout]
-  (rstructs/get-texture (raylib_h/LoadTextureCubemap rarena/*current-arena*
+  (rstructs/get-texture (raylib_h/LoadTextureCubemap memory/*current-arena*
                                                      (rstructs/image image)
                                                      layout)))
 
@@ -2494,7 +2497,7 @@
   [int width, int height] -> RenderTexture2D"
   [width height]
   (rstructs/get-render-texture
-    (raylib_h/LoadRenderTexture rarena/*current-arena* width height)))
+    (raylib_h/LoadRenderTexture memory/*current-arena* width height)))
 
 (defn texture-ready?
   "Check if a texture is ready
@@ -2615,7 +2618,7 @@
   [Color color, float alpha] -> Color"
   [color alpha]
   (rstructs/get-color
-    (raylib_h/Fade rarena/*current-arena* (rstructs/color color) alpha)))
+    (raylib_h/Fade memory/*current-arena* (rstructs/color color) alpha)))
 
 (defn color-to-int
   "Get hexadecimal value for a Color
@@ -2627,14 +2630,14 @@
   "Get Color normalized as float [0..1]
   [Color color] -> Vector4"
   [color]
-  (rstructs/get-vector4 (raylib_h/ColorNormalize rarena/*current-arena*
+  (rstructs/get-vector4 (raylib_h/ColorNormalize memory/*current-arena*
                                                  (rstructs/color color))))
 
 (defn color-from-normalized
   "Get Color from normalized values [0..1]
   [Vector4 normalized] -> Color"
   [normalized]
-  (rstructs/get-color (raylib_h/ColorFromNormalized rarena/*current-arena*
+  (rstructs/get-color (raylib_h/ColorFromNormalized memory/*current-arena*
                                                     (rstructs/vector4
                                                       normalized))))
 
@@ -2642,7 +2645,7 @@
   "Get HSV values for a Color, hue [0..360], saturation/value [0..1]
   [Color color] -> Vector3"
   [color]
-  (rstructs/get-vector3 (raylib_h/ColorToHSV rarena/*current-arena*
+  (rstructs/get-vector3 (raylib_h/ColorToHSV memory/*current-arena*
                                              (rstructs/color color))))
 
 (defn color-from-hsv
@@ -2650,13 +2653,13 @@
   [float hue, float saturation, float value] -> Color"
   [hue saturation value]
   (rstructs/get-color
-    (raylib_h/ColorFromHSV rarena/*current-arena* hue saturation value)))
+    (raylib_h/ColorFromHSV memory/*current-arena* hue saturation value)))
 
 (defn color-tint
   "Get color multiplied with another color
   [Color color, Color tint] -> Color"
   [color tint]
-  (rstructs/get-color (raylib_h/ColorTint rarena/*current-arena*
+  (rstructs/get-color (raylib_h/ColorTint memory/*current-arena*
                                           (rstructs/color color)
                                           (rstructs/color tint))))
 
@@ -2664,7 +2667,7 @@
   "Get color with brightness correction, brightness factor goes from -1.0f to 1.0f
   [Color color, float factor] -> Color"
   [color factor]
-  (rstructs/get-color (raylib_h/ColorBrightness rarena/*current-arena*
+  (rstructs/get-color (raylib_h/ColorBrightness memory/*current-arena*
                                                 (rstructs/color color)
                                                 factor)))
 
@@ -2672,7 +2675,7 @@
   "Get color with contrast correction, contrast values between -1.0f and 1.0f
   [Color color, float contrast] -> Color"
   [color contrast]
-  (rstructs/get-color (raylib_h/ColorContrast rarena/*current-arena*
+  (rstructs/get-color (raylib_h/ColorContrast memory/*current-arena*
                                               (rstructs/color color)
                                               contrast)))
 
@@ -2681,13 +2684,13 @@
   [Color color, float alpha] -> Color"
   [color alpha]
   (rstructs/get-color
-    (raylib_h/ColorAlpha rarena/*current-arena* (rstructs/color color) alpha)))
+    (raylib_h/ColorAlpha memory/*current-arena* (rstructs/color color) alpha)))
 
 (defn color-alpha-blend
   "Get src alpha-blended into dst color with tint
   [Color dst, Color src, Color tint] -> Color"
   [dst src tint]
-  (rstructs/get-color (raylib_h/ColorAlphaBlend rarena/*current-arena*
+  (rstructs/get-color (raylib_h/ColorAlphaBlend memory/*current-arena*
                                                 (rstructs/color dst)
                                                 (rstructs/color src)
                                                 (rstructs/color tint))))
@@ -2696,14 +2699,14 @@
   "Get Color structure from hexadecimal value
   [unsigned int hexValue] -> Color"
   [hex-value]
-  (rstructs/get-color (raylib_h/GetColor rarena/*current-arena* hex-value)))
+  (rstructs/get-color (raylib_h/GetColor memory/*current-arena* hex-value)))
 
 (defn get-pixel-color
   "Get Color from a source pixel pointer of certain format
   [void * srcPtr, int format] -> Color"
   [src-ptr format]
   (rstructs/get-color
-    (raylib_h/GetPixelColor rarena/*current-arena* src-ptr format)))
+    (raylib_h/GetPixelColor memory/*current-arena* src-ptr format)))
 
 (defn set-pixel-color
   "Set color formatted into destination pixel pointer
@@ -2721,21 +2724,21 @@
   "Get the default Font
   [] -> Font"
   []
-  (rstructs/get-font (raylib_h/GetFontDefault rarena/*current-arena*)))
+  (rstructs/get-font (raylib_h/GetFontDefault memory/*current-arena*)))
 
 (defn load-font
   "Load font from file into GPU memory (VRAM)
   [const char * fileName] -> Font"
   [file-name]
-  (rstructs/get-font (raylib_h/LoadFont rarena/*current-arena*
-                                        (string file-name))))
+  (rstructs/get-font (raylib_h/LoadFont memory/*current-arena*
+                                        (memory/string file-name))))
 
 (defn load-font-ex
   "Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character setFont
   [const char * fileName, int fontSize, int * codepoints, int codepointCount] -> Font"
   [file-name font-size codepoints codepoint-count]
-  (rstructs/get-font (raylib_h/LoadFontEx rarena/*current-arena*
-                                          (string file-name)
+  (rstructs/get-font (raylib_h/LoadFontEx memory/*current-arena*
+                                          (memory/string file-name)
                                           font-size
                                           codepoints
                                           codepoint-count)))
@@ -2744,7 +2747,7 @@
   "Load font from Image (XNA style)
   [Image image, Color key, int firstChar] -> Font"
   [image key first-char]
-  (rstructs/get-font (raylib_h/LoadFontFromImage rarena/*current-arena*
+  (rstructs/get-font (raylib_h/LoadFontFromImage memory/*current-arena*
                                                  (rstructs/image image)
                                                  (rstructs/color key)
                                                  first-char)))
@@ -2753,8 +2756,8 @@
   "Load font from memory buffer, fileType refers to extension: i.e. '.ttf'
   [const char * fileType, const unsigned char * fileData, int dataSize, int fontSize, int * codepoints, int codepointCount] -> Font"
   [file-type file-data data-size font-size codepoints codepoint-count]
-  (rstructs/get-font (raylib_h/LoadFontFromMemory rarena/*current-arena*
-                                                  (string file-type)
+  (rstructs/get-font (raylib_h/LoadFontFromMemory memory/*current-arena*
+                                                  (memory/string file-type)
                                                   file-data
                                                   data-size
                                                   font-size
@@ -2782,7 +2785,7 @@
   "Generate image font atlas using chars info
   [const GlyphInfo * glyphs, Rectangle ** glyphRecs, int glyphCount, int fontSize, int padding, int packMethod] -> Image"
   [glyphs glyph-recs glyph-count font-size padding pack-method]
-  (rstructs/get-image (raylib_h/GenImageFontAtlas rarena/*current-arena*
+  (rstructs/get-image (raylib_h/GenImageFontAtlas memory/*current-arena*
                                                   (rstructs/glyph-info glyphs)
                                                   (rstructs/rectangle
                                                     glyph-recs)
@@ -2807,7 +2810,7 @@
   "Export font as code file, returns true on success
   [Font font, const char * fileName] -> bool"
   [font file-name]
-  (raylib_h/ExportFontAsCode (rstructs/font font) (string file-name)))
+  (raylib_h/ExportFontAsCode (rstructs/font font) (memory/string file-name)))
 
 (defn draw-fps
   "Draw current FPS
@@ -2819,7 +2822,7 @@
   "Draw text (using default font)
   [const char * text, int posX, int posY, int fontSize, Color color] -> void"
   [text pos-x pos-y font-size color]
-  (raylib_h/DrawText (string text)
+  (raylib_h/DrawText (memory/string text)
                      pos-x
                      pos-y
                      font-size
@@ -2830,7 +2833,7 @@
   [Font font, const char * text, Vector2 position, float fontSize, float spacing, Color tint] -> void"
   [font text position font-size spacing tint]
   (raylib_h/DrawTextEx (rstructs/font font)
-                       (string text)
+                       (memory/string text)
                        (rstructs/vector2 position)
                        font-size
                        spacing
@@ -2841,7 +2844,7 @@
   [Font font, const char * text, Vector2 position, Vector2 origin, float rotation, float fontSize, float spacing, Color tint] -> void"
   [font text position origin rotation font-size spacing tint]
   (raylib_h/DrawTextPro (rstructs/font font)
-                        (string text)
+                        (memory/string text)
                         (rstructs/vector2 position)
                         (rstructs/vector2 origin)
                         rotation
@@ -2881,15 +2884,15 @@
   "Measure string width for default font
   [const char * text, int fontSize] -> int"
   [text font-size]
-  (raylib_h/MeasureText (string text) font-size))
+  (raylib_h/MeasureText (memory/string text) font-size))
 
 (defn measure-text-ex
   "Measure string size for Font
   [Font font, const char * text, float fontSize, float spacing] -> Vector2"
   [font text font-size spacing]
-  (rstructs/get-vector2 (raylib_h/MeasureTextEx rarena/*current-arena*
+  (rstructs/get-vector2 (raylib_h/MeasureTextEx memory/*current-arena*
                                                 (rstructs/font font)
-                                                (string text)
+                                                (memory/string text)
                                                 font-size
                                                 spacing)))
 
@@ -2903,7 +2906,7 @@
   "Get glyph font info data for a codepoint (unicode character), fallback to '?' if not found
   [Font font, int codepoint] -> GlyphInfo"
   [font codepoint]
-  (rstructs/get-glyph-info (raylib_h/GetGlyphInfo rarena/*current-arena*
+  (rstructs/get-glyph-info (raylib_h/GetGlyphInfo memory/*current-arena*
                                                   (rstructs/font font)
                                                   codepoint)))
 
@@ -2911,7 +2914,7 @@
   "Get glyph rectangle in font atlas for a codepoint (unicode character), fallback to '?' if not found
   [Font font, int codepoint] -> Rectangle"
   [font codepoint]
-  (rstructs/get-rectangle (raylib_h/GetGlyphAtlasRec rarena/*current-arena*
+  (rstructs/get-rectangle (raylib_h/GetGlyphAtlasRec memory/*current-arena*
                                                      (rstructs/font font)
                                                      codepoint)))
 
@@ -2931,7 +2934,7 @@
   "Load all codepoints from a UTF-8 text string, codepoints count returned by parameter
   [const char * text, int * count] -> int *"
   [text count]
-  (raylib_h/LoadCodepoints (string text) count))
+  (raylib_h/LoadCodepoints (memory/string text) count))
 
 (defn unload-codepoints
   "Unload codepoints data from memory
@@ -2943,25 +2946,25 @@
   "Get total number of codepoints in a UTF-8 encoded string
   [const char * text] -> int"
   [text]
-  (raylib_h/GetCodepointCount (string text)))
+  (raylib_h/GetCodepointCount (memory/string text)))
 
 (defn get-codepoint
   "Get next codepoint in a UTF-8 encoded string, 0x3f('?') is returned on failure
   [const char * text, int * codepointSize] -> int"
   [text codepoint-size]
-  (raylib_h/GetCodepoint (string text) codepoint-size))
+  (raylib_h/GetCodepoint (memory/string text) codepoint-size))
 
 (defn get-codepoint-next
   "Get next codepoint in a UTF-8 encoded string, 0x3f('?') is returned on failure
   [const char * text, int * codepointSize] -> int"
   [text codepoint-size]
-  (raylib_h/GetCodepointNext (string text) codepoint-size))
+  (raylib_h/GetCodepointNext (memory/string text) codepoint-size))
 
 (defn get-codepoint-previous
   "Get previous codepoint in a UTF-8 encoded string, 0x3f('?') is returned on failure
   [const char * text, int * codepointSize] -> int"
   [text codepoint-size]
-  (raylib_h/GetCodepointPrevious (string text) codepoint-size))
+  (raylib_h/GetCodepointPrevious (memory/string text) codepoint-size))
 
 (defn codepoint-to-utf8
   "Encode one codepoint into UTF-8 byte array (array length returned as parameter)
@@ -2973,91 +2976,91 @@
   "Copy one string to another, returns bytes copied
   [char * dst, const char * src] -> int"
   [dst src]
-  (raylib_h/TextCopy dst (string src)))
+  (raylib_h/TextCopy dst (memory/string src)))
 
 (defn text-is-equal?
   "Check if two text string are equal
   [const char * text1, const char * text2] -> bool"
   [text1 text2]
-  (raylib_h/TextIsEqual (string text1) (string text2)))
+  (raylib_h/TextIsEqual (memory/string text1) (memory/string text2)))
 
 (defn text-length
   "Get text length, checks for '\\0' ending
   [const char * text] -> unsigned int"
   [text]
-  (raylib_h/TextLength (string text)))
+  (raylib_h/TextLength (memory/string text)))
 
 (defn text-format
   "Text formatting with variables (sprintf() style)
   [const char * text, ... args] -> const char *"
   [text args]
-  (raylib_h/TextFormat (string text) args))
+  (raylib_h/TextFormat (memory/string text) args))
 
 (defn text-subtext
   "Get a piece of a text string
   [const char * text, int position, int length] -> const char *"
   [text position length]
-  (raylib_h/TextSubtext (string text) position length))
+  (raylib_h/TextSubtext (memory/string text) position length))
 
 (defn text-replace
   "Replace text string (WARNING: memory must be freed!)
   [char * text, const char * replace, const char * by] -> char *"
   [text replace by]
-  (raylib_h/TextReplace text (string replace) (string by)))
+  (raylib_h/TextReplace text (memory/string replace) (memory/string by)))
 
 (defn text-insert
   "Insert text in a position (WARNING: memory must be freed!)
   [const char * text, const char * insert, int position] -> char *"
   [text insert position]
-  (raylib_h/TextInsert (string text) (string insert) position))
+  (raylib_h/TextInsert (memory/string text) (memory/string insert) position))
 
 (defn text-join
   "Join text strings with delimiter
   [const char ** textList, int count, const char * delimiter] -> const char *"
   [text-list count delimiter]
-  (raylib_h/TextJoin text-list count (string delimiter)))
+  (raylib_h/TextJoin text-list count (memory/string delimiter)))
 
 (defn text-split
   "Split text into multiple strings
   [const char * text, char delimiter, int * count] -> const char **"
   [text delimiter count]
-  (raylib_h/TextSplit (string text) delimiter count))
+  (raylib_h/TextSplit (memory/string text) delimiter count))
 
 (defn text-append
   "Append text at specific position and move cursor!
   [char * text, const char * append, int * position] -> void"
   [text append position]
-  (raylib_h/TextAppend text (string append) position))
+  (raylib_h/TextAppend text (memory/string append) position))
 
 (defn text-find-index
   "Find first text occurrence within a string
   [const char * text, const char * find] -> int"
   [text find]
-  (raylib_h/TextFindIndex (string text) (string find)))
+  (raylib_h/TextFindIndex (memory/string text) (memory/string find)))
 
 (defn text-to-upper
   "Get upper case version of provided string
   [const char * text] -> const char *"
   [text]
-  (raylib_h/TextToUpper (string text)))
+  (raylib_h/TextToUpper (memory/string text)))
 
 (defn text-to-lower
   "Get lower case version of provided string
   [const char * text] -> const char *"
   [text]
-  (raylib_h/TextToLower (string text)))
+  (raylib_h/TextToLower (memory/string text)))
 
 (defn text-to-pascal
   "Get Pascal case notation version of provided string
   [const char * text] -> const char *"
   [text]
-  (raylib_h/TextToPascal (string text)))
+  (raylib_h/TextToPascal (memory/string text)))
 
 (defn text-to-integer
   "Get integer value from text (negative values not supported)
   [const char * text] -> int"
   [text]
-  (raylib_h/TextToInteger (string text)))
+  (raylib_h/TextToInteger (memory/string text)))
 
 (defn draw-line3d
   "Draw a line in 3D world space
@@ -3254,14 +3257,14 @@
   "Load model from files (meshes and materials)
   [const char * fileName] -> Model"
   [file-name]
-  (rstructs/get-model (raylib_h/LoadModel rarena/*current-arena*
-                                          (string file-name))))
+  (rstructs/get-model (raylib_h/LoadModel memory/*current-arena*
+                                          (memory/string file-name))))
 
 (defn load-model-from-mesh
   "Load model from generated mesh (default material)
   [Mesh mesh] -> Model"
   [mesh]
-  (rstructs/get-model (raylib_h/LoadModelFromMesh rarena/*current-arena*
+  (rstructs/get-model (raylib_h/LoadModelFromMesh memory/*current-arena*
                                                   (rstructs/mesh mesh))))
 
 (defn model-ready?
@@ -3281,7 +3284,7 @@
   [Model model] -> BoundingBox"
   [model]
   (rstructs/get-bounding-box (raylib_h/GetModelBoundingBox
-                               rarena/*current-arena*
+                               memory/*current-arena*
                                (rstructs/model model))))
 
 (defn draw-model
@@ -3404,14 +3407,14 @@
   "Export mesh data to file, returns true on success
   [Mesh mesh, const char * fileName] -> bool"
   [mesh file-name]
-  (raylib_h/ExportMesh (rstructs/mesh mesh) (string file-name)))
+  (raylib_h/ExportMesh (rstructs/mesh mesh) (memory/string file-name)))
 
 (defn get-mesh-bounding-box
   "Compute mesh bounding box limits
   [Mesh mesh] -> BoundingBox"
   [mesh]
   (rstructs/get-bounding-box
-    (raylib_h/GetMeshBoundingBox rarena/*current-arena* (rstructs/mesh mesh))))
+    (raylib_h/GetMeshBoundingBox memory/*current-arena* (rstructs/mesh mesh))))
 
 (defn gen-mesh-tangents
   "Compute mesh tangents
@@ -3424,69 +3427,69 @@
   [int sides, float radius] -> Mesh"
   [sides radius]
   (rstructs/get-mesh
-    (raylib_h/GenMeshPoly rarena/*current-arena* sides radius)))
+    (raylib_h/GenMeshPoly memory/*current-arena* sides radius)))
 
 (defn gen-mesh-plane
   "Generate plane mesh (with subdivisions)
   [float width, float length, int resX, int resZ] -> Mesh"
   [width length res-x res-z]
   (rstructs/get-mesh
-    (raylib_h/GenMeshPlane rarena/*current-arena* width length res-x res-z)))
+    (raylib_h/GenMeshPlane memory/*current-arena* width length res-x res-z)))
 
 (defn gen-mesh-cube
   "Generate cuboid mesh
   [float width, float height, float length] -> Mesh"
   [width height length]
   (rstructs/get-mesh
-    (raylib_h/GenMeshCube rarena/*current-arena* width height length)))
+    (raylib_h/GenMeshCube memory/*current-arena* width height length)))
 
 (defn gen-mesh-sphere
   "Generate sphere mesh (standard sphere)
   [float radius, int rings, int slices] -> Mesh"
   [radius rings slices]
   (rstructs/get-mesh
-    (raylib_h/GenMeshSphere rarena/*current-arena* radius rings slices)))
+    (raylib_h/GenMeshSphere memory/*current-arena* radius rings slices)))
 
 (defn gen-mesh-hemi-sphere
   "Generate half-sphere mesh (no bottom cap)
   [float radius, int rings, int slices] -> Mesh"
   [radius rings slices]
   (rstructs/get-mesh
-    (raylib_h/GenMeshHemiSphere rarena/*current-arena* radius rings slices)))
+    (raylib_h/GenMeshHemiSphere memory/*current-arena* radius rings slices)))
 
 (defn gen-mesh-cylinder
   "Generate cylinder mesh
   [float radius, float height, int slices] -> Mesh"
   [radius height slices]
   (rstructs/get-mesh
-    (raylib_h/GenMeshCylinder rarena/*current-arena* radius height slices)))
+    (raylib_h/GenMeshCylinder memory/*current-arena* radius height slices)))
 
 (defn gen-mesh-cone
   "Generate cone/pyramid mesh
   [float radius, float height, int slices] -> Mesh"
   [radius height slices]
   (rstructs/get-mesh
-    (raylib_h/GenMeshCone rarena/*current-arena* radius height slices)))
+    (raylib_h/GenMeshCone memory/*current-arena* radius height slices)))
 
 (defn gen-mesh-torus
   "Generate torus mesh
   [float radius, float size, int radSeg, int sides] -> Mesh"
   [radius size rad-seg sides]
   (rstructs/get-mesh
-    (raylib_h/GenMeshTorus rarena/*current-arena* radius size rad-seg sides)))
+    (raylib_h/GenMeshTorus memory/*current-arena* radius size rad-seg sides)))
 
 (defn gen-mesh-knot
   "Generate trefoil knot mesh
   [float radius, float size, int radSeg, int sides] -> Mesh"
   [radius size rad-seg sides]
   (rstructs/get-mesh
-    (raylib_h/GenMeshKnot rarena/*current-arena* radius size rad-seg sides)))
+    (raylib_h/GenMeshKnot memory/*current-arena* radius size rad-seg sides)))
 
 (defn gen-mesh-heightmap
   "Generate heightmap mesh from image data
   [Image heightmap, Vector3 size] -> Mesh"
   [heightmap size]
-  (rstructs/get-mesh (raylib_h/GenMeshHeightmap rarena/*current-arena*
+  (rstructs/get-mesh (raylib_h/GenMeshHeightmap memory/*current-arena*
                                                 (rstructs/image heightmap)
                                                 (rstructs/vector3 size))))
 
@@ -3494,7 +3497,7 @@
   "Generate cubes-based map mesh from image data
   [Image cubicmap, Vector3 cubeSize] -> Mesh"
   [cubicmap cube-size]
-  (rstructs/get-mesh (raylib_h/GenMeshCubicmap rarena/*current-arena*
+  (rstructs/get-mesh (raylib_h/GenMeshCubicmap memory/*current-arena*
                                                (rstructs/image cubicmap)
                                                (rstructs/vector3 cube-size))))
 
@@ -3502,13 +3505,13 @@
   "Load materials from model file
   [const char * fileName, int * materialCount] -> Material *"
   [file-name material-count]
-  (raylib_h/LoadMaterials (string file-name) material-count))
+  (raylib_h/LoadMaterials (memory/string file-name) material-count))
 
 (defn load-material-default
   "Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)
   [] -> Material"
   []
-  (rstructs/get-material (raylib_h/LoadMaterialDefault rarena/*current-arena*)))
+  (rstructs/get-material (raylib_h/LoadMaterialDefault memory/*current-arena*)))
 
 (defn material-ready?
   "Check if a material is ready
@@ -3540,7 +3543,7 @@
   "Load model animations from file
   [const char * fileName, int * animCount] -> ModelAnimation *"
   [file-name anim-count]
-  (raylib_h/LoadModelAnimations (string file-name) anim-count))
+  (raylib_h/LoadModelAnimations (memory/string file-name) anim-count))
 
 (defn update-model-animation
   "Update model animation pose
@@ -3599,7 +3602,7 @@
   [Ray ray, Vector3 center, float radius] -> RayCollision"
   [ray center radius]
   (rstructs/get-ray-collision (raylib_h/GetRayCollisionSphere
-                                rarena/*current-arena*
+                                memory/*current-arena*
                                 (rstructs/ray ray)
                                 (rstructs/vector3 center)
                                 radius)))
@@ -3609,7 +3612,7 @@
   [Ray ray, BoundingBox box] -> RayCollision"
   [ray box]
   (rstructs/get-ray-collision (raylib_h/GetRayCollisionBox
-                                rarena/*current-arena*
+                                memory/*current-arena*
                                 (rstructs/ray ray)
                                 (rstructs/bounding-box box))))
 
@@ -3618,7 +3621,7 @@
   [Ray ray, Mesh mesh, Matrix transform] -> RayCollision"
   [ray mesh transform]
   (rstructs/get-ray-collision (raylib_h/GetRayCollisionMesh
-                                rarena/*current-arena*
+                                memory/*current-arena*
                                 (rstructs/ray ray)
                                 (rstructs/mesh mesh)
                                 (rstructs/matrix transform))))
@@ -3628,7 +3631,7 @@
   [Ray ray, Vector3 p1, Vector3 p2, Vector3 p3] -> RayCollision"
   [ray p1 p2 p3]
   (rstructs/get-ray-collision (raylib_h/GetRayCollisionTriangle
-                                rarena/*current-arena*
+                                memory/*current-arena*
                                 (rstructs/ray ray)
                                 (rstructs/vector3 p1)
                                 (rstructs/vector3 p2)
@@ -3639,7 +3642,7 @@
   [Ray ray, Vector3 p1, Vector3 p2, Vector3 p3, Vector3 p4] -> RayCollision"
   [ray p1 p2 p3 p4]
   (rstructs/get-ray-collision (raylib_h/GetRayCollisionQuad
-                                rarena/*current-arena*
+                                memory/*current-arena*
                                 (rstructs/ray ray)
                                 (rstructs/vector3 p1)
                                 (rstructs/vector3 p2)
@@ -3680,15 +3683,15 @@
   "Load wave data from file
   [const char * fileName] -> Wave"
   [file-name]
-  (rstructs/get-wave (raylib_h/LoadWave rarena/*current-arena*
-                                        (string file-name))))
+  (rstructs/get-wave (raylib_h/LoadWave memory/*current-arena*
+                                        (memory/string file-name))))
 
 (defn load-wave-from-memory
   "Load wave from memory buffer, fileType refers to extension: i.e. '.wav'
   [const char * fileType, const unsigned char * fileData, int dataSize] -> Wave"
   [file-type file-data data-size]
-  (rstructs/get-wave (raylib_h/LoadWaveFromMemory rarena/*current-arena*
-                                                  (string file-type)
+  (rstructs/get-wave (raylib_h/LoadWaveFromMemory memory/*current-arena*
+                                                  (memory/string file-type)
                                                   file-data
                                                   data-size)))
 
@@ -3702,21 +3705,21 @@
   "Load sound from file
   [const char * fileName] -> Sound"
   [file-name]
-  (rstructs/get-sound (raylib_h/LoadSound rarena/*current-arena*
-                                          (string file-name))))
+  (rstructs/get-sound (raylib_h/LoadSound memory/*current-arena*
+                                          (memory/string file-name))))
 
 (defn load-sound-from-wave
   "Load sound from wave data
   [Wave wave] -> Sound"
   [wave]
-  (rstructs/get-sound (raylib_h/LoadSoundFromWave rarena/*current-arena*
+  (rstructs/get-sound (raylib_h/LoadSoundFromWave memory/*current-arena*
                                                   (rstructs/wave wave))))
 
 (defn load-sound-alias
   "Create a new sound that shares the same sample data as the source sound, does not own the sound data
   [Sound source] -> Sound"
   [source]
-  (rstructs/get-sound (raylib_h/LoadSoundAlias rarena/*current-arena*
+  (rstructs/get-sound (raylib_h/LoadSoundAlias memory/*current-arena*
                                                (rstructs/sound source))))
 
 (defn sound-ready?
@@ -3753,13 +3756,13 @@
   "Export wave data to file, returns true on success
   [Wave wave, const char * fileName] -> bool"
   [wave file-name]
-  (raylib_h/ExportWave (rstructs/wave wave) (string file-name)))
+  (raylib_h/ExportWave (rstructs/wave wave) (memory/string file-name)))
 
 (defn export-wave-as-code?
   "Export wave sample data to code (.h), returns true on success
   [Wave wave, const char * fileName] -> bool"
   [wave file-name]
-  (raylib_h/ExportWaveAsCode (rstructs/wave wave) (string file-name)))
+  (raylib_h/ExportWaveAsCode (rstructs/wave wave) (memory/string file-name)))
 
 (defn play-sound
   "Play a sound
@@ -3813,7 +3816,7 @@
   "Copy a wave to a new wave
   [Wave wave] -> Wave"
   [wave]
-  (rstructs/get-wave (raylib_h/WaveCopy rarena/*current-arena*
+  (rstructs/get-wave (raylib_h/WaveCopy memory/*current-arena*
                                         (rstructs/wave wave))))
 
 (defn wave-crop
@@ -3844,15 +3847,16 @@
   "Load music stream from file
   [const char * fileName] -> Music"
   [file-name]
-  (rstructs/get-music (raylib_h/LoadMusicStream rarena/*current-arena*
-                                                (string file-name))))
+  (rstructs/get-music (raylib_h/LoadMusicStream memory/*current-arena*
+                                                (memory/string file-name))))
 
 (defn load-music-stream-from-memory
   "Load music stream from data
   [const char * fileType, const unsigned char * data, int dataSize] -> Music"
   [file-type data data-size]
-  (rstructs/get-music (raylib_h/LoadMusicStreamFromMemory rarena/*current-arena*
-                                                          (string file-type)
+  (rstructs/get-music (raylib_h/LoadMusicStreamFromMemory memory/*current-arena*
+                                                          (memory/string
+                                                            file-type)
                                                           data
                                                           data-size)))
 
@@ -3944,7 +3948,7 @@
   "Load audio stream (to stream raw audio pcm data)
   [unsigned int sampleRate, unsigned int sampleSize, unsigned int channels] -> AudioStream"
   [sample-rate sample-size channels]
-  (rstructs/get-audio-stream (raylib_h/LoadAudioStream rarena/*current-arena*
+  (rstructs/get-audio-stream (raylib_h/LoadAudioStream memory/*current-arena*
                                                        sample-rate
                                                        sample-size
                                                        channels)))

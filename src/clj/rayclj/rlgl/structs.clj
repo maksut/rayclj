@@ -1,5 +1,5 @@
 (ns rayclj.rlgl.structs
-  (:require [rayclj.arrays
+  (:require [rayclj.memory
              :refer [get-byte-array
                      get-float-array
                      get-unsigned-int-array
@@ -7,7 +7,7 @@
                      array-fn
                      get-array-fn
                      set-array-fn]
-             :as arrays]
+             :as memory]
             [rayclj.rlgl.defines :as defines])
   (:import
    [java.lang.foreign MemorySegment]))
@@ -68,7 +68,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-matrix (arrays/allocate (rayclj.rlgl.Matrix/$LAYOUT)) v)))
+    (set-matrix (memory/allocate (rayclj.rlgl.Matrix/$LAYOUT)) v)))
 
 (def matrix-array (array-fn (rayclj.rlgl.Matrix/$LAYOUT) set-matrix))
 
@@ -115,16 +115,16 @@
   (rayclj.rlgl.rlVertexBuffer/elementCount$set seg elementCount)
   (rayclj.rlgl.rlVertexBuffer/vertices$set
     seg
-    (arrays/float-array vertices (* elementCount 3)))
+    (memory/float-array vertices (* elementCount 3)))
   (rayclj.rlgl.rlVertexBuffer/texcoords$set
     seg
-    (arrays/float-array texcoords (* elementCount 2)))
+    (memory/float-array texcoords (* elementCount 2)))
   (rayclj.rlgl.rlVertexBuffer/colors$set seg
-                                         (arrays/byte-array colors
+                                         (memory/byte-array colors
                                                             (* elementCount 4)))
   (rayclj.rlgl.rlVertexBuffer/indices$set
     seg
-    (arrays/byte-array indices (* elementCount 6)))
+    (memory/byte-array indices (* elementCount 6)))
   (rayclj.rlgl.rlVertexBuffer/vaoId$set seg vaoId)
   (set-unsigned-int-array (rayclj.rlgl.rlVertexBuffer/vboId$slice seg) vboId 4)
   seg)
@@ -141,7 +141,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-vertex-buffer (arrays/allocate (rayclj.rlgl.rlVertexBuffer/$LAYOUT))
+    (set-vertex-buffer (memory/allocate (rayclj.rlgl.rlVertexBuffer/$LAYOUT))
                        v)))
 
 (def vertex-buffer-array
@@ -187,7 +187,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-draw-call (arrays/allocate (rayclj.rlgl.rlDrawCall/$LAYOUT)) v)))
+    (set-draw-call (memory/allocate (rayclj.rlgl.rlDrawCall/$LAYOUT)) v)))
 
 (def draw-call-array (array-fn (rayclj.rlgl.rlDrawCall/$LAYOUT) set-draw-call))
 
@@ -251,7 +251,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-render-batch (arrays/allocate (rayclj.rlgl.rlRenderBatch/$LAYOUT)) v)))
+    (set-render-batch (memory/allocate (rayclj.rlgl.rlRenderBatch/$LAYOUT)) v)))
 
 (def render-batch-array
   (array-fn (rayclj.rlgl.rlRenderBatch/$LAYOUT) set-render-batch))

@@ -1,4 +1,6 @@
-(ns gen.overrides)
+(ns gen.overrides
+  (:require
+   [rayclj.memory :as memory]))
 
 (def docstrings
   {"Matrix"
@@ -50,20 +52,18 @@
   unsigned char g; // Color green value
   unsigned char b; // Color blue value
   unsigned char a; // Color alpha value"
-       ([:CARETArena arena c]
-        (if (keyword? c)
-          (predefined-colors c)
-          (set-color (.allocate arena (rayclj.raylib.Color/$LAYOUT)) c)))
-       ([c]
-        (if (instance? MemorySegment c)
-          c
-          (color rarena/*current-arena* c))))
+       [c]
+       (cond
+         (instance? MemorySegment c) c
+         (keyword? c) (predefined-colors c)
+         :else (set-color (memory/allocate (rayclj.raylib.Color/$LAYOUT)) c)))
     '(def predefined-colors
-       (into
-        {}
-        (map
-         (fn [[k v]] [k (color rarena/global-arena v)])
-         renums/predefined-colors)))]
+       (let [arena (memory/global-arena)
+             layout (rayclj.raylib.Color/$LAYOUT)
+             global-color (fn [c] (set-color (memory/allocate arena layout) c))]
+         (into
+          {}
+          (map (fn [[k v]] [k (global-color v)]) renums/predefined-colors))))]
 
    :get-font
    ['(defn get-font
@@ -112,7 +112,7 @@
              [v]
              (if (clojure.core/instance? MemorySegment v)
                v
-               (set-font (.allocate rarena/*current-arena* (rayclj.raylib.Font/$LAYOUT)) v)))]
+               (set-font (memory/allocate (rayclj.raylib.Font/$LAYOUT)) v)))]
 
    :get-shader '[(defn get-shader
                    "Shader
@@ -128,7 +128,7 @@
   int * locs // Shader locations array (RL_MAX_SHADER_LOCATIONS)"
                    [:CARETMemorySegment seg {:keys [id locs]}]
                    (rayclj.raylib.Shader/id$set seg id)
-                   (rayclj.raylib.Shader/locs$set seg (arrays/int-array locs gldefines/max-shader-locations))
+                   (rayclj.raylib.Shader/locs$set seg (memory/int-array locs gldefines/max-shader-locations))
                    seg)]
 
    ;;
@@ -169,13 +169,13 @@
         {:keys [elementCount vertices texcoords colors indices vaoId vboId]}]
        (rayclj.rlgl.rlVertexBuffer/elementCount$set seg elementCount)
        ; (set-float-array (rayclj.rlgl.rlVertexBuffer/vertices$get seg) vertices (* elementCount 3))
-       (rayclj.rlgl.rlVertexBuffer/vertices$set seg (arrays/float-array vertices (* elementCount 3)))
+       (rayclj.rlgl.rlVertexBuffer/vertices$set seg (memory/float-array vertices (* elementCount 3)))
        ; (set-float-array (rayclj.rlgl.rlVertexBuffer/texcoords$get seg) texcoords (* elementCount 2))
-       (rayclj.rlgl.rlVertexBuffer/texcoords$set seg (arrays/float-array texcoords (* elementCount 2)))
+       (rayclj.rlgl.rlVertexBuffer/texcoords$set seg (memory/float-array texcoords (* elementCount 2)))
        ; (set-byte-array (rayclj.rlgl.rlVertexBuffer/colors$get seg) colors (* elementCount 4))
-       (rayclj.rlgl.rlVertexBuffer/colors$set seg (arrays/byte-array colors (* elementCount 4)))
+       (rayclj.rlgl.rlVertexBuffer/colors$set seg (memory/byte-array colors (* elementCount 4)))
        ; (set-byte-array (rayclj.rlgl.rlVertexBuffer/indices$get seg) indices (* elementCount 6))
-       (rayclj.rlgl.rlVertexBuffer/indices$set seg (arrays/byte-array indices (* elementCount 6)))
+       (rayclj.rlgl.rlVertexBuffer/indices$set seg (memory/byte-array indices (* elementCount 6)))
        (rayclj.rlgl.rlVertexBuffer/vaoId$set seg vaoId)
        (set-unsigned-int-array (rayclj.rlgl.rlVertexBuffer/vboId$slice seg) vboId 4)
        seg)]

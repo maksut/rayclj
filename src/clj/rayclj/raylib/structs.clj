@@ -1,7 +1,6 @@
 (ns rayclj.raylib.structs
-  (:require [rayclj.arena :as rarena]
-            [rayclj.raylib.enums :as renums]
-            [rayclj.arrays
+  (:require [rayclj.raylib.enums :as renums]
+            [rayclj.memory
              :refer [get-float-array
                      set-float-array
                      get-char-array
@@ -11,10 +10,10 @@
                      array-fn
                      get-array-fn
                      set-array-fn]
-             :as arrays]
+             :as memory]
             [rayclj.rlgl.defines :as gldefines])
   (:import
-   [java.lang.foreign Arena MemorySegment]))
+   [java.lang.foreign MemorySegment]))
 
 (set! *warn-on-reflection* true)
 
@@ -45,7 +44,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-vector2 (arrays/allocate (rayclj.raylib.Vector2/$LAYOUT)) v)))
+    (set-vector2 (memory/allocate (rayclj.raylib.Vector2/$LAYOUT)) v)))
 
 (def vector2-array (array-fn (rayclj.raylib.Vector2/$LAYOUT) set-vector2))
 
@@ -83,7 +82,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-vector3 (arrays/allocate (rayclj.raylib.Vector3/$LAYOUT)) v)))
+    (set-vector3 (memory/allocate (rayclj.raylib.Vector3/$LAYOUT)) v)))
 
 (def vector3-array (array-fn (rayclj.raylib.Vector3/$LAYOUT) set-vector3))
 
@@ -125,7 +124,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-vector4 (arrays/allocate (rayclj.raylib.Vector4/$LAYOUT)) v)))
+    (set-vector4 (memory/allocate (rayclj.raylib.Vector4/$LAYOUT)) v)))
 
 (def vector4-array (array-fn (rayclj.raylib.Vector4/$LAYOUT) set-vector4))
 
@@ -185,7 +184,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-matrix (arrays/allocate (rayclj.raylib.Matrix/$LAYOUT)) v)))
+    (set-matrix (memory/allocate (rayclj.raylib.Matrix/$LAYOUT)) v)))
 
 (def matrix-array (array-fn (rayclj.raylib.Matrix/$LAYOUT) set-matrix))
 
@@ -226,16 +225,16 @@
   unsigned char g; // Color green value
   unsigned char b; // Color blue value
   unsigned char a; // Color alpha value"
-  ([^Arena arena c]
-   (if (keyword? c)
-     (predefined-colors c)
-     (set-color (.allocate arena (rayclj.raylib.Color/$LAYOUT)) c)))
-  ([c] (if (instance? MemorySegment c) c (color rarena/*current-arena* c))))
+  [c]
+  (cond (instance? MemorySegment c) c
+        (keyword? c) (predefined-colors c)
+        :else (set-color (memory/allocate (rayclj.raylib.Color/$LAYOUT)) c)))
 
 (def predefined-colors
-  (into {}
-        (map (fn [[k v]] [k (color rarena/global-arena v)])
-          renums/predefined-colors)))
+  (let [arena (memory/global-arena)
+        layout (rayclj.raylib.Color/$LAYOUT)
+        global-color (fn [c] (set-color (memory/allocate arena layout) c))]
+    (into {} (map (fn [[k v]] [k (global-color v)]) renums/predefined-colors))))
 
 (def color-array (array-fn (rayclj.raylib.Color/$LAYOUT) set-color))
 
@@ -277,7 +276,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-rectangle (arrays/allocate (rayclj.raylib.Rectangle/$LAYOUT)) v)))
+    (set-rectangle (memory/allocate (rayclj.raylib.Rectangle/$LAYOUT)) v)))
 
 (def rectangle-array (array-fn (rayclj.raylib.Rectangle/$LAYOUT) set-rectangle))
 
@@ -326,7 +325,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-image (arrays/allocate (rayclj.raylib.Image/$LAYOUT)) v)))
+    (set-image (memory/allocate (rayclj.raylib.Image/$LAYOUT)) v)))
 
 (def image-array (array-fn (rayclj.raylib.Image/$LAYOUT) set-image))
 
@@ -373,7 +372,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-texture (arrays/allocate (rayclj.raylib.Texture/$LAYOUT)) v)))
+    (set-texture (memory/allocate (rayclj.raylib.Texture/$LAYOUT)) v)))
 
 (def texture-array (array-fn (rayclj.raylib.Texture/$LAYOUT) set-texture))
 
@@ -412,7 +411,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-render-texture (arrays/allocate (rayclj.raylib.RenderTexture/$LAYOUT))
+    (set-render-texture (memory/allocate (rayclj.raylib.RenderTexture/$LAYOUT))
                         v)))
 
 (def render-texture-array
@@ -468,7 +467,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-npatch-info (arrays/allocate (rayclj.raylib.NPatchInfo/$LAYOUT)) v)))
+    (set-npatch-info (memory/allocate (rayclj.raylib.NPatchInfo/$LAYOUT)) v)))
 
 (def npatch-info-array
   (array-fn (rayclj.raylib.NPatchInfo/$LAYOUT) set-npatch-info))
@@ -518,7 +517,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-glyph-info (arrays/allocate (rayclj.raylib.GlyphInfo/$LAYOUT)) v)))
+    (set-glyph-info (memory/allocate (rayclj.raylib.GlyphInfo/$LAYOUT)) v)))
 
 (def glyph-info-array
   (array-fn (rayclj.raylib.GlyphInfo/$LAYOUT) set-glyph-info))
@@ -576,8 +575,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-font (.allocate rarena/*current-arena* (rayclj.raylib.Font/$LAYOUT))
-              v)))
+    (set-font (memory/allocate (rayclj.raylib.Font/$LAYOUT)) v)))
 
 (def font-array (array-fn (rayclj.raylib.Font/$LAYOUT) set-font))
 
@@ -624,7 +622,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-camera3d (arrays/allocate (rayclj.raylib.Camera3D/$LAYOUT)) v)))
+    (set-camera3d (memory/allocate (rayclj.raylib.Camera3D/$LAYOUT)) v)))
 
 (def camera3d-array (array-fn (rayclj.raylib.Camera3D/$LAYOUT) set-camera3d))
 
@@ -668,7 +666,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-camera2d (arrays/allocate (rayclj.raylib.Camera2D/$LAYOUT)) v)))
+    (set-camera2d (memory/allocate (rayclj.raylib.Camera2D/$LAYOUT)) v)))
 
 (def camera2d-array (array-fn (rayclj.raylib.Camera2D/$LAYOUT) set-camera2d))
 
@@ -770,7 +768,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-mesh (arrays/allocate (rayclj.raylib.Mesh/$LAYOUT)) v)))
+    (set-mesh (memory/allocate (rayclj.raylib.Mesh/$LAYOUT)) v)))
 
 (def mesh-array (array-fn (rayclj.raylib.Mesh/$LAYOUT) set-mesh))
 
@@ -795,7 +793,7 @@
   (rayclj.raylib.Shader/id$set seg id)
   (rayclj.raylib.Shader/locs$set
     seg
-    (arrays/int-array locs gldefines/max-shader-locations))
+    (memory/int-array locs gldefines/max-shader-locations))
   seg)
 
 (defn shader
@@ -805,7 +803,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-shader (arrays/allocate (rayclj.raylib.Shader/$LAYOUT)) v)))
+    (set-shader (memory/allocate (rayclj.raylib.Shader/$LAYOUT)) v)))
 
 (def shader-array (array-fn (rayclj.raylib.Shader/$LAYOUT) set-shader))
 
@@ -842,7 +840,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-material-map (arrays/allocate (rayclj.raylib.MaterialMap/$LAYOUT)) v)))
+    (set-material-map (memory/allocate (rayclj.raylib.MaterialMap/$LAYOUT)) v)))
 
 (def material-map-array
   (array-fn (rayclj.raylib.MaterialMap/$LAYOUT) set-material-map))
@@ -882,7 +880,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-material (arrays/allocate (rayclj.raylib.Material/$LAYOUT)) v)))
+    (set-material (memory/allocate (rayclj.raylib.Material/$LAYOUT)) v)))
 
 (def material-array (array-fn (rayclj.raylib.Material/$LAYOUT) set-material))
 
@@ -921,7 +919,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-transform (arrays/allocate (rayclj.raylib.Transform/$LAYOUT)) v)))
+    (set-transform (memory/allocate (rayclj.raylib.Transform/$LAYOUT)) v)))
 
 (def transform-array (array-fn (rayclj.raylib.Transform/$LAYOUT) set-transform))
 
@@ -955,7 +953,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-bone-info (arrays/allocate (rayclj.raylib.BoneInfo/$LAYOUT)) v)))
+    (set-bone-info (memory/allocate (rayclj.raylib.BoneInfo/$LAYOUT)) v)))
 
 (def bone-info-array (array-fn (rayclj.raylib.BoneInfo/$LAYOUT) set-bone-info))
 
@@ -1026,7 +1024,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-model (arrays/allocate (rayclj.raylib.Model/$LAYOUT)) v)))
+    (set-model (memory/allocate (rayclj.raylib.Model/$LAYOUT)) v)))
 
 (def model-array (array-fn (rayclj.raylib.Model/$LAYOUT) set-model))
 
@@ -1073,7 +1071,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-model-animation (arrays/allocate
+    (set-model-animation (memory/allocate
                            (rayclj.raylib.ModelAnimation/$LAYOUT))
                          v)))
 
@@ -1110,7 +1108,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-ray (arrays/allocate (rayclj.raylib.Ray/$LAYOUT)) v)))
+    (set-ray (memory/allocate (rayclj.raylib.Ray/$LAYOUT)) v)))
 
 (def ray-array (array-fn (rayclj.raylib.Ray/$LAYOUT) set-ray))
 
@@ -1152,7 +1150,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-ray-collision (arrays/allocate (rayclj.raylib.RayCollision/$LAYOUT))
+    (set-ray-collision (memory/allocate (rayclj.raylib.RayCollision/$LAYOUT))
                        v)))
 
 (def ray-collision-array
@@ -1188,7 +1186,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-bounding-box (arrays/allocate (rayclj.raylib.BoundingBox/$LAYOUT)) v)))
+    (set-bounding-box (memory/allocate (rayclj.raylib.BoundingBox/$LAYOUT)) v)))
 
 (def bounding-box-array
   (array-fn (rayclj.raylib.BoundingBox/$LAYOUT) set-bounding-box))
@@ -1238,7 +1236,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-wave (arrays/allocate (rayclj.raylib.Wave/$LAYOUT)) v)))
+    (set-wave (memory/allocate (rayclj.raylib.Wave/$LAYOUT)) v)))
 
 (def wave-array (array-fn (rayclj.raylib.Wave/$LAYOUT) set-wave))
 
@@ -1285,7 +1283,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-audio-stream (arrays/allocate (rayclj.raylib.AudioStream/$LAYOUT)) v)))
+    (set-audio-stream (memory/allocate (rayclj.raylib.AudioStream/$LAYOUT)) v)))
 
 (def audio-stream-array
   (array-fn (rayclj.raylib.AudioStream/$LAYOUT) set-audio-stream))
@@ -1320,7 +1318,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-sound (arrays/allocate (rayclj.raylib.Sound/$LAYOUT)) v)))
+    (set-sound (memory/allocate (rayclj.raylib.Sound/$LAYOUT)) v)))
 
 (def sound-array (array-fn (rayclj.raylib.Sound/$LAYOUT) set-sound))
 
@@ -1367,7 +1365,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-music (arrays/allocate (rayclj.raylib.Music/$LAYOUT)) v)))
+    (set-music (memory/allocate (rayclj.raylib.Music/$LAYOUT)) v)))
 
 (def music-array (array-fn (rayclj.raylib.Music/$LAYOUT) set-music))
 
@@ -1456,7 +1454,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-vr-device-info (arrays/allocate (rayclj.raylib.VrDeviceInfo/$LAYOUT))
+    (set-vr-device-info (memory/allocate (rayclj.raylib.VrDeviceInfo/$LAYOUT))
                         v)))
 
 (def vr-device-info-array
@@ -1547,7 +1545,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-vr-stereo-config (arrays/allocate
+    (set-vr-stereo-config (memory/allocate
                             (rayclj.raylib.VrStereoConfig/$LAYOUT))
                           v)))
 
@@ -1589,7 +1587,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-file-path-list (arrays/allocate (rayclj.raylib.FilePathList/$LAYOUT))
+    (set-file-path-list (memory/allocate (rayclj.raylib.FilePathList/$LAYOUT))
                         v)))
 
 (def file-path-list-array
@@ -1630,7 +1628,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-automation-event (arrays/allocate
+    (set-automation-event (memory/allocate
                             (rayclj.raylib.AutomationEvent/$LAYOUT))
                           v)))
 
@@ -1672,7 +1670,7 @@
   [v]
   (if (clojure.core/instance? MemorySegment v)
     v
-    (set-automation-event-list (arrays/allocate
+    (set-automation-event-list (memory/allocate
                                  (rayclj.raylib.AutomationEventList/$LAYOUT))
                                v)))
 

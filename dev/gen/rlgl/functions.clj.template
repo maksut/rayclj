@@ -1,6 +1,5 @@
 (ns rayclj.rlgl.functions
-  (:require [rayclj.arena :as rarena]
-            [rayclj.arrays :refer [string]]
+  (:require [rayclj.memory :as memory]
             [rayclj.rlgl.structs :as rstructs])
   (:import [rayclj.rlgl rlgl_h]))
 

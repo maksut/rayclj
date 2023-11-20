@@ -1,7 +1,7 @@
 (ns examples.shaders.pallette-switch
   (:require
    [rayclj.raylib.functions :as rl]
-   [rayclj.arrays :as arrays]))
+   [rayclj.memory :as memory]))
 
 (comment
   (rl/init-window 800 450 "raylib [shaders] example - color palette switch")
@@ -14,7 +14,7 @@
   (rl/close-window))
 
 (def palettes
-  [(arrays/int-array
+  [(memory/int-array
     [;; 3-BIT RGB
      0, 0, 0,
      255, 0, 0,
@@ -24,7 +24,7 @@
      255, 0, 255,
      255, 255, 0,
      255, 255, 255])
-   (arrays/int-array
+   (memory/int-array
     [;; AMMO-8 (GameBoy-like)
      4, 12, 6,
      17, 35, 24,
@@ -34,7 +34,7 @@
      137, 162, 87,
      190, 220, 127,
      238, 255, 204])
-   (arrays/int-array
+   (memory/int-array
     [;; RKBV (2-strip film)
      21, 25, 26,
      138, 76, 88,
@@ -56,7 +56,7 @@
 
    ; Load shader to be used on some parts drawing
    ; NOTE: Defining 0 (NULL) for vertex shader forces usage of internal default vertex shader
-  (let [shader (rl/load-shader nil "examples/examples/shaders/resources/glsl330/palette_switch.fs")
+  (let [shader (rl/load-shader memory/null "examples/examples/shaders/resources/glsl330/palette_switch.fs")
         palette-loc (rl/get-shader-location shader "palette")
         current-palette 0;
         line-height (/ screen-height COLORS_PER_PALETTE)]
