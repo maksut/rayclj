@@ -2,8 +2,7 @@
   (:require [rayclj.arena :as rarena]
             [rayclj.arrays :refer [string]]
             [rayclj.rlgl.structs :as rstructs])
-  (:import [rayclj.rlgl rlgl_h]
-           [java.lang.foreign Arena]))
+  (:import [rayclj.rlgl rlgl_h]))
 
 (set! *warn-on-reflection* true)
 

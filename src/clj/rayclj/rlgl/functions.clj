@@ -2,8 +2,7 @@
   (:require [rayclj.arena :as rarena]
             [rayclj.arrays :refer [string]]
             [rayclj.rlgl.structs :as rstructs])
-  (:import [rayclj.rlgl rlgl_h]
-           [java.lang.foreign Arena]))
+  (:import [rayclj.rlgl rlgl_h]))
 
 (set! *warn-on-reflection* true)
 
@@ -511,12 +510,10 @@
 (defn load-render-batch
   "Load a render batch system
   [int numBuffers, int bufferElements] -> rlRenderBatch"
-  ([^Arena arena num-buffers buffer-elements]
-   (rlgl_h/rlLoadRenderBatch arena num-buffers buffer-elements))
-  ([num-buffers buffer-elements]
-   (rstructs/get-render-batch (rlgl_h/rlLoadRenderBatch rarena/*current-arena*
-                                                        num-buffers
-                                                        buffer-elements))))
+  [num-buffers buffer-elements]
+  (rstructs/get-render-batch (rlgl_h/rlLoadRenderBatch rarena/*current-arena*
+                                                       num-buffers
+                                                       buffer-elements)))
 
 (defn unload-render-batch
   "Unload render batch system
@@ -725,17 +722,14 @@
 (defn load-shader-code
   "Load shader from code strings
   [const char * vsCode, const char * fsCode] -> unsigned int"
-  ([^Arena arena vs-code fs-code]
-   (rlgl_h/rlLoadShaderCode (string arena vs-code) (string arena fs-code)))
-  ([vs-code fs-code]
-   (rlgl_h/rlLoadShaderCode (string vs-code) (string fs-code))))
+  [vs-code fs-code]
+  (rlgl_h/rlLoadShaderCode (string vs-code) (string fs-code)))
 
 (defn compile-shader
   "Compile custom shader and return shader id (type: RL_VERTEX_SHADER, RL_FRAGMENT_SHADER, RL_COMPUTE_SHADER)
   [const char * shaderCode, int type] -> unsigned int"
-  ([^Arena arena shader-code type]
-   (rlgl_h/rlCompileShader (string arena shader-code) type))
-  ([shader-code type] (rlgl_h/rlCompileShader (string shader-code) type)))
+  [shader-code type]
+  (rlgl_h/rlCompileShader (string shader-code) type))
 
 (defn load-shader-program
   "Load custom shader program
@@ -752,18 +746,14 @@
 (defn get-location-uniform
   "Get shader location uniform
   [unsigned int shaderId, const char * uniformName] -> int"
-  ([^Arena arena shader-id uniform-name]
-   (rlgl_h/rlGetLocationUniform shader-id (string arena uniform-name)))
-  ([shader-id uniform-name]
-   (rlgl_h/rlGetLocationUniform shader-id (string uniform-name))))
+  [shader-id uniform-name]
+  (rlgl_h/rlGetLocationUniform shader-id (string uniform-name)))
 
 (defn get-location-attrib
   "Get shader location attribute
   [unsigned int shaderId, const char * attribName] -> int"
-  ([^Arena arena shader-id attrib-name]
-   (rlgl_h/rlGetLocationAttrib shader-id (string arena attrib-name)))
-  ([shader-id attrib-name]
-   (rlgl_h/rlGetLocationAttrib shader-id (string attrib-name))))
+  [shader-id attrib-name]
+  (rlgl_h/rlGetLocationAttrib shader-id (string attrib-name)))
 
 (defn set-uniform
   "Set shader value uniform
@@ -852,39 +842,34 @@
 (defn get-matrix-modelview
   "Get internal modelview matrix
   [] -> Matrix"
-  ([^Arena arena] (rlgl_h/rlGetMatrixModelview arena))
-  ([]
-   (rstructs/get-matrix (rlgl_h/rlGetMatrixModelview rarena/*current-arena*))))
+  []
+  (rstructs/get-matrix (rlgl_h/rlGetMatrixModelview rarena/*current-arena*)))
 
 (defn get-matrix-projection
   "Get internal projection matrix
   [] -> Matrix"
-  ([^Arena arena] (rlgl_h/rlGetMatrixProjection arena))
-  ([]
-   (rstructs/get-matrix (rlgl_h/rlGetMatrixProjection rarena/*current-arena*))))
+  []
+  (rstructs/get-matrix (rlgl_h/rlGetMatrixProjection rarena/*current-arena*)))
 
 (defn get-matrix-transform
   "Get internal accumulated transform matrix
   [] -> Matrix"
-  ([^Arena arena] (rlgl_h/rlGetMatrixTransform arena))
-  ([]
-   (rstructs/get-matrix (rlgl_h/rlGetMatrixTransform rarena/*current-arena*))))
+  []
+  (rstructs/get-matrix (rlgl_h/rlGetMatrixTransform rarena/*current-arena*)))
 
 (defn get-matrix-projection-stereo
   "Get internal projection matrix for stereo render (selected eye)
   [int eye] -> Matrix"
-  ([^Arena arena eye] (rlgl_h/rlGetMatrixProjectionStereo arena eye))
-  ([eye]
-   (rstructs/get-matrix
-     (rlgl_h/rlGetMatrixProjectionStereo rarena/*current-arena* eye))))
+  [eye]
+  (rstructs/get-matrix
+   (rlgl_h/rlGetMatrixProjectionStereo rarena/*current-arena* eye)))
 
 (defn get-matrix-view-offset-stereo
   "Get internal view offset matrix for stereo render (selected eye)
   [int eye] -> Matrix"
-  ([^Arena arena eye] (rlgl_h/rlGetMatrixViewOffsetStereo arena eye))
-  ([eye]
-   (rstructs/get-matrix
-     (rlgl_h/rlGetMatrixViewOffsetStereo rarena/*current-arena* eye))))
+  [eye]
+  (rstructs/get-matrix
+   (rlgl_h/rlGetMatrixViewOffsetStereo rarena/*current-arena* eye)))
 
 (defn set-matrix-projection
   "Set a custom projection matrix (replaces internal projection matrix)

@@ -27,7 +27,7 @@
   unsigned int vaoId // OpenGL Vertex Array Object id
   unsigned int[4] vboId // OpenGL Vertex Buffer Objects id (4 types of vertex data)"})
 
-(def definitions
+(def struct-functions
   {:set-color
    ['(defn set-color
        "Color, 4 components, R8G8B8A8 (32bit)
@@ -92,16 +92,48 @@
   Texture2D texture // Texture atlas containing the glyphs
   Rectangle * recs // Rectangles in texture for the glyphs
   GlyphInfo * glyphs // Glyphs info data"
-       ([:CARETArena arena :CARETMemorySegment seg {:keys [base-size glyph-count glyph-padding texture recs glyphs]}]
+       ([:CARETMemorySegment seg {:keys [base-size glyph-count glyph-padding texture recs glyphs]}]
         (rayclj.raylib.Font/baseSize$set seg base-size)
         (rayclj.raylib.Font/glyphCount$set seg glyph-count)
         (rayclj.raylib.Font/glyphPadding$set seg glyph-padding)
         (set-texture (rayclj.raylib.Font/texture$slice seg) texture)
-        (rayclj.raylib.Font/recs$set seg (rectangle-array arena recs))
-        (rayclj.raylib.Font/glyphs$set seg (glyph-info-array arena glyphs))
-        seg)
-       ([^MemorySegment seg font]
-        (set-font rarena/*current-arena* seg font)))]
+        (rayclj.raylib.Font/recs$set seg (rectangle-array recs glyph-count))
+        (rayclj.raylib.Font/glyphs$set seg (glyph-info-array glyphs glyph-count))
+        seg))]
+
+   :font ['(defn font
+             "Font, font texture and GlyphInfo array data
+  int baseSize // Base size (default chars height)
+  int glyphCount // Number of glyph characters
+  int glyphPadding // Padding around the glyph characters
+  Texture2D texture // Texture atlas containing the glyphs
+  Rectangle * recs // Rectangles in texture for the glyphs
+  GlyphInfo * glyphs // Glyphs info data"
+             [v]
+             (if (clojure.core/instance? MemorySegment v)
+               v
+               (set-font (.allocate rarena/*current-arena* (rayclj.raylib.Font/$LAYOUT)) v)))]
+
+   :get-shader '[(defn get-shader
+                   "Shader
+  unsigned int id // Shader program id
+  int * locs // Shader locations array (RL_MAX_SHADER_LOCATIONS)"
+                   [:CARETMemorySegment seg]
+                   {:id (rayclj.raylib.Shader/id$get seg),
+                    :locs (get-int-array (rayclj.raylib.Shader/locs$get seg) gldefines/max-shader-locations)})]
+
+   :set-shader '[(defn set-shader
+                   "Shader
+  unsigned int id // Shader program id
+  int * locs // Shader locations array (RL_MAX_SHADER_LOCATIONS)"
+                   [:CARETMemorySegment seg {:keys [id locs]}]
+                   (rayclj.raylib.Shader/id$set seg id)
+                   (rayclj.raylib.Shader/locs$set seg (arrays/int-array locs gldefines/max-shader-locations))
+                   seg)]
+
+   ;;
+   ;; rlgl overrides
+   ;;
 
    :get-vertex-buffer
    ['(defn get-vertex-buffer
@@ -133,14 +165,17 @@
   unsigned int * indices // Vertex indices (in case vertex data comes indexed) (6 indices per quad)
   unsigned int vaoId // OpenGL Vertex Array Object id
   unsigned int[4] vboId // OpenGL Vertex Buffer Objects id (4 types of vertex data)"
-       [^MemorySegment seg
-        {:keys [elementCount vertices texcoords colors indices indices indices
-                indices indices vaoId vaoId vboId]}]
+       [:CARETMemorySegment seg
+        {:keys [elementCount vertices texcoords colors indices vaoId vboId]}]
        (rayclj.rlgl.rlVertexBuffer/elementCount$set seg elementCount)
-       (set-float-array (rayclj.rlgl.rlVertexBuffer/vertices$get seg) vertices (* elementCount 3))
-       (set-float-array (rayclj.rlgl.rlVertexBuffer/texcoords$get seg) texcoords (* elementCount 2))
-       (set-byte-array (rayclj.rlgl.rlVertexBuffer/colors$get seg) colors (* elementCount 4))
-       (set-byte-array (rayclj.rlgl.rlVertexBuffer/indices$get seg) indices (* elementCount 6))
+       ; (set-float-array (rayclj.rlgl.rlVertexBuffer/vertices$get seg) vertices (* elementCount 3))
+       (rayclj.rlgl.rlVertexBuffer/vertices$set seg (arrays/float-array vertices (* elementCount 3)))
+       ; (set-float-array (rayclj.rlgl.rlVertexBuffer/texcoords$get seg) texcoords (* elementCount 2))
+       (rayclj.rlgl.rlVertexBuffer/texcoords$set seg (arrays/float-array texcoords (* elementCount 2)))
+       ; (set-byte-array (rayclj.rlgl.rlVertexBuffer/colors$get seg) colors (* elementCount 4))
+       (rayclj.rlgl.rlVertexBuffer/colors$set seg (arrays/byte-array colors (* elementCount 4)))
+       ; (set-byte-array (rayclj.rlgl.rlVertexBuffer/indices$get seg) indices (* elementCount 6))
+       (rayclj.rlgl.rlVertexBuffer/indices$set seg (arrays/byte-array indices (* elementCount 6)))
        (rayclj.rlgl.rlVertexBuffer/vaoId$set seg vaoId)
        (set-unsigned-int-array (rayclj.rlgl.rlVertexBuffer/vboId$slice seg) vboId 4)
        seg)]
@@ -153,7 +188,7 @@
   rlDrawCall * draws // Draw calls array, depends on textureId
   int drawCounter // Draw calls counter
   float currentDepth // Current depth value for next draw"
-                         [^MemorySegment seg]
+                         [:CARETMemorySegment seg]
                          (let [buffer-count (rayclj.rlgl.rlRenderBatch/bufferCount$get seg)]
                            {:bufferCount buffer-count,
                             :currentBuffer (rayclj.rlgl.rlRenderBatch/currentBuffer$get seg)
@@ -170,13 +205,17 @@
   rlDrawCall * draws // Draw calls array, depends on textureId
   int drawCounter // Draw calls counter
   float currentDepth // Current depth value for next draw"
-                         [^MemorySegment seg
+                         [:CARETMemorySegment seg
                           {:keys [bufferCount currentBuffer vertexBuffer draws drawCounter
                                   currentDepth]}]
                          (rayclj.rlgl.rlRenderBatch/bufferCount$set seg bufferCount)
                          (rayclj.rlgl.rlRenderBatch/currentBuffer$set seg currentBuffer)
-                         (set-vertex-buffer-array (rayclj.rlgl.rlRenderBatch/vertexBuffer$get seg) vertexBuffer bufferCount)
-                         (set-draw-call-array (rayclj.rlgl.rlRenderBatch/draws$get seg) draws defines/default-batch-drawcalls)
+                         ; (set-vertex-buffer-array (rayclj.rlgl.rlRenderBatch/vertexBuffer$get seg) vertexBuffer bufferCount)
+                         (rayclj.rlgl.rlRenderBatch/vertexBuffer$set seg (vertex-buffer-array vertexBuffer bufferCount))
+                         ; (set-draw-call-array (rayclj.rlgl.rlRenderBatch/draws$get seg) draws defines/default-batch-drawcalls)
+                         (rayclj.rlgl.rlRenderBatch/draws$set seg (draw-call-array draws defines/default-batch-drawcalls))
                          (rayclj.rlgl.rlRenderBatch/drawCounter$set seg drawCounter)
                          (rayclj.rlgl.rlRenderBatch/currentDepth$set seg currentDepth)
                          seg)]})
+
+(def functions {})

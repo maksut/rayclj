@@ -1,15 +1,18 @@
 (ns rayclj.raylib.structs
   (:require [rayclj.arena :as rarena]
             [rayclj.raylib.enums :as renums]
-            [rayclj.arrays :refer [get-float-array
-                                   set-float-array
-                                   get-char-array
-                                   set-char-array
-                                   get-int-array
-                                   set-int-array
-                                   array-fn
-                                   get-array-fn
-                                   set-array-fn]])
+            [rayclj.arrays
+             :refer [get-float-array
+                     set-float-array
+                     get-char-array
+                     set-char-array
+                     get-int-array
+                     set-int-array
+                     array-fn
+                     get-array-fn
+                     set-array-fn]
+             :as arrays]
+            [rayclj.rlgl.defines :as gldefines])
   (:import
    [java.lang.foreign Arena MemorySegment]))
 

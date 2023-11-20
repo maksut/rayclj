@@ -16,7 +16,6 @@
         (string/replace #"^rl-" "")))) ;; drop `rl-` prefix from rlgl definitions
 
 (def memory-segment-symbol (symbol "^MemorySegment"))
-(def arena-symbol (symbol "^Arena"))
 
 (defn array? [name]
   (re-matches #"(.+)\[([0-9]+)\]" name))
@@ -97,12 +96,10 @@
         struct-set-fn (symbol (str "set-" kebab-name))
         layout-sym (symbol (str "rayclj." header-name "." name "/$LAYOUT"))]
     `(~'defn ~fn-name ~(doc-str struct)
-             ([~arena-symbol ~'arena ~'v]
-              (~struct-set-fn (.allocate ~'arena (~layout-sym)) ~'v))
-             ([~'v]
-              (if (instance? ~'MemorySegment ~'v)
-                ~'v
-                (~fn-name rarena/*current-arena* ~'v))))))
+             [~'v]
+             (if (instance? ~'MemorySegment ~'v)
+               ~'v
+               (~struct-set-fn (arrays/allocate (~layout-sym)) ~'v)))))
 
 (defn array-fn [header-name {:keys [name]}]
   (let [kebab-name (c-name->clj-name name)
@@ -138,12 +135,21 @@
         aliases (apply hash-map aliases)]
     (merge aliases struct-names)))
 
-(defn get-overrided [definition]
+(defn get-overrided
+  [overrides definition]
   (let [name (keyword (second definition))
-        override (get overrides/definitions name)]
+        override (get overrides name)]
     (if override
       override
       [definition])))
+
+(defn get-overrided-struct-fn
+  [definition]
+  (get-overrided overrides/struct-functions definition))
+
+(defn get-overrided-fn
+  [definition]
+  (get-overrided overrides/functions definition))
 
 (defn pprint-struct-fns [header-name out-file all-struct-names struct]
   (let [get-fn (struct-get-fn header-name all-struct-names struct)
@@ -153,7 +159,7 @@
         get-array-fn (get-array-fn header-name struct)
         set-array-fn (set-array-fn header-name struct)
         str-fns [get-fn set-fn struct-fn array-fn get-array-fn set-array-fn]
-        str-fns (mapcat get-overrided str-fns)
+        str-fns (mapcat get-overrided-struct-fn str-fns)
         str-fns (map pprint str-fns)
         str-fns (apply str (interleave str-fns (repeat "\n\n")))]
     (spit out-file str-fns :append true)))
@@ -217,17 +223,15 @@
   ;; TODO: rest of the enums
   )
 
-(defn coerced-arg [all-struct-names function-name needs-arena? {:keys [name type]}]
+(defn coerced-arg [all-struct-names function-name {:keys [name type]}]
   (let [pointer-type (second (pointer? type))
         struct-name (get all-struct-names (or pointer-type type))
         enum-map (find-enum-map function-name name)
         name (symbol (c-name->clj-name name))]
     (cond
-      (c-string? type) (if needs-arena? `(~'string ~'arena ~name) `(~'string ~name))
+      (c-string? type) `(~'string ~name)
       struct-name (let [struct-fn (symbol (str "rstructs/" (c-name->clj-name struct-name)))]
-                    (if needs-arena?
-                      `(~struct-fn ~'arena ~name)
-                      `(~struct-fn ~name)))
+                    `(~struct-fn ~name))
       enum-map `(if (keyword? ~name) (~enum-map ~name) ~name)
       :else name)))
 
@@ -291,9 +295,7 @@
         clj-fn (symbol (clj-fn-name name returnType))
         args (mapv (comp symbol c-name->clj-name :name) params)
         struct-return (c-name->clj-name (get all-struct-names returnType))
-        needs-arena (some (comp c-string? :type) params)
-        coerced-args (mapv (partial coerced-arg all-struct-names name false) params)
-        coerced-args-arena (mapv (partial coerced-arg all-struct-names name true) params)]
+        coerced-args (mapv (partial coerced-arg all-struct-names name) params)]
     (cond
       return-first-arg
       (let [type (:type (first params))
@@ -309,17 +311,8 @@
       struct-return
       `(~'defn ~clj-fn
                ~(fn-doc-str function)
-               ([:CARETArena ~'arena ~@args]
-                (~java-fn ~'arena ~@coerced-args-arena))
-               (~args
-                (~(symbol (str "rstructs/get-" struct-return)) (~java-fn ~'rarena/*current-arena* ~@coerced-args))))
-      needs-arena
-      `(~'defn ~clj-fn
-               ~(fn-doc-str function)
-               ([:CARETArena ~'arena ~@args]
-                (~java-fn ~@coerced-args-arena))
-               (~args
-                (~java-fn ~@coerced-args)))
+               ~args
+               (~(symbol (str "rstructs/get-" struct-return)) (~java-fn ~'rarena/*current-arena* ~@coerced-args)))
       :else
       `(~'defn ~clj-fn
                ~(fn-doc-str function)
@@ -328,7 +321,7 @@
 
 (defn pprint-fn [header-name out-file all-struct-names function]
   (let [function (get-fn header-name all-struct-names function)
-        functions (map pprint (get-overrided function))
+        functions (map pprint (get-overrided-fn function))
         str-fns (apply str (interleave functions (repeat "\n\n")))]
     (spit out-file str-fns :append true)))
 

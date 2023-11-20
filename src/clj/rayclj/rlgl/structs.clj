@@ -1,16 +1,16 @@
 (ns rayclj.rlgl.structs
-  (:require [rayclj.arena :as rarena]
-            [rayclj.arrays :refer [get-byte-array
-                                   set-byte-array
-                                   get-float-array
-                                   set-float-array
-                                   get-unsigned-int-array
-                                   set-unsigned-int-array
-                                   array-fn
-                                   get-array-fn
-                                   set-array-fn]])
+  (:require [rayclj.arrays
+             :refer [get-byte-array
+                     get-float-array
+                     get-unsigned-int-array
+                     set-unsigned-int-array
+                     array-fn
+                     get-array-fn
+                     set-array-fn]
+             :as arrays]
+            [rayclj.rlgl.defines :as defines])
   (:import
-   [java.lang.foreign Arena MemorySegment]))
+   [java.lang.foreign MemorySegment]))
 
 (set! *warn-on-reflection* true)
 
@@ -65,12 +65,10 @@
   float m1, m5, m9,  m13 // Matrix second row (4 components)
   float m2, m6, m10, m14 // Matrix third row (4 components)
   float m3, m7, m11, m15 // Matrix fourth row (4 components)"
-  ([^Arena arena v]
-   (set-matrix (.allocate arena (rayclj.rlgl.Matrix/$LAYOUT)) v))
-  ([v]
-   (if (clojure.core/instance? MemorySegment v)
-     v
-     (matrix rarena/*current-arena* v))))
+  [v]
+  (if (clojure.core/instance? MemorySegment v)
+    v
+    (set-matrix (arrays/allocate (rayclj.rlgl.Matrix/$LAYOUT)) v)))
 
 (def matrix-array (array-fn (rayclj.rlgl.Matrix/$LAYOUT) set-matrix))
 
@@ -112,22 +110,21 @@
   unsigned int * indices // Vertex indices (in case vertex data comes indexed) (6 indices per quad)
   unsigned int vaoId // OpenGL Vertex Array Object id
   unsigned int[4] vboId // OpenGL Vertex Buffer Objects id (4 types of vertex data)"
-  [seg
-   {:keys [elementCount vertices texcoords colors indices indices indices
-           indices indices vaoId vaoId vboId]}]
+  [^MemorySegment seg
+   {:keys [elementCount vertices texcoords colors indices vaoId vboId]}]
   (rayclj.rlgl.rlVertexBuffer/elementCount$set seg elementCount)
-  (set-float-array (rayclj.rlgl.rlVertexBuffer/vertices$get seg)
-                   vertices
-                   (* elementCount 3))
-  (set-float-array (rayclj.rlgl.rlVertexBuffer/texcoords$get seg)
-                   texcoords
-                   (* elementCount 2))
-  (set-byte-array (rayclj.rlgl.rlVertexBuffer/colors$get seg)
-                  colors
-                  (* elementCount 4))
-  (set-byte-array (rayclj.rlgl.rlVertexBuffer/indices$get seg)
-                  indices
-                  (* elementCount 6))
+  (rayclj.rlgl.rlVertexBuffer/vertices$set
+    seg
+    (arrays/float-array vertices (* elementCount 3)))
+  (rayclj.rlgl.rlVertexBuffer/texcoords$set
+    seg
+    (arrays/float-array texcoords (* elementCount 2)))
+  (rayclj.rlgl.rlVertexBuffer/colors$set seg
+                                         (arrays/byte-array colors
+                                                            (* elementCount 4)))
+  (rayclj.rlgl.rlVertexBuffer/indices$set
+    seg
+    (arrays/byte-array indices (* elementCount 6)))
   (rayclj.rlgl.rlVertexBuffer/vaoId$set seg vaoId)
   (set-unsigned-int-array (rayclj.rlgl.rlVertexBuffer/vboId$slice seg) vboId 4)
   seg)
@@ -141,12 +138,11 @@
   unsigned int * indices // Vertex indices (in case vertex data comes indexed) (6 indices per quad)
   unsigned int vaoId // OpenGL Vertex Array Object id
   unsigned int[4] vboId // OpenGL Vertex Buffer Objects id (4 types of vertex data)"
-  ([^Arena arena v]
-   (set-vertex-buffer (.allocate arena (rayclj.rlgl.rlVertexBuffer/$LAYOUT)) v))
-  ([v]
-   (if (clojure.core/instance? MemorySegment v)
-     v
-     (vertex-buffer rarena/*current-arena* v))))
+  [v]
+  (if (clojure.core/instance? MemorySegment v)
+    v
+    (set-vertex-buffer (arrays/allocate (rayclj.rlgl.rlVertexBuffer/$LAYOUT))
+                       v)))
 
 (def vertex-buffer-array
   (array-fn (rayclj.rlgl.rlVertexBuffer/$LAYOUT) set-vertex-buffer))
@@ -188,12 +184,10 @@
   int vertexCount // Number of vertex of the draw
   int vertexAlignment // Number of vertex required for index alignment (LINES, TRIANGLES)
   unsigned int textureId // Texture id to be used on the draw -> Use to create new draw call if changes"
-  ([^Arena arena v]
-   (set-draw-call (.allocate arena (rayclj.rlgl.rlDrawCall/$LAYOUT)) v))
-  ([v]
-   (if (clojure.core/instance? MemorySegment v)
-     v
-     (draw-call rarena/*current-arena* v))))
+  [v]
+  (if (clojure.core/instance? MemorySegment v)
+    v
+    (set-draw-call (arrays/allocate (rayclj.rlgl.rlDrawCall/$LAYOUT)) v)))
 
 (def draw-call-array (array-fn (rayclj.rlgl.rlDrawCall/$LAYOUT) set-draw-call))
 
@@ -211,7 +205,7 @@
   rlDrawCall * draws // Draw calls array, depends on textureId
   int drawCounter // Draw calls counter
   float currentDepth // Current depth value for next draw"
-  [seg]
+  [^MemorySegment seg]
   (let [buffer-count (rayclj.rlgl.rlRenderBatch/bufferCount$get seg)]
     {:bufferCount buffer-count,
      :currentBuffer (rayclj.rlgl.rlRenderBatch/currentBuffer$get seg),
@@ -231,17 +225,17 @@
   rlDrawCall * draws // Draw calls array, depends on textureId
   int drawCounter // Draw calls counter
   float currentDepth // Current depth value for next draw"
-  [seg
+  [^MemorySegment seg
    {:keys [bufferCount currentBuffer vertexBuffer draws drawCounter
            currentDepth]}]
   (rayclj.rlgl.rlRenderBatch/bufferCount$set seg bufferCount)
   (rayclj.rlgl.rlRenderBatch/currentBuffer$set seg currentBuffer)
-  (set-vertex-buffer-array (rayclj.rlgl.rlRenderBatch/vertexBuffer$get seg)
-                           vertexBuffer
-                           bufferCount)
-  (set-draw-call-array (rayclj.rlgl.rlRenderBatch/draws$get seg)
-                       draws
-                       defines/default-batch-drawcalls)
+  (rayclj.rlgl.rlRenderBatch/vertexBuffer$set seg
+                                              (vertex-buffer-array vertexBuffer
+                                                                   bufferCount))
+  (rayclj.rlgl.rlRenderBatch/draws$set
+    seg
+    (draw-call-array draws defines/default-batch-drawcalls))
   (rayclj.rlgl.rlRenderBatch/drawCounter$set seg drawCounter)
   (rayclj.rlgl.rlRenderBatch/currentDepth$set seg currentDepth)
   seg)
@@ -254,12 +248,10 @@
   rlDrawCall * draws // Draw calls array, depends on textureId
   int drawCounter // Draw calls counter
   float currentDepth // Current depth value for next draw"
-  ([^Arena arena v]
-   (set-render-batch (.allocate arena (rayclj.rlgl.rlRenderBatch/$LAYOUT)) v))
-  ([v]
-   (if (clojure.core/instance? MemorySegment v)
-     v
-     (render-batch rarena/*current-arena* v))))
+  [v]
+  (if (clojure.core/instance? MemorySegment v)
+    v
+    (set-render-batch (arrays/allocate (rayclj.rlgl.rlRenderBatch/$LAYOUT)) v)))
 
 (def render-batch-array
   (array-fn (rayclj.rlgl.rlRenderBatch/$LAYOUT) set-render-batch))
