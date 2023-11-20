@@ -51,10 +51,8 @@
           (rl/with-drawing
             (rl/clear-background :raywhite)
 
-            (dorun
-             (map
-              (fn [{[x y] :position color :color}] (rl/draw-texture tex-bunny-seg x y color))
-              bunnies))
+            (doseq [{[x y] :position color :color} bunnies]
+              (rl/draw-texture tex-bunny-seg x y color))
 
             (rl/draw-rectangle 0 0 screen-width 40 :black)
             (rl/draw-text (format "bunnies: %d" bunnies-count) 120 10 20 :green)

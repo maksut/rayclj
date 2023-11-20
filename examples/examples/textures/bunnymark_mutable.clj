@@ -47,12 +47,12 @@
         min-y (* -1 (/ height 2))
         max-y (+ (rl/get-screen-height) min-y)]
 
-    (loop [bunnies (transient [])]
+    (loop [bunnies []]
       (when-not (rl/window-should-close?)
         (let [bunnies (if (rl/mouse-button-down? :left)
                         (loop [bunnies bunnies i 0]
                           (if (< i 100)
-                            (recur (conj! bunnies (new-bunny)) (inc i))
+                            (recur (conj bunnies (new-bunny)) (inc i))
                             bunnies))
                         bunnies)
 
@@ -62,11 +62,8 @@
           (rl/with-drawing
             (rl/clear-background :raywhite)
 
-            (loop [i 0]
-              (when (< i bunnies-count)
-                (let [^IBunny bunny (nth bunnies i)]
-                  (.update-and-draw bunny tex-bunny-seg min-x max-x min-y max-y)
-                  (recur (unchecked-inc i)))))
+            (doseq [^IBunny bunny bunnies]
+              (.update-and-draw bunny tex-bunny-seg min-x max-x min-y max-y))
 
             (rl/draw-rectangle 0 0 screen-width 40 :black)
             (rl/draw-text (format "bunnies: %d" bunnies-count) 120 10 20 :green)
