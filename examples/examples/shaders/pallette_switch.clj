@@ -71,8 +71,7 @@
       ;; Update
       ;; Send new value to the shader to be used on drawing.
       ;; NOTE: We are sending RGB triplets w/o the alpha channel
-      ;; TODO: add enums to this function SHADER_UNIFORM_IVEC3 is 6
-      (rl/set-shader-value-v shader palette-loc (nth palettes current-palette) 6 COLORS_PER_PALETTE);
+      (rl/set-shader-value-v shader palette-loc (nth palettes current-palette) :ivec3 COLORS_PER_PALETTE);
 
       ;; Draw
       (rl/with-drawing

@@ -87,19 +87,21 @@
   "Check if one specific window flag is enabled
   [unsigned int flag] -> bool"
   [flag]
-  (raylib_h/IsWindowState flag))
+  (raylib_h/IsWindowState (if (keyword? flag) (renums/config-flags flag) flag)))
 
 (defn set-window-state
   "Set window configuration state using flags (only PLATFORM_DESKTOP)
   [unsigned int flags] -> void"
   [flags]
-  (raylib_h/SetWindowState flags))
+  (raylib_h/SetWindowState
+    (if (keyword? flags) (renums/config-flags flags) flags)))
 
 (defn clear-window-state
   "Clear window configuration state flags
   [unsigned int flags] -> void"
   [flags]
-  (raylib_h/ClearWindowState flags))
+  (raylib_h/ClearWindowState
+    (if (keyword? flags) (renums/config-flags flags) flags)))
 
 (defn toggle-fullscreen
   "Toggle window state: fullscreen/windowed (only PLATFORM_DESKTOP)
@@ -412,7 +414,7 @@
   "Begin blending mode (alpha, additive, multiplied, subtract, custom)
   [int mode] -> void"
   [mode]
-  (raylib_h/BeginBlendMode mode))
+  (raylib_h/BeginBlendMode (if (keyword? mode) (renums/blend-mode mode) mode)))
 
 (defn end-blend-mode
   "End blending mode (reset to default: alpha blending)
@@ -501,7 +503,9 @@
   (raylib_h/SetShaderValue (rstructs/shader shader)
                            loc-index
                            value
-                           uniform-type))
+                           (if (keyword? uniform-type)
+                             (renums/shader-uniform-data-type uniform-type)
+                             uniform-type)))
 
 (defn set-shader-value-v
   "Set shader uniform value vector
@@ -510,7 +514,9 @@
   (raylib_h/SetShaderValueV (rstructs/shader shader)
                             loc-index
                             value
-                            uniform-type
+                            (if (keyword? uniform-type)
+                              (renums/shader-uniform-data-type uniform-type)
+                              uniform-type)
                             count))
 
 (defn set-shader-value-matrix
@@ -666,7 +672,8 @@
   "Setup init configuration flags (view FLAGS)
   [unsigned int flags] -> void"
   [flags]
-  (raylib_h/SetConfigFlags flags))
+  (raylib_h/SetConfigFlags
+    (if (keyword? flags) (renums/config-flags flags) flags)))
 
 (defn open-url
   "Open URL with default system browser (if available)
@@ -678,13 +685,17 @@
   "Show trace log messages (LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR...)
   [int logLevel, const char * text, ... args] -> void"
   [log-level text args]
-  (raylib_h/TraceLog log-level (memory/string text) args))
+  (raylib_h/TraceLog
+    (if (keyword? log-level) (renums/trace-log-level log-level) log-level)
+    (memory/string text)
+    args))
 
 (defn set-trace-log-level
   "Set the current threshold (minimum) log level
   [int logLevel] -> void"
   [log-level]
-  (raylib_h/SetTraceLogLevel log-level))
+  (raylib_h/SetTraceLogLevel
+    (if (keyword? log-level) (renums/trace-log-level log-level) log-level)))
 
 (defn mem-alloc
   "Internal memory allocator
@@ -982,36 +993,32 @@
   "Check if a key has been pressed once
   [int key] -> bool"
   [key]
-  (raylib_h/IsKeyPressed
-    (if (clojure.core/keyword? key) (renums/keyboard-key key) key)))
+  (raylib_h/IsKeyPressed (if (keyword? key) (renums/keyboard-key key) key)))
 
 (defn key-pressed-repeat?
   "Check if a key has been pressed again (Only PLATFORM_DESKTOP)
   [int key] -> bool"
   [key]
   (raylib_h/IsKeyPressedRepeat
-    (if (clojure.core/keyword? key) (renums/keyboard-key key) key)))
+    (if (keyword? key) (renums/keyboard-key key) key)))
 
 (defn key-down?
   "Check if a key is being pressed
   [int key] -> bool"
   [key]
-  (raylib_h/IsKeyDown
-    (if (clojure.core/keyword? key) (renums/keyboard-key key) key)))
+  (raylib_h/IsKeyDown (if (keyword? key) (renums/keyboard-key key) key)))
 
 (defn key-released?
   "Check if a key has been released once
   [int key] -> bool"
   [key]
-  (raylib_h/IsKeyReleased
-    (if (clojure.core/keyword? key) (renums/keyboard-key key) key)))
+  (raylib_h/IsKeyReleased (if (keyword? key) (renums/keyboard-key key) key)))
 
 (defn key-up?
   "Check if a key is NOT being pressed
   [int key] -> bool"
   [key]
-  (raylib_h/IsKeyUp
-    (if (clojure.core/keyword? key) (renums/keyboard-key key) key)))
+  (raylib_h/IsKeyUp (if (keyword? key) (renums/keyboard-key key) key)))
 
 (defn get-key-pressed
   "Get key pressed (keycode), call it multiple times for keys queued, returns 0 when the queue is empty
@@ -1029,8 +1036,7 @@
   "Set a custom key to exit program (default is ESC)
   [int key] -> void"
   [key]
-  (raylib_h/SetExitKey
-    (if (clojure.core/keyword? key) (renums/keyboard-key key) key)))
+  (raylib_h/SetExitKey (if (keyword? key) (renums/keyboard-key key) key)))
 
 (defn gamepad-available?
   "Check if a gamepad is available
@@ -1050,7 +1056,7 @@
   [gamepad button]
   (raylib_h/IsGamepadButtonPressed
     gamepad
-    (if (clojure.core/keyword? button) (renums/gamepad-button button) button)))
+    (if (keyword? button) (renums/gamepad-button button) button)))
 
 (defn gamepad-button-down?
   "Check if a gamepad button is being pressed
@@ -1058,7 +1064,7 @@
   [gamepad button]
   (raylib_h/IsGamepadButtonDown
     gamepad
-    (if (clojure.core/keyword? button) (renums/gamepad-button button) button)))
+    (if (keyword? button) (renums/gamepad-button button) button)))
 
 (defn gamepad-button-released?
   "Check if a gamepad button has been released once
@@ -1066,7 +1072,7 @@
   [gamepad button]
   (raylib_h/IsGamepadButtonReleased
     gamepad
-    (if (clojure.core/keyword? button) (renums/gamepad-button button) button)))
+    (if (keyword? button) (renums/gamepad-button button) button)))
 
 (defn gamepad-button-up?
   "Check if a gamepad button is NOT being pressed
@@ -1074,7 +1080,7 @@
   [gamepad button]
   (raylib_h/IsGamepadButtonUp
     gamepad
-    (if (clojure.core/keyword? button) (renums/gamepad-button button) button)))
+    (if (keyword? button) (renums/gamepad-button button) button)))
 
 (defn get-gamepad-button-pressed
   "Get the last gamepad button pressed
@@ -1092,7 +1098,9 @@
   "Get axis movement value for a gamepad axis
   [int gamepad, int axis] -> float"
   [gamepad axis]
-  (raylib_h/GetGamepadAxisMovement gamepad axis))
+  (raylib_h/GetGamepadAxisMovement
+    gamepad
+    (if (keyword? axis) (renums/gamepad-axis axis) axis)))
 
 (defn set-gamepad-mappings
   "Set internal gamepad mappings (SDL_GameControllerDB)
@@ -1105,28 +1113,28 @@
   [int button] -> bool"
   [button]
   (raylib_h/IsMouseButtonPressed
-    (if (clojure.core/keyword? button) (renums/mouse-button button) button)))
+    (if (keyword? button) (renums/mouse-button button) button)))
 
 (defn mouse-button-down?
   "Check if a mouse button is being pressed
   [int button] -> bool"
   [button]
   (raylib_h/IsMouseButtonDown
-    (if (clojure.core/keyword? button) (renums/mouse-button button) button)))
+    (if (keyword? button) (renums/mouse-button button) button)))
 
 (defn mouse-button-released?
   "Check if a mouse button has been released once
   [int button] -> bool"
   [button]
   (raylib_h/IsMouseButtonReleased
-    (if (clojure.core/keyword? button) (renums/mouse-button button) button)))
+    (if (keyword? button) (renums/mouse-button button) button)))
 
 (defn mouse-button-up?
   "Check if a mouse button is NOT being pressed
   [int button] -> bool"
   [button]
   (raylib_h/IsMouseButtonUp
-    (if (clojure.core/keyword? button) (renums/mouse-button button) button)))
+    (if (keyword? button) (renums/mouse-button button) button)))
 
 (defn get-mouse-x "Get mouse position X
   [] -> int" [] (raylib_h/GetMouseX))
@@ -1180,7 +1188,8 @@
   "Set mouse cursor
   [int cursor] -> void"
   [cursor]
-  (raylib_h/SetMouseCursor cursor))
+  (raylib_h/SetMouseCursor
+    (if (keyword? cursor) (renums/mouse-cursor cursor) cursor)))
 
 (defn get-touch-x
   "Get touch position X for touch point 0 (relative to screen size)
@@ -1217,13 +1226,15 @@
   "Enable a set of gestures using flags
   [unsigned int flags] -> void"
   [flags]
-  (raylib_h/SetGesturesEnabled flags))
+  (raylib_h/SetGesturesEnabled
+    (if (keyword? flags) (renums/gesture flags) flags)))
 
 (defn gesture-detected?
   "Check if a gesture have been detected
   [unsigned int gesture] -> bool"
   [gesture]
-  (raylib_h/IsGestureDetected gesture))
+  (raylib_h/IsGestureDetected
+    (if (keyword? gesture) (renums/gesture gesture) gesture)))
 
 (defn get-gesture-detected
   "Get latest detected gesture
@@ -1854,7 +1865,9 @@
                                              (memory/string file-name)
                                              width
                                              height
-                                             format
+                                             (if (keyword? format)
+                                               (renums/pixel-format format)
+                                               format)
                                              header-size)))
 
 (defn load-image-svg
@@ -2057,7 +2070,9 @@
   [Image * image, int newFormat] -> void"
   [image new-format]
   (let [first-arg (rstructs/image image)]
-    (raylib_h/ImageFormat first-arg new-format)
+    (raylib_h/ImageFormat
+      first-arg
+      (if (keyword? new-format) (renums/pixel-format new-format) new-format))
     (rstructs/get-image first-arg)))
 
 (defn image-to-pot
@@ -2488,9 +2503,11 @@
   "Load cubemap from image, multiple image cubemap layouts supported
   [Image image, int layout] -> TextureCubemap"
   [image layout]
-  (rstructs/get-texture (raylib_h/LoadTextureCubemap memory/*current-arena*
-                                                     (rstructs/image image)
-                                                     layout)))
+  (rstructs/get-texture
+    (raylib_h/LoadTextureCubemap
+      memory/*current-arena*
+      (rstructs/image image)
+      (if (keyword? layout) (renums/cubemap-layout layout) layout))))
 
 (defn load-render-texture
   "Load texture for rendering (framebuffer)
@@ -2547,13 +2564,17 @@
   "Set texture scaling filter mode
   [Texture2D texture, int filter] -> void"
   [texture filter]
-  (raylib_h/SetTextureFilter (rstructs/texture texture) filter))
+  (raylib_h/SetTextureFilter
+    (rstructs/texture texture)
+    (if (keyword? filter) (renums/texture-filter filter) filter)))
 
 (defn set-texture-wrap
   "Set texture wrapping mode
   [Texture2D texture, int wrap] -> void"
   [texture wrap]
-  (raylib_h/SetTextureWrap (rstructs/texture texture) wrap))
+  (raylib_h/SetTextureWrap
+    (rstructs/texture texture)
+    (if (keyword? wrap) (renums/texture-wrap wrap) wrap)))
 
 (defn draw-texture
   "Draw a Texture2D
@@ -2779,7 +2800,7 @@
                          font-size
                          codepoints
                          codepoint-count
-                         type))
+                         (if (keyword? type) (renums/font-type type) type)))
 
 (defn gen-image-font-atlas
   "Generate image font atlas using chars info

@@ -215,24 +215,62 @@
       structs))
     api))
 
-(defn find-enum-map [function-name arg-name]
-  (cond
-    (and (re-find #"Key" function-name) (= arg-name "key")) (symbol "renums/keyboard-key")
-    (and (re-find #"MouseButton" function-name) (= arg-name "button")) (symbol "renums/mouse-button")
-    (and (re-find #"GamepadButton" function-name) (= arg-name "button")) (symbol "renums/gamepad-button"))
-  ;; TODO: rest of the enums
-  )
+;; Currently only supports function arguments. Struct fields are not supported.
+(def enum-args
+  {["SetConfigFlags" "flags"] "renums/config-flags"
+   ["SetWindowState" "flags"] "renums/config-flags"
+   ["ClearWindowState" "flags"] "renums/config-flags"
+   ["IsWindowState" "flag"] "renums/config-flags"
+   ["TraceLog" "logLevel"] "renums/trace-log-level"
+   ["SetTraceLogLevel" "logLevel"] "renums/trace-log-level"
+   ["IsKeyPressed" "key"] "renums/keyboard-key"
+   ["IsKeyPressedRepeat" "key"] "renums/keyboard-key"
+   ["IsKeyDown" "key"] "renums/keyboard-key"
+   ["IsKeyReleased" "key"] "renums/keyboard-key"
+   ["IsKeyUp" "key"] "renums/keyboard-key"
+   ["SetExitKey" "key"] "renums/keyboard-key"
+   ["SetCameraAltControl" "keyAlt"] "renums/keyboard-key"
+   ["SetCameraSmoothZoomControl" "keySmoothZoom"] "renums/keyboard-key"
+   ["SetCameraMoveControls" "keyFront"] "renums/keyboard-key"
+   ["SetCameraMoveControls" "keyBack"] "renums/keyboard-key"
+   ["SetCameraMoveControls" "keyRight"] "renums/keyboard-key"
+   ["SetCameraMoveControls" "keyLeft"] "renums/keyboard-key"
+   ["SetCameraMoveControls" "keyUp"] "renums/keyboard-key"
+   ["SetCameraMoveControls" "keyDown"] "renums/keyboard-key"
+   ["IsMouseButtonPressed" "button"] "renums/mouse-button"
+   ["IsMouseButtonDown" "button"] "renums/mouse-button"
+   ["IsMouseButtonReleased" "button"] "renums/mouse-button"
+   ["IsMouseButtonUp" "button"] "renums/mouse-button"
+   ["SetCameraPanControl" "keyPan"] "renums/mouse-button"
+   ["SetMouseCursor" "cursor"] "renums/mouse-cursor"
+   ["IsGamepadButtonPressed" "button"] "renums/gamepad-button"
+   ["IsGamepadButtonDown" "button"] "renums/gamepad-button"
+   ["IsGamepadButtonReleased" "button"] "renums/gamepad-button"
+   ["IsGamepadButtonUp" "button"] "renums/gamepad-button"
+   ["GetGamepadAxisMovement" "axis"] "renums/gamepad-axis"
+   ["SetShaderValue" "uniformType"] "renums/shader-uniform-data-type"
+   ["SetShaderValueV" "uniformType"] "renums/shader-uniform-data-type"
+   ["LoadImageRaw" "format"] "renums/pixel-format"
+   ["ImageFormat" "newFormat"] "renums/pixel-format"
+   ["SetTextureFilter" "filter"] "renums/texture-filter"
+   ["SetTextureWrap" "wrap"] "renums/texture-wrap"
+   ["LoadTextureCubemap" "layout"] "renums/cubemap-layout"
+   ["LoadFontData" "type"] "renums/font-type"
+   ["BeginBlendMode" "mode"] "renums/blend-mode"
+   ["SetGesturesEnabled" "flags"] "renums/gesture" ;; combination of flags not supported yet
+   ["IsGestureDetected" "gesture"] "renums/gesture"
+   ["SetCameraMode" "mode"] "renums/camera-mode"})
 
 (defn coerced-arg [all-struct-names function-name {:keys [name type]}]
   (let [pointer-type (second (pointer? type))
         struct-name (get all-struct-names (or pointer-type type))
-        enum-map (find-enum-map function-name name)
+        enum-arg (enum-args [function-name name])
         name (symbol (c-name->clj-name name))]
     (cond
       (c-string? type) `(~'memory/string ~name)
       struct-name (let [struct-fn (symbol (str "rstructs/" (c-name->clj-name struct-name)))]
                     `(~struct-fn ~name))
-      enum-map `(if (keyword? ~name) (~enum-map ~name) ~name)
+      enum-arg `(if (~'keyword? ~name) (~(symbol enum-arg) ~name) ~name)
       :else name)))
 
 (defn clj-fn-name [name return-type]
