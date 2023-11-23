@@ -3,3 +3,5 @@
 .lsp
 .nrepl-*
 target
+/libraylib.so
+/native

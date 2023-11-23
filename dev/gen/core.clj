@@ -435,8 +435,8 @@
     (spit out-file str-defines :append true)
     api))
 
-(defn generate-for-header [header-name]
-  (let [api (slurp (str "native/raylib_linux_amd64/api/" header-name "_api.json"))
+(defn generate-for-header [api-folder header-name]
+  (let [api (slurp (str api-folder "/" header-name "_api.json"))
         api (json/read-value api json/keyword-keys-object-mapper)]
     (->> api
          (process-api)
@@ -446,14 +446,17 @@
          (generate-functions header-name))
     nil))
 
-(defn generate-all []
-  (generate-for-header "raylib")
-  (generate-for-header "rlgl"))
+(defn generate-all [api-folder]
+  (generate-for-header api-folder "raylib")
+  (generate-for-header api-folder "rlgl"))
 
 (comment
-  (generate-all)
-  (generate-for-header "raylib")
-  (generate-for-header "rlgl")
+  ; generates all clojure code for the bindings by using the parser output
+  ; generated clojure code uses the generated java code
+  (generate-all "native/raylib-5.0_linux_amd64/api")
+
+  (generate-for-header "native/raylib-5.0_linux_amd64/api" "raylib")
+  (generate-for-header "native/raylib-5.0_linux_amd64/api" "rlgl")
 
   (def raylib-api
     (-> "native/raylib_linux_amd64/api/raylib_api.json"
@@ -467,7 +470,7 @@
   (enum-value-prefix (:FontType enums-by-name))
 
   (print (zp/zprint-str (get-enum-str (enums-by-name :FontType)) {:parse-string? true}))
-  (generate-enums raylib-api)
+  (generate-enums "raylib" raylib-api)
 
   (def rlgl-api
     (-> "native/raylib_linux_amd64/api/rlgl_api.json"
@@ -488,45 +491,4 @@
   (def functions-by-name
     (into {} (map (juxt (comp keyword :name) identity)) functions))
 
-  (def init-window (:InitWindow functions-by-name))
-  (get-fn all-struct-names init-window)
-  (mapv (partial coerced-arg all-struct-names) (:params init-window))
-
-  (generate-functions raylib-api)
-
-  (def get-mouse-position (:GetMousePosition functions-by-name))
-  (get-fn all-struct-names get-mouse-position)
-
-  (generate-structs raylib-api)
-
-  (def structs (:structs (process-api raylib-api)))
-  (def structs-by-name
-    (into {} (map (juxt (comp keyword :name) identity)) structs))
-
-  (:Matrix structs-by-name)
-
-  (def all-struct-names (get-all-struct-names raylib-api))
-
-  (def vector2 (:Vector2 structs-by-name))
-  (def render-texture (:RenderTexture structs-by-name))
-
-  (print (pprint (struct-get-fn all-struct-names (assoc vector2 :as-vector? true))))
-  (print (pprint (struct-get-fn all-struct-names (assoc vector2 :as-vector? false))))
-  (print (pprint (struct-set-fn all-struct-names (assoc vector2 :as-vector? true))))
-  (print (pprint (struct-set-fn all-struct-names (assoc vector2 :as-vector? false))))
-  (print (pprint (struct-fn vector2)))
-  (print (pprint (array-fn vector2)))
-  (print (pprint (get-array-fn vector2)))
-  (keyword (second (get-array-fn vector2)))
-
-  (print (pprint (struct-get-fn all-struct-names (assoc render-texture :as-vector? true))))
-  (print (pprint (struct-get-fn all-struct-names (assoc render-texture :as-vector? false))))
-  (print (pprint (struct-set-fn all-struct-names (assoc render-texture :as-vector? true))))
-  (print (pprint (struct-set-fn all-struct-names (assoc render-texture :as-vector? false))))
-  (print (pprint (struct-fn render-texture)))
-  (print (pprint (array-fn render-texture)))
-  (print (pprint (get-array-fn render-texture)))
-  (c-name->clj-name "LoadImage")
-  (c-name->clj-name "Camera3D")
-  (c-name->clj-name "Vector2")
-  (c-name->clj-name "rlSetMatrixViewOffsetStereo"))
+  (def init-window (:InitWindow functions-by-name)))

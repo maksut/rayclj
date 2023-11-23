@@ -1,7 +1,12 @@
-{:paths ["src/clj" "target/classes" "examples"]
+{:paths ["src/clj" "native" "target/classes" "examples"]
 
  :deps
  {org.clojure/clojure {:mvn/version "1.11.1"}}
+
+ :deps/prep-lib
+ {:ensure "target/classes"
+  :alias :build
+  :fn prep}
 
  :aliases
  {:build {:deps {io.github.clojure/tools.build {:git/tag "v0.9.6" :git/sha "8e78bcc"}}
@@ -27,8 +32,8 @@
                    "--enable-preview"
                    "--enable-native-access=ALL-UNNAMED"
 
-                   ; this folder must contain raylib dynamic library (e.g. libraylib.so)
-                   "-Djava.library.path=native/raylib_linux_amd64/lib"
+                   ; Optional raylib dynamic library. If not provided, then a library from classpath will be used.
+                   ; "-Drayclj.library=native/native/raylib-5.0_linux_amd64/lib/libraylib.so"
 
                    ; for debugger
                    ;"-Dclojure.storm.instrumentEnable=true"
