@@ -10,14 +10,21 @@
 ;; Utility Functions
 ;;
 
-(defmacro with-drawing [& body]
-  `(binding [memory/*current-arena* (memory/confined-arena)]
-     (try
-       (begin-drawing)
-       ~@body
-       (end-drawing)
-       (finally
-         (.close memory/*current-arena*)))))
+(defmacro with-drawing
+  "Evaluates body between begin-drawing and end-drawing calls"
+  [& body]
+  `(do
+     (begin-drawing)
+     ~@body
+     (end-drawing)))
+
+(defmacro with-shader-mode
+  "Evaluates body between begin-shader-mode and end-shader-mode calls"
+  [shader & body]
+  `(do
+     (begin-shader-mode ~shader)
+     ~@body
+     (end-shader-mode)))
 
 ;;
 ;; Raylib Functions

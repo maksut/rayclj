@@ -14,9 +14,9 @@
 
   :examples {:jvm-opts [; for foreign function api
                         "--enable-preview"
-                        "--enable-native-access=ALL-UNNAMED"
-                        ; this folder must contain raylib dynamic library (e.g. libraylib.so)
-                        "-Djava.library.path=native/raylib_linux_amd64/lib"]}
+                        ; Optional raylib dynamic library. If not provided, then a library from classpath will be used.
+                        ; "-Drayclj.library=./libraylib.so"
+                        ]}
 
   :dev {:extra-paths ["dev"]
         :classpath-overrides {org.clojure/clojure nil} ;; for disabling the official compiler
@@ -33,13 +33,13 @@
                    "--enable-native-access=ALL-UNNAMED"
 
                    ; Optional raylib dynamic library. If not provided, then a library from classpath will be used.
-                   ; "-Drayclj.library=native/native/raylib-5.0_linux_amd64/lib/libraylib.so"
+                   ; "-Drayclj.library=./libraylib.so"
 
                    ; for debugger
-                   ;"-Dclojure.storm.instrumentEnable=true"
-                   ;"-Dclojure.storm.instrumentOnlyPrefixes=ffi"
+                   ; "-Dclojure.storm.instrumentEnable=true"
+                   ; "-Dclojure.storm.instrumentOnlyPrefixes=ffi"
 
-                   ;; for profiler
+                   ; for profiler
                    ; "-Djdk.attach.allowAttachSelf"
                    ; "-XX:+UnlockDiagnosticVMOptions"
                    ]

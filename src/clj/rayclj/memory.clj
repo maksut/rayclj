@@ -12,6 +12,11 @@
 
 (def ^Arena ^:dynamic *current-arena* (auto-arena))
 
+(defmacro with-confined-arena [& body]
+  `(with-open [arena# (confined-arena)]
+     (binding [memory/*current-arena* arena#]
+       ~@body)))
+
 (def null MemorySegment/NULL)
 
 (defn allocate
