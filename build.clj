@@ -4,11 +4,12 @@
             [clojure.java.io :as io]
             [clojure.string :as string]))
 
-(def lib 'maksut/rayclj)
+(def lib 'org.clojars.maksut/rayclj)
 (def version (format "0.0.%s" (b/git-count-revs nil)))
-(def class-dir "target/classes")
+(def target-dir "target")
+(def class-dir (str target-dir "/classes"))
 (def basis (b/create-basis {:project "deps.edn"}))
-(def jar-file (format "target/%s.jar" (name lib)))
+(def jar-file (str target-dir "/" (name lib) ".jar"))
 
 (defn- absolute-path [& paths]
   (.getCanonicalPath ^java.io.File (apply io/file paths)))
@@ -23,7 +24,7 @@
 (defn clean
   "Delete target folder"
   [_]
-  (b/delete {:path "target"}))
+  (b/delete {:path target-dir}))
 
 (defn clean-generated
   "Delete generated java and clojure files"
@@ -157,14 +158,21 @@
     (copy-artifact config "parser/output/rlgl_api.json" "api/rlgl_api.json")
     (println "parser run is successful")))
 
-(defn jar
-  "Generates a pom, compiles java and clj files and builds a jar file"
-  [opts]
+(defn pom
+  "Generates a pom file in classes/META-INF directory. Also copies it into target"
+  [_]
   (b/write-pom {:class-dir class-dir
                 :lib lib
                 :version version
                 :basis basis
                 :src-dirs ["src"]})
+  (b/copy-file {:src (b/pom-path {:lib lib :class-dir class-dir})
+                :target (str target-dir "/pom.xml")}))
+
+(defn jar
+  "Generates a pom, compiles java and clj files and builds a jar file"
+  [opts]
+  (pom opts)
   (prep opts)
 
   ;; Also AOT compile clj code, so the user has to provide only --enable-preview jvm flag
@@ -204,6 +212,7 @@
   (gen.core/generate-all "native/raylib-5.0_linux_amd64/api")
 
   (clean-generated nil)
+
   (clean nil)
 
   ; Generates java code from raylib headers
