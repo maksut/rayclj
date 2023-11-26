@@ -59,6 +59,9 @@
       (catch InterruptedException _ nil)) ; quit the loop silently on interrupt
     (rl/close-window)))
 
+(defn -main []
+  (game-init))
+
 (comment
   ; start the game in another thread
   (def game (future (game-init)))

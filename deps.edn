@@ -12,11 +12,13 @@
  {:build {:deps {io.github.clojure/tools.build {:git/tag "v0.9.6" :git/sha "8e78bcc"}}
           :ns-default build}
 
-  :examples {:jvm-opts [; for foreign function api
-                        "--enable-preview"
-                        ; Optional raylib dynamic library. If not provided, then a library from classpath will be used.
-                        ; "-Drayclj.library=./libraylib.so"
-                        ]}
+  :run {:jvm-opts [; for foreign function api
+                   "--enable-preview"
+                   "--enable-native-access=ALL-UNNAMED"
+
+                   ; Optional raylib dynamic library. If not provided, then a library from classpath will be used.
+                   ; "-Drayclj.library=./libraylib.so"
+                   ]}
 
   :dev {:extra-paths ["dev"]
         :classpath-overrides {org.clojure/clojure nil} ;; for disabling the official compiler

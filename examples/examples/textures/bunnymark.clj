@@ -28,38 +28,39 @@
                              (if pos-y-out? (unchecked-negate speed-y) speed-y)])
         bunny))))
 
+(defn -main []
 ;; Initialization
-(let [screen-width 800 screen-height 450]
-  (rl/init-window screen-width screen-height "raylib [textures] example - bunnymark")
+  (let [screen-width 800 screen-height 450]
+    (rl/init-window screen-width screen-height "raylib [textures] example - bunnymark")
 
-  (rl/set-target-fps 60) ;; Set our game to run at 60 frames-per-second
+    (rl/set-target-fps 60) ;; Set our game to run at 60 frames-per-second
 
-  (let [tex-bunny (rl/load-texture "examples/examples/textures/resources/wabbit_alpha.png")
-        tex-bunny-seg (rstructs/texture tex-bunny)
-        min-x (* -1 (/ (:width tex-bunny) 2))
-        max-x (+ (rl/get-screen-width) min-x)
-        min-y (* -1 (/ (:height tex-bunny) 2))
-        max-y (+ (rl/get-screen-height) min-y)]
-    (loop [bunnies [] bunnies-count 0]
-      (when-not (rl/window-should-close?) ;; Detect window close button or ESC key
-        (let [bunnies (if (rl/mouse-button-down? :left)
-                        (concat bunnies (take 100 (repeatedly new-bunny)))
-                        bunnies)
+    (let [tex-bunny (rl/load-texture "examples/examples/textures/resources/wabbit_alpha.png")
+          tex-bunny-seg (rstructs/texture tex-bunny)
+          min-x (* -1 (/ (:width tex-bunny) 2))
+          max-x (+ (rl/get-screen-width) min-x)
+          min-y (* -1 (/ (:height tex-bunny) 2))
+          max-y (+ (rl/get-screen-height) min-y)]
+      (loop [bunnies [] bunnies-count 0]
+        (when-not (rl/window-should-close?) ;; Detect window close button or ESC key
+          (let [bunnies (if (rl/mouse-button-down? :left)
+                          (concat bunnies (take 100 (repeatedly new-bunny)))
+                          bunnies)
 
-              bunnies (into [] (map (update-bunny min-x max-x min-y max-y)) bunnies)]
+                bunnies (into [] (map (update-bunny min-x max-x min-y max-y)) bunnies)]
 
-          (rl/with-drawing
-            (rl/clear-background :raywhite)
+            (rl/with-drawing
+              (rl/clear-background :raywhite)
 
-            (doseq [{[x y] :position color :color} bunnies]
-              (rl/draw-texture tex-bunny-seg x y color))
+              (doseq [{[x y] :position color :color} bunnies]
+                (rl/draw-texture tex-bunny-seg x y color))
 
-            (rl/draw-rectangle 0 0 screen-width 40 :black)
-            (rl/draw-text (format "bunnies: %d" bunnies-count) 120 10 20 :green)
-            (rl/draw-text (format "batched draw calls: %d" (int (inc (/ bunnies-count default-batch-buffer-elements)))) 320 10 20 :maroon)
-            (rl/draw-fps 10 10))
+              (rl/draw-rectangle 0 0 screen-width 40 :black)
+              (rl/draw-text (format "bunnies: %d" bunnies-count) 120 10 20 :green)
+              (rl/draw-text (format "batched draw calls: %d" (int (inc (/ bunnies-count default-batch-buffer-elements)))) 320 10 20 :maroon)
+              (rl/draw-fps 10 10))
 
-          (recur bunnies (count bunnies)))))
+            (recur bunnies (count bunnies)))))
 
-    (rl/unload-texture tex-bunny) ;; Unload bunny texture
-    (rl/close-window)))           ;; Close window and OpenGL context
+      (rl/unload-texture tex-bunny) ;; Unload bunny texture
+      (rl/close-window))))           ;; Close window and OpenGL context
