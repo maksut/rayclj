@@ -49,11 +49,11 @@ See [more raylib examples](https://github.com/maksut/rayclj/tree/main/examples/e
 To provide your own raylib binary you can use `rayclj.library` property. For example:
 ```
 :jvm-opts [; for foreign function api
-          "--enable-preview"
-          "--enable-native-access=ALL-UNNAMED"
+           "--enable-preview"
+           "--enable-native-access=ALL-UNNAMED"
 
-          ; Optional raylib dynamic library.
-          "-Drayclj.library=/some/directory/libraylib.so"]
+           ; Optional raylib dynamic library.
+           "-Drayclj.library=/some/directory/libraylib.so"]
 ```
 
 Naming
