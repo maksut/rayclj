@@ -85,7 +85,8 @@ Other structs can be represented with clojure maps.
 (image-crop img {:x 100 :y 10 :width 280 :height 380})
 ```
 
-### Performance
+Performance
+===========
 Do not use clojure if performance is a hard requirement.
 Trade off here is performance vs productivity. Who am I kidding. It is performance vs fun. Clojure is fun.
 
