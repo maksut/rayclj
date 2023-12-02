@@ -18,13 +18,61 @@
      ~@body
      (end-drawing)))
 
+(defmacro with-mode2d
+  "Evaluates body between begin-mode2d and end-mode2d calls."
+  [camera & body]
+  `(do
+     (begin-mode2d ~camera)
+     ~@body
+     (end-mode2d)))
+
+(defmacro with-mode3d
+  "Evaluates body between begin-mode3d and end-mode3d calls."
+  [camera & body]
+  `(do
+     (begin-mode3d ~camera)
+     ~@body
+     (end-mode3d)))
+
+(defmacro with-texture-mode
+  "Evaluates body between begin-texture-mode and end-texture-mode calls."
+  [target & body]
+  `(do
+     (begin-texture-mode ~target)
+     ~@body
+     (end-texture-mode)))
+
 (defmacro with-shader-mode
-  "Evaluates body between begin-shader-mode and end-shader-mode calls"
+  "Evaluates body between begin-shader-mode and end-shader-mode calls."
   [shader & body]
   `(do
      (begin-shader-mode ~shader)
      ~@body
      (end-shader-mode)))
+
+(defmacro with-blend-mode
+  "Evaluates body between begin-blend-mode and end-blend-mode calls."
+  [mode & body]
+  `(do
+     (begin-blend-mode ~mode)
+     ~@body
+     (end-blend-mode)))
+
+(defmacro with-scissor-mode
+  "Evaluates body between begin-scissor-mode and end-scissor-mode calls."
+  [x y width height & body]
+  `(do
+     (begin-scissor-mode ~x ~y ~width ~height)
+     ~@body
+     (end-scissor-mode)))
+
+(defmacro with-vr-stereo-mode
+  "Evaluates body between begin-vr-stereo-mode and end-vr-stereo-mode calls."
+  [config & body]
+  `(do
+     (begin-vr-stereo-mode ~config)
+     ~@body
+     (end-vr-stereo-mode)))
 
 ;;
 ;; Raylib Functions
