@@ -1,16 +1,23 @@
-rayclj
-======
+<img align="left" style="width:260px" src="https://github.com/maksut/rayclj/blob/main/examples/examples/shapes/resources/rayclj.gif" width="288px">
+
+
 [![Clojars Project](https://img.shields.io/clojars/v/org.clojars.maksut/rayclj.svg)](https://clojars.org/org.clojars.maksut/rayclj)
 
-Raylib 5.0 bindings for Clojure. Thin wrapper around raylib.h and rlgl.h.
+rayclj
+======
+[Raylib 5.0](https://github.com/raysan5/raylib) bindings for Clojure.
+
+Thin wrapper around raylib.h and rlgl.h.
 
 **REQUIRES:** java21 and `--enable-preview` jdk flag.
+
+<br>
 
 Usage
 =====
 Add rayclj as a dependency. For Clojure CLI/deps.edn:
 ```
-org.clojars.maksut/rayclj {:mvn/version "0.0.47"}
+org.clojars.maksut/rayclj {:mvn/version "0.0.52"}
 ```
 
 Add these two jvm options into your alias:
