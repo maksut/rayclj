@@ -218,4 +218,130 @@
                          (rayclj.rlgl.rlRenderBatch/currentDepth$set seg currentDepth)
                          seg)]})
 
-(def functions {})
+(def functions
+  {:draw-line-strip '[(defn draw-line-strip
+                        "Draw lines sequence (using gl lines)
+  [Vector2 * points, int pointCount, Color color] -> void"
+                        ([points point-count color]
+                         (raylib_h/DrawLineStrip (rstructs/vector2-array points point-count)
+                                                 point-count
+                                                 (rstructs/color color)))
+                        ([points color]
+                         (raylib_h/DrawLineStrip (rstructs/vector2-array points)
+                                                 (count points)
+                                                 (rstructs/color color))))]
+   :draw-triangle-fan '[(defn draw-triangle-fan
+                          "Draw a triangle fan defined by points (first vertex is the center)
+  [Vector2 * points, int pointCount, Color color] -> void"
+                          ([points point-count color]
+                           (raylib_h/DrawTriangleFan (rstructs/vector2-array points point-count)
+                                                     point-count
+                                                     (rstructs/color color)))
+                          ([points color]
+                           (raylib_h/DrawTriangleFan (rstructs/vector2-array points)
+                                                     (count points)
+                                                     (rstructs/color color))))]
+   :draw-triangle-strip '[(defn draw-triangle-strip
+                            "Draw a triangle strip defined by points
+  [Vector2 * points, int pointCount, Color color] -> void"
+                            ([points point-count color]
+                             (raylib_h/DrawTriangleStrip (rstructs/vector2-array points point-count)
+                                                         point-count
+                                                         (rstructs/color color)))
+                            ([points color]
+                             (raylib_h/DrawTriangleStrip (rstructs/vector2-array points)
+                                                         (count points)
+                                                         (rstructs/color color))))]
+
+   :draw-spline-linear '[(defn draw-spline-linear
+                           "Draw spline: Linear, minimum 2 points
+  [Vector2 * points, int pointCount, float thick, Color color] -> void"
+                           ([points point-count thick color]
+                            (raylib_h/DrawSplineLinear (rstructs/vector2-array points point-count)
+                                                       point-count
+                                                       thick
+                                                       (rstructs/color color)))
+                           ([points thick color]
+                            (raylib_h/DrawSplineLinear (rstructs/vector2-array points)
+                                                       (count points)
+                                                       thick
+                                                       (rstructs/color color))))]
+
+   :draw-spline-basis '[(defn draw-spline-basis
+                          "Draw spline: B-Spline, minimum 4 points
+  [Vector2 * points, int pointCount, float thick, Color color] -> void"
+                          ([points point-count thick color]
+                           (raylib_h/DrawSplineBasis (rstructs/vector2-array points point-count)
+                                                     point-count
+                                                     thick
+                                                     (rstructs/color color)))
+                          ([points thick color]
+                           (raylib_h/DrawSplineBasis (rstructs/vector2-array points)
+                                                     (count points)
+                                                     thick
+                                                     (rstructs/color color))))]
+
+   :draw-spline-catmull-rom '[(defn draw-spline-catmull-rom
+                                "Draw spline: Catmull-Rom, minimum 4 points
+  [Vector2 * points, int pointCount, float thick, Color color] -> void"
+                                ([points point-count thick color]
+                                 (raylib_h/DrawSplineCatmullRom (rstructs/vector2-array points point-count)
+                                                                point-count
+                                                                thick
+                                                                (rstructs/color color)))
+                                ([points thick color]
+                                 (raylib_h/DrawSplineCatmullRom (rstructs/vector2-array points)
+                                                                (count points)
+                                                                thick
+                                                                (rstructs/color color))))]
+
+   :draw-spline-bezier-quadratic '[(defn draw-spline-bezier-quadratic
+                                     "Draw spline: Quadratic Bezier, minimum 3 points (1 control point): [p1, c2, p3, c4...]
+  [Vector2 * points, int pointCount, float thick, Color color] -> void"
+                                     ([points point-count thick color]
+                                      (raylib_h/DrawSplineBezierQuadratic (rstructs/vector2-array points point-count)
+                                                                          point-count
+                                                                          thick
+                                                                          (rstructs/color color)))
+                                     ([points thick color]
+                                      (raylib_h/DrawSplineBezierQuadratic (rstructs/vector2-array points)
+                                                                          (count points)
+                                                                          thick
+                                                                          (rstructs/color color))))]
+   :draw-spline-bezier-qubic '[(defn draw-spline-bezier-cubic
+                                 "Draw spline: Cubic Bezier, minimum 4 points (2 control points): [p1, c2, c3, p4, c5, c6...]
+  [Vector2 * points, int pointCount, float thick, Color color] -> void"
+                                 ([points point-count thick color]
+                                  (raylib_h/DrawSplineBezierCubic (rstructs/vector2 points point-count)
+                                                                  point-count
+                                                                  thick
+                                                                  (rstructs/color color)))
+                                 ([points thick color]
+                                  (raylib_h/DrawSplineBezierCubic (rstructs/vector2 points)
+                                                                  (count points)
+                                                                  thick
+                                                                  (rstructs/color color))))]
+
+   :check-collision-point-poly? '[(defn check-collision-point-poly?
+                                    "Check if point is within a polygon described by array of vertices
+  [Vector2 point, Vector2 * points, int pointCount] -> bool"
+                                    ([point points point-count]
+                                     (raylib_h/CheckCollisionPointPoly (rstructs/vector2 point)
+                                                                       (rstructs/vector2-array points point-count)
+                                                                       point-count))
+                                    ([point points]
+                                     (raylib_h/CheckCollisionPointPoly (rstructs/vector2 point)
+                                                                       (rstructs/vector2-array points)
+                                                                       (count points))))]
+
+   :draw-triangle-strip3d '[(defn draw-triangle-strip3d
+                              "Draw a triangle strip defined by points
+  [Vector3 * points, int pointCount, Color color] -> void"
+                              ([points point-count color]
+                               (raylib_h/DrawTriangleStrip3D (rstructs/vector3-array points point-count)
+                                                             point-count
+                                                             (rstructs/color color)))
+                              ([points color]
+                               (raylib_h/DrawTriangleStrip3D (rstructs/vector3-array points)
+                                                             (count points)
+                                                             (rstructs/color color))))]})
