@@ -1741,11 +1741,16 @@
 (defn draw-spline-bezier-cubic
   "Draw spline: Cubic Bezier, minimum 4 points (2 control points): [p1, c2, c3, p4, c5, c6...]
   [Vector2 * points, int pointCount, float thick, Color color] -> void"
-  [points point-count thick color]
-  (raylib_h/DrawSplineBezierCubic (rstructs/vector2 points)
-                                  point-count
-                                  thick
-                                  (rstructs/color color)))
+  ([points point-count thick color]
+   (raylib_h/DrawSplineBezierCubic (rstructs/vector2 points point-count)
+                                   point-count
+                                   thick
+                                   (rstructs/color color)))
+  ([points thick color]
+   (raylib_h/DrawSplineBezierCubic (rstructs/vector2 points)
+                                   (count points)
+                                   thick
+                                   (rstructs/color color))))
 
 (defn draw-spline-segment-linear
   "Draw spline segment: Linear, 2 points

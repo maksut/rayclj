@@ -308,7 +308,7 @@
                                                                           (count points)
                                                                           thick
                                                                           (rstructs/color color))))]
-   :draw-spline-bezier-qubic '[(defn draw-spline-bezier-cubic
+   :draw-spline-bezier-cubic '[(defn draw-spline-bezier-cubic
                                  "Draw spline: Cubic Bezier, minimum 4 points (2 control points): [p1, c2, c3, p4, c5, c6...]
   [Vector2 * points, int pointCount, float thick, Color color] -> void"
                                  ([points point-count thick color]
