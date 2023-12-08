@@ -1742,7 +1742,7 @@
   "Draw spline: Cubic Bezier, minimum 4 points (2 control points): [p1, c2, c3, p4, c5, c6...]
   [Vector2 * points, int pointCount, float thick, Color color] -> void"
   ([points point-count thick color]
-   (raylib_h/DrawSplineBezierCubic (rstructs/vector2 points point-count)
+   (raylib_h/DrawSplineBezierCubic (rstructs/vector2-array points point-count)
                                    point-count
                                    thick
                                    (rstructs/color color)))
