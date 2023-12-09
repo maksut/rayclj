@@ -131,6 +131,25 @@
                    (rayclj.raylib.Shader/locs$set seg (memory/int-array locs gldefines/max-shader-locations))
                    seg)]
 
+   :set-camera3d ['(defn set-camera3d
+                     "Camera, defines position/orientation in 3d space
+  Vector3 position // Camera position
+  Vector3 target // Camera target it looks-at
+  Vector3 up // Camera up vector (rotation over its axis)
+  float fovy // Camera field-of-view aperture in Y (degrees) in perspective, used as near plane width in orthographic
+  int projection // Camera projection: CAMERA_PERSPECTIVE or CAMERA_ORTHOGRAPHIC"
+                     [:CARETMemorySegment seg {:keys [position target up fovy projection]}]
+                     (set-vector3 (rayclj.raylib.Camera3D/position$slice seg) position)
+                     (set-vector3 (rayclj.raylib.Camera3D/target$slice seg) target)
+                     (set-vector3 (rayclj.raylib.Camera3D/up$slice seg) up)
+                     (rayclj.raylib.Camera3D/fovy$set seg fovy)
+                     (rayclj.raylib.Camera3D/projection$set
+                      seg
+                      (if (keyword? projection)
+                        (renums/camera-projection projection)
+                        projection))
+                     seg)]
+
    ;;
    ;; rlgl overrides
    ;;

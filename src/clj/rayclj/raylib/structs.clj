@@ -609,7 +609,9 @@
   (set-vector3 (rayclj.raylib.Camera3D/target$slice seg) target)
   (set-vector3 (rayclj.raylib.Camera3D/up$slice seg) up)
   (rayclj.raylib.Camera3D/fovy$set seg fovy)
-  (rayclj.raylib.Camera3D/projection$set seg projection)
+  (rayclj.raylib.Camera3D/projection$set
+    seg
+    (if (keyword? projection) (renums/camera-projection projection) projection))
   seg)
 
 (defn camera3d
