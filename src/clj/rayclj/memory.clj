@@ -1,8 +1,10 @@
 (ns rayclj.memory
   "Utilities for memory management and arrays"
-  (:refer-clojure :exclude [float-array byte-array int-array char-array])
+  (:refer-clojure :exclude [int float double float-array byte-array int-array char-array])
   (:import
-   [java.lang.foreign Arena MemorySegment ValueLayout MemoryLayout]))
+   [java.lang.foreign Arena MemorySegment ValueLayout ValueLayout$OfInt ValueLayout$OfFloat ValueLayout$OfDouble MemoryLayout]))
+
+(set! *warn-on-reflection* true)
 
 (defn auto-arena ^Arena [] (Arena/ofAuto))
 
@@ -45,6 +47,39 @@
     str
     (.allocateUtf8String *current-arena* str)))
 
+(defn get-int
+  [^MemorySegment seg]
+  (.get seg (ValueLayout/JAVA_INT) 0))
+
+(defn int
+  [val]
+  (let [^ValueLayout$OfInt layout (ValueLayout/JAVA_INT)
+        ^MemorySegment seg (allocate layout)]
+    (.set seg layout 0 ^int val)
+    seg))
+
+(defn get-float
+  [^MemorySegment seg]
+  (.get seg (ValueLayout/JAVA_FLOAT) 0))
+
+(defn float
+  [val]
+  (let [^ValueLayout$OfFloat layout (ValueLayout/JAVA_FLOAT)
+        ^MemorySegment seg (allocate layout)]
+    (.set seg layout 0 ^float val)
+    seg))
+
+(defn get-double
+  [^MemorySegment seg]
+  (.get seg (ValueLayout/JAVA_DOUBLE) 0))
+
+(defn double
+  [val]
+  (let [^ValueLayout$OfDouble layout (ValueLayout/JAVA_DOUBLE)
+        ^MemorySegment seg (allocate layout)]
+    (.set seg layout 0 ^double val)
+    seg))
+
 ;;
 ;; Array functions for arrays of primitives
 ;;
@@ -70,7 +105,7 @@
     (throw (ex-info "Float array too long" {:elems elems :max-size max-size})))
   (let [layout (ValueLayout/JAVA_FLOAT)]
     (dorun
-     (map-indexed (fn [i elem] (.setAtIndex seg layout (long i) (float elem))) elems)))
+     (map-indexed (fn [i elem] (.setAtIndex seg layout (long i) ^float elem)) elems)))
   seg)
 
 (def float-array (primitive-array-fn ValueLayout/JAVA_FLOAT set-float-array))
@@ -115,15 +150,10 @@
     (throw (ex-info "Int array too long" {:elems elems :max-size max-size})))
   (let [layout (ValueLayout/JAVA_INT)]
     (dorun
-     (map-indexed (fn [i elem] (.setAtIndex seg layout (long i) (int elem))) elems)))
+     (map-indexed (fn [i elem] (.setAtIndex seg layout (long i) ^int elem)) elems)))
   seg)
 
 (def int-array (primitive-array-fn ValueLayout/JAVA_INT set-int-array))
-
-(comment
-  (let [seg (int-array [3 4 5 6 7 8 9 10 11 12] 10)]
-    (set-int-array seg [1 2 3 4 5 6 7 8 9 10] 10)
-    (get-int-array seg 10)))
 
 (def get-unsigned-int-array get-int-array)
 (def set-unsigned-int-array set-int-array)

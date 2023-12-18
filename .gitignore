@@ -2,6 +2,7 @@
 .cpcache
 .lsp
 .nrepl-*
+.portal
 target
 /libraylib.so
 /native
