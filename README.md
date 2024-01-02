@@ -63,8 +63,8 @@ To provide your own raylib binary you can use `rayclj.library` property. For exa
            "-Drayclj.library=/some/directory/libraylib.so"]
 ```
 
-Naming
-======
+Names
+=====
 Raylib function/struct/enum names are converted into kebab-case:
 - `ImageDrawCircleLines` => `image-draw-circle-lines`
 - `BoneInfo` => `bone-info`
@@ -104,6 +104,6 @@ Bunnymark example:
 
 |implementation        | explanation                       | bunnies | relative performance |
 |----------------------|-----------------------------------|--------:|----------------------|
-|textures_bunnymark.c  | basic example in C, not optimised | 180000  | 1x                   |
-|bunnymark.clj         | rayclj, not optimised             |  46000  | 0.26x                |
-|bunnymark_mutable.clj | rayclj, mutable data structures   |  95000  | 0.52x                |
+|[textures_bunnymark.c](https://github.com/raysan5/raylib/blob/master/examples/textures/textures_bunnymark.c)  | basic example in C, not optimised | 180000  | 1x                   |
+|[bunnymark.clj](https://github.com/maksut/rayclj/blob/main/examples/examples/textures/bunnymark.clj)         | rayclj, not optimised             |  46000  | 0.26x                |
+|[bunnymark_mutable.clj](https://github.com/maksut/rayclj/blob/main/examples/examples/textures/bunnymark_mutable.clj) | rayclj, mutable data structures   |  95000  | 0.52x                |
