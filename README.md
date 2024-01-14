@@ -17,7 +17,7 @@ Usage
 =====
 Add rayclj as a dependency. For Clojure CLI/deps.edn:
 ```
-org.clojars.maksut/rayclj {:mvn/version "0.0.52"}
+org.clojars.maksut/rayclj {:mvn/version "0.0.60"}
 ```
 
 Add these two jvm options into your alias:
@@ -94,13 +94,13 @@ Other structs can be represented with clojure maps.
 
 Performance
 ===========
-Do not use clojure if performance is a hard requirement.
-Trade off here is performance vs productivity. Who am I kidding. It is performance vs fun. Clojure is fun.
+Not bad actually. Idiomatic clojure with immutable data structures is slow as expected. But it is cleaner and can be parallelized. 
 
-Java's new FFM api is designed to be more performant than JNA and close to JNI.
-And clojure can get really close to java's performance. But one has to leave idiomatic clojure to get there (eg. by not using immutable data structures).
+With mutable data structures, clojure can get really close to java's performance.
 
-Bunnymark example:
+This wrapper uses Java's new Foreign Function and Memory (FFM) api. Which is designed to be performant (similar to JNI) and ergonomic (like JNA).
+
+Bunnymark (silly example but gives an idea):
 
 |implementation        | explanation                       | bunnies | relative performance |
 |----------------------|-----------------------------------|--------:|----------------------|
