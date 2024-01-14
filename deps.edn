@@ -39,8 +39,8 @@
                    ; "-Drayclj.library=./libraylib.so"
 
                    ; for debugger
-                   ; "-Dclojure.storm.instrumentEnable=true"
                    ; "-Dclojure.storm.instrumentOnlyPrefixes=ffi"
+                   ; "-Dclojure.storm.instrumentEnable=true"
 
                    ; for profiler
                    ; "-Djdk.attach.allowAttachSelf"

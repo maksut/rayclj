@@ -3,32 +3,40 @@
             [rayclj.raylib.structs :as rstructs]
             [rayclj.rlgl.defines :refer [default-batch-buffer-elements]]))
 
+(set! *unchecked-math* :warn-on-boxed)
+
 (definterface IBunny
-  (update_and_draw [texture min-x max-x min-y max-y]))
+  (update_x ^:void [^double min-x ^double max-x])
+  (update_y ^:void [^double min-y ^double max-y])
+  (draw ^:void [texture]))
 
-(deftype Bunny [^:unsynchronized-mutable ^:int pos-x
-                ^:unsynchronized-mutable ^:int pos-y
-                ^:unsynchronized-mutable ^:int speed-x
-                ^:unsynchronized-mutable ^:int speed-y
-                color]
-
+(deftype Bunny [^:unsynchronized-mutable ^double pos-x
+                ^:unsynchronized-mutable ^double pos-y
+                ^:unsynchronized-mutable ^double speed-x
+                ^:unsynchronized-mutable ^double speed-y
+                ^:unsynchronized-mutable color]
   IBunny
-  (update-and-draw [_ texture min-x max-x min-y max-y]
+  (update_x
+    [_ min-x max-x]
     (set! pos-x (unchecked-add pos-x speed-x))
-    (set! pos-y (unchecked-add pos-y speed-y))
 
     (when (or (> pos-x max-x) (< pos-x min-x))
-      (set! speed-x (unchecked-negate speed-x)))
+      (set! speed-x (unchecked-negate speed-x))))
+
+  (update_y
+    [_ min-y max-y]
+    (set! pos-y (unchecked-add pos-y speed-y))
 
     (when (or (> pos-y max-y) (< pos-y min-y))
-      (set! speed-y (unchecked-negate speed-y)))
+      (set! speed-y (unchecked-negate speed-y))))
 
+  (draw [_ texture]
     (rl/draw-texture texture pos-x pos-y color)))
 
 (defn new-bunny []
   (let [[pos-x pos-y] (rl/get-mouse-position)
-        speed-x (/ (rl/get-random-value -250 250) 60.0)
-        speed-y (/ (rl/get-random-value -250 250) 60.0)
+        speed-x (/ ^long (rl/get-random-value -250 250) 60.0)
+        speed-y (/ ^long (rl/get-random-value -250 250) 60.0)
         color (rstructs/color
                {:r (rl/get-random-value 50 240)
                 :g (rl/get-random-value 80 240)
@@ -41,12 +49,12 @@
     (rl/init-window screen-width screen-height "raylib [textures] example - bunnymark")
     (rl/set-target-fps 60)
 
-    (let [{:keys [width height] :as tex-bunny} (rl/load-texture "examples/examples/textures/resources/wabbit_alpha.png")
+    (let [{:keys [^long width ^long height] :as tex-bunny} (rl/load-texture "examples/examples/textures/resources/wabbit_alpha.png")
           tex-bunny-seg (rstructs/texture tex-bunny)
-          min-x (* -1 (/ width 2))
-          max-x (+ (rl/get-screen-width) min-x)
-          min-y (* -1 (/ height 2))
-          max-y (+ (rl/get-screen-height) min-y)]
+          min-x (* -0.5 width)
+          max-x (+ screen-width min-x)
+          min-y (* -0.5 height)
+          max-y (+ screen-height min-y)]
 
       (loop [bunnies []]
         (when-not (rl/window-should-close?)
@@ -64,11 +72,13 @@
               (rl/clear-background :raywhite)
 
               (doseq [^IBunny bunny bunnies]
-                (.update-and-draw bunny tex-bunny-seg min-x max-x min-y max-y))
+                (.update_x bunny min-x max-x)
+                (.update_y bunny min-y max-y)
+                (.draw bunny tex-bunny-seg))
 
               (rl/draw-rectangle 0 0 screen-width 40 :black)
               (rl/draw-text (format "bunnies: %d" bunnies-count) 120 10 20 :green)
-              (rl/draw-text (format "batched draw calls: %d" (int (inc (/ bunnies-count default-batch-buffer-elements)))) 320 10 20 :maroon)
+              (rl/draw-text (format "batched draw calls: %d" (inc (unchecked-divide-int bunnies-count default-batch-buffer-elements))) 320 10 20 :maroon)
               (rl/draw-fps 10 10))
 
             (recur bunnies))))

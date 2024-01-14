@@ -104,6 +104,6 @@ Bunnymark example:
 
 |implementation        | explanation                       | bunnies | relative performance |
 |----------------------|-----------------------------------|--------:|----------------------|
-|[textures_bunnymark.c](https://github.com/raysan5/raylib/blob/master/examples/textures/textures_bunnymark.c)  | basic example in C, not optimised | 180000  | 1x                   |
-|[bunnymark.clj](https://github.com/maksut/rayclj/blob/main/examples/examples/textures/bunnymark.clj)         | rayclj, not optimised             |  46000  | 0.26x                |
-|[bunnymark_mutable.clj](https://github.com/maksut/rayclj/blob/main/examples/examples/textures/bunnymark_mutable.clj) | rayclj, mutable data structures   |  95000  | 0.52x                |
+|textures_bunnymark.c  | basic example in C, not optimised | 175000  | 1x                   |
+|bunnymark.clj         | rayclj, not optimised             |  50000  | 0.29x                |
+|bunnymark_mutable.clj | rayclj, mutable data structures   | 135000  | 0.77x                |
